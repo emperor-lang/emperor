@@ -6,10 +6,9 @@ CP = cp
 OUTPUT_FILE := ./emperor
 MANGEN_LOCATION := ../mangen/
 MANGEN := $(MANGEN_LOCATION)mangen
-MAKEFLAGS := $(MAKEFLAGS) s
+# MAKEFLAGS := $(MAKEFLAGS) s
 
-MAN_FILE := ./emperor.1
-COMPRESSED_MAN_FILE := ./emperor.1.gz
+MAN_FILE := ./emperor.1.gz
 
 EXECUTABLE_INSTALL_LOCATION := /usr/bin/emperor
 MAN_INSTALL_LOCATION := /usr/share/man/man1/emperor.1.gz
@@ -45,16 +44,13 @@ install: $(EXECUTABLE_INSTALL_LOCATION) $(MAN_INSTALL_LOCATION);
 $(EXECUTABLE_INSTALL_LOCATION): $(OUTPUT_FILE)
 	sudo install $(OUTPUT_FILE) $(EXECUTABLE_INSTALL_LOCATION)
 
-$(MAN_INSTALL_LOCATION): $(COMPRESSED_MAN_FILE)
-	sudo install $(COMPRESSED_MAN_FILE) $(MAN_INSTALL_LOCATION)
-
-$(COMPRESSED_MAN_FILE): $(MAN_FILE)
-	gzip --keep --best --to-stdout $(MAN_FILE) > $(COMPRESSED_MAN_FILE)
+$(MAN_INSTALL_LOCATION): $(MAN_FILE)
+	sudo install -m 644 $(MAN_FILE) $(MAN_INSTALL_LOCATION)
 
 man: $(MAN_FILE)
 
 $(MAN_FILE): $(OUTPUT_FILE) $(MANGEN)
-	./emperor -* | $(MANGEN) - > $(MAN_FILE)
+	./emperor -* | $(MANGEN) - | gzip --best > $(MAN_FILE)
 
 $(MANGEN):
 	+@$(MAKE) -C $(MANGEN_LOCATION) install
@@ -66,7 +62,6 @@ clean-installation: clean
 clean:
 	+@$(MAKE) -C actions $@
 	+@$(MAKE) -C parser $@
-	-@$(RM) $(COMPRESSED_MAN_FILE)			2>/dev/null	|| true
 	-@$(RM) $(MAN_FILE)						2>/dev/null	|| true
 	-@$(RM) *.o								2>/dev/null	|| true
 	-@$(RM) *.so							2>/dev/null	|| true
