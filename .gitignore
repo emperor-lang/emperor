@@ -30,3 +30,7 @@ emperor
 
 # Generated argument parser
 Args.hs
+
+# Generated lexers and parser
+*.y.hs
+*.x.hs
