@@ -26,7 +26,7 @@ extern int currentChar;
 	"*"+           				; /**/
 	[^/*\n]+       				; /**/
 	[/]            				; /**/
-	\n             				; /* TODO: ADD THE DOCUMENTATION ACTUAL BODY BIT! */
+	\n             				; /* ADD THE DOCUMENTATION ACTUAL BODY BIT! */
 }
 "/*"							{ BEGIN(commentBlock); }
 <commentBlock>{
