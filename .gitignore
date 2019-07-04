@@ -1,86 +1,32 @@
-# Prerequisites
-*.d
-
-# Object files
+# General Haskell ignores
+dist
+dist-*
+cabal-dev
 *.o
-*.ko
-*.obj
-*.elf
+*.hi
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+.hpc
+.hsenv
+.cabal-sandbox/
+cabal.sandbox.config
+*.prof
+*.aux
+*.hp
+*.eventlog
+.stack-work/
+cabal.project.local
+cabal.project.local~
+.HTF/
+.ghc.environment.*
 
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-*.pyc
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+# Executable
 emperor
-!emperor/
-emperordoc
-!emperordoc/
-emperorlint
-!emperorlint/
-mangen
-!mangen/
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
+# Generated MAN files
+*.[1-9].gz
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-# VSCode Things
-.vscode
-markdown-styles.css
-temp/
-
-# Lex and Yacc Things
-*.yy.c
-*.tab.c*
-*.tab.h*
-*.output
-.emperor.yacc
-
-# Cython Things
-*.html
-*.py.c
-
-# Troff things
-*.1*
-*.[gt]roff
-*.json
-
-# Misc
-*.log
-images/
+# Generated argument parser
+Args.hs

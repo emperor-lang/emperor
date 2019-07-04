@@ -1,3 +1,13 @@
 -- Emperor
+
+module Main where
+
+import Args
+
 main :: IO ()
-main = putStrLn "Hello, world!"
+main = do
+    putStrLn "Hello, world!"
+    args <- parseArgv
+    putStrLn $ show args
+    putStrLn $ show (__help__ args)
+    
