@@ -1,0 +1,117 @@
+{
+	"$schema": "https://github.com/argspec/argspec/releases/download/v1.0.2/dual-arguments-schema.json",
+	"description": "Compiler for the Emperor language",
+	"longDescription": "This compiles emperor code in to an executable or library.",
+	"program": "emperor",
+	"author": "This is maintained by Edward Jones. Source code can be found at <https://github.com/TheSignPainter98/emperor>",
+	"licence": "Copyright (c) 2019, Edward Jones\n\n%%%%%%LICENSE_START(GPLv2+_DOC_FULL)\nThis is free documentation; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License as\npublished by the Free Software Foundation; either version 2 of\nthe License, or (at your option) any later version.\n\nThe GNU General Public License's references to \"object code\"\nand \"executables\" are to be interpreted as the output of any\ndocument formatting or typesetting system, including\nintermediate and printed output.\n\nThis manual is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public\nLicense along with this manual; if not, see\n<http://www.gnu.org/licenses/>.\n%%%%%%LICENSE_EN",
+	"version": "0.1.0",
+	"date": "09 June 2019",
+	"examples": [
+		{
+			"input": "emperor -i ./program.emp -o ./program",
+			"description": "Compile `program.emp` in to a binary `program`"
+		},
+		{
+			"input": "emperor -cv -i ./program.emp -o ./program.c",
+			"description": "Verbosely translate program.emp in to C"
+		},
+		{
+			"input": "emperor -c -O3 -i - -o - < ./program.emp > ./program.c",
+			"description": "Translate program.emp in to C through use of the pipe and with all available optimisations"
+		}
+	],
+	"seeAlso": [
+		{
+			"name": "gcc",
+			"manLocation": 1
+		},
+		{
+			"name": "dux",
+			"manLocation": 1
+		},
+		{
+			"name": "bison",
+			"manLocation": 1
+		},
+		{
+			"name": "flex",
+			"manLocation": 1
+		}
+	],
+	"bugs": "If you find any bugs, please report them at <https://github.com/TheSignPainter98/emperor/issues>",
+	"args": [
+		{
+			"short": "-h",
+			"long": "--help",
+			"dest": "help",
+			"default": "false",
+			"type": "help",
+			"mandatory": false,
+			"help": "show this help message and exit"
+		},
+		{
+			"short": "-v",
+			"long": "--verbose",
+			"dest": "verbose",
+			"type": "flag",
+			"default": "false",
+			"mandatory": false,
+			"help": "Output verbosity"
+		},
+		{
+			"short": "-V",
+			"long": "--version",
+			"dest": "version",
+			"type": "flag",
+			"default": "false",
+			"mandatory": false,
+			"help": "Output version and exit"
+		},
+		{
+			"short": "-i",
+			"long": "--input-main",
+			"dest": "input",
+			"type": "string",
+			"metaDest": "file",
+			"default": "",
+			"mandatory": false,
+			"help": "A file from which to take input or `-` for stdin"
+		},
+		{
+			"short": "-O",
+			"long": "--optimisation",
+			"dest": "optimisation",
+			"default": "0",
+			"type": "char",
+			"choices": [
+				"s",
+				"0",
+				"1",
+				"2",
+				"3"
+			],
+			"mandatory": false,
+			"help": "Compiler optimisation level as specified in **gcc**"
+		},
+		{
+			"short": "-c",
+			"long": "--to-c",
+			"dest": "compileCOnly",
+			"type": "flag",
+			"default": "false",
+			"mandatory": false,
+			"help": "Translate to C (skips compilation step)"
+		},
+		{
+			"short": "-o",
+			"long": "--output",
+			"dest": "outputFile",
+			"type": "string",
+			"default": "",
+			"metaDest": "file",
+			"mandatory": false,
+			"help": "Specify output file"
+		}
+	]
+}
