@@ -9,5 +9,4 @@ main = do
     putStrLn "Hello, world!"
     args <- parseArgv
     putStrLn $ show args
-    putStrLn $ show (__help__ args)
-    
+    putStrLn $ "Showing help?: " ++ show (__help__ args)
