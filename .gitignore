@@ -38,3 +38,6 @@ parser/EmperorParser*.hs
 
 # Cabal generated files
 ./dist/*
+
+# Generated bash completions
+*_completions.sh

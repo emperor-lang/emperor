@@ -7,6 +7,8 @@
 # HC := ghc
 # HC_FLAGS := -Wall -Wextra -Werror -O2
 
+COMPLETION_INSTALL_LOCATION := /usr/share/bash-completion/completions/emperor
+
 .DEFAULT_GOAL := all
 
 all: build
@@ -29,10 +31,12 @@ build: ./dist/build/emperor/emperor
 	arggen_haskell < $^ > $@
 
 %.hs:;
+%.x:;
+%.y:;
 
 ./emperor.json:;
 
-install: /usr/bin/emperor /usr/share/man/man1/emperor.1.gz;
+install: /usr/bin/emperor /usr/share/man/man1/emperor.1.gz $(COMPLETION_INSTALL_LOCATION);
 .PHONY: install
 
 /usr/bin/emperor: ./dist/build/emperor/emperor
@@ -49,9 +53,17 @@ man: ./dist/doc/man/emperor.1.gz;
 	(mangen | gzip --best) < $^ > $@
 .DELETE_ON_ERROR: ./dist/doc/man/emperor.1.gz
 
+$(COMPLETION_INSTALL_LOCATION): ./emperor_completions.sh;
+	sudo install -m 644 $^ $@
+
+./emperor_completions.sh: ./emperor.json
+	argcompgen < $< > $@
+.DELETE_ON_ERROR: ./emperor_completions.sh
+
 clean-installation:
 	sudo $(RM) /usr/bin/emperor
 	sudo $(RM) /usr/share/man/man1/emperor.1.gz
+	sudo $(RM) /usr/share/bash-completion/completions/emperor 2>/dev/null || true
 .PHONY: clean-installation
 
 clean:
@@ -59,4 +71,5 @@ clean:
 	-@$(RM) cabal.config	2>/dev/null || true
 	-@$(RM) Args.hs			2>/dev/null	|| true
 	-@$(MAKE) -sC ./parser/ clean
+	-@$(RM) *_completions.sh		2>/dev/null || true
 .PHONY: clean
