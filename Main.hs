@@ -2,7 +2,8 @@
 
 module Main where
 
-import Args
+import Args (parseArgv, __help__)
+import Parser (parse)
 
 main :: IO ()
 main = do
