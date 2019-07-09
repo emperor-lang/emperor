@@ -7,11 +7,16 @@
 # HC := ghc
 # HC_FLAGS := -Wall -Wextra -Werror -O2
 
+LEXER_GENERATOR := alex
+LEXER_GENERATOR_FLAGS := -g
+PARSER_GENERATOR := happy
+PARSER_GENERATOR_FLAGS := -ga # -m emperor_lang
+
 COMPLETION_INSTALL_LOCATION := /usr/share/bash-completion/completions/emperor
 
 .DEFAULT_GOAL := all
 
-all: build
+all: build 
 .PHONY: all
 
 run: build
@@ -21,18 +26,25 @@ run: build
 build: ./dist/build/emperor/emperor
 .PHONY: build
 
-./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/emperor.x.hs ./parser/emperor.y.hs ./parser/emperor.y.tab.hs
-	cabal build
+./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParserData.hs ./parser/EmperorParser.hs
+	@echo $^
+	cabal build -v
 
-./parser/emperor.x.hs ./parser/emperor.y.hs ./parser/emperor.y.tab.hs: ./parser/emperor.x ./parser/emperor.y
-	-@$(MAKE) -C ./parser/
+./parser/EmperorLexer.hs: ./parser/EmperorLexer.x
+	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $^ -o $@
+.DELETE_ON_ERROR: ./parser/EmperorLexer.hs
+
+./parser/EmperorParser.hs: ./parser/EmperorParser.y
+	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) $< -o $@
+.DELETE_ON_ERROR: ./parser/EmperorParser.hs
+
+./parser/EmperorParserData.hs: ./parser/EmperorParser.hs;
+.DELETE_ON_ERROR: ./parser/EmperorParserData.hs
 
 ./Args.hs: emperor.json
 	arggen_haskell < $^ > $@
 
 %.hs:;
-%.x:;
-%.y:;
 
 ./emperor.json:;
 
@@ -67,9 +79,9 @@ clean-installation:
 .PHONY: clean-installation
 
 clean:
-	-@cabal clean			1>/dev/null || true
-	-@$(RM) cabal.config	2>/dev/null || true
-	-@$(RM) Args.hs			2>/dev/null	|| true
-	-@$(MAKE) -sC ./parser/ clean
+	-@cabal clean					1>/dev/null || true
+	-@$(RM) cabal.config			2>/dev/null || true
+	-@$(RM) Args.hs					2>/dev/null	|| true
 	-@$(RM) *_completions.sh		2>/dev/null || true
+	-@$(RM) ./parser/Emperor*.hs	2>/dev/null || true
 .PHONY: clean
