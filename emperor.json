@@ -74,7 +74,7 @@
 			"dest": "input",
 			"type": "string",
 			"metaDest": "file",
-			"default": "",
+			"default": "-",
 			"mandatory": false,
 			"help": "A file from which to take input or `-` for stdin"
 		},
@@ -108,7 +108,7 @@
 			"long": "--output",
 			"dest": "outputFile",
 			"type": "string",
-			"default": "",
+			"default": "-",
 			"metaDest": "file",
 			"mandatory": false,
 			"help": "Specify output file"
