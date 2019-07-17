@@ -1,4 +1,5 @@
 #!/usr/bin/make
+SHELL := bash
 
 # CC = gcc-8
 # CFLAGS := $(shell emperor-setup --cflags) # $(CFLAGS) -Wall -Os -I . -I /usr/include/python3.6m -g
@@ -23,12 +24,14 @@ run: build
 	@cabal run
 .PHONY: run
 
-build: ./dist/build/emperor/emperor
+build: ./emperor
 .PHONY: build
 
+./emperor: ./dist/build/emperor/emperor
+	$(shell [[ ! -f $@ ]] && ln -s $^ $@)
+
 ./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParserData.hs ./parser/EmperorParser.hs
-	@echo $^
-	cabal build -v
+	cabal build # -v
 
 ./parser/EmperorLexer.hs: ./parser/EmperorLexer.x
 	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $^ -o $@
@@ -79,9 +82,10 @@ clean-installation:
 .PHONY: clean-installation
 
 clean:
-	-@cabal clean					1>/dev/null || true
-	-@$(RM) cabal.config			2>/dev/null || true
-	-@$(RM) Args.hs					2>/dev/null	|| true
-	-@$(RM) *_completions.sh		2>/dev/null || true
-	-@$(RM) ./parser/Emperor*.hs	2>/dev/null || true
+	-@cabal clean											1>/dev/null || true
+	-@$(RM) cabal.config									2>/dev/null || true
+	-@$(RM) Args.hs											2>/dev/null	|| true
+	-@$(RM) *_completions.sh								2>/dev/null || true
+	-@$(RM) ./emperor										2>/dev/null || true
+	-@$(RM) ./parser/Emperor{Lexer,Parser,ParserData}.hs	2>/dev/null || true
 .PHONY: clean
