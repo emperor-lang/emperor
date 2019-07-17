@@ -1,6 +1,7 @@
 module Logger (makeLoggers, Loggers) where
 
 import Args (Args, verbose)
+import System.IO (hPutStrLn, stderr)
 
 data LogType = Info
              | Warning
@@ -29,7 +30,7 @@ makeVerboseLogger a t = if verbose a
         trivialLogger
 
 makeLogger :: LogType -> Logger
-makeLogger t = putStrLn . colouriseLog t
+makeLogger t = (hPutStrLn stderr) . colouriseLog t
 
 -- logError :: String -> IO ()
 -- logError = makeLogger Error
