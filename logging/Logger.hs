@@ -57,8 +57,4 @@ colouriseLog c args t m = messageHeader c t ++ " " ++ m
         useANSI colourSupported a s = if useANSIColour then s else ""
             where 
                 useANSIColour :: Bool
-                useANSIColour = if useColour a
-                    then True
-                    else if noUseColour a
-                        then False
-                        else colourSupported
+                useANSIColour = useColour a || (not (noUseColour a) && colourSupported)
