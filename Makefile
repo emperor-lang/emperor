@@ -20,18 +20,14 @@ COMPLETION_INSTALL_LOCATION := /usr/share/bash-completion/completions/emperor
 all: build 
 .PHONY: all
 
-run: build
-	@cabal run
-.PHONY: run
-
 build: ./emperor
 .PHONY: build
 
 ./emperor: ./dist/build/emperor/emperor
 	$(shell [[ ! -f $@ ]] && ln -s $^ $@)
 
-./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParserData.hs ./parser/EmperorParser.hs
-	cabal build # -v
+./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
+	cabal build $(CABALFLAGS)
 
 ./parser/EmperorLexer.hs: ./parser/EmperorLexer.x
 	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $^ -o $@
@@ -40,9 +36,6 @@ build: ./emperor
 ./parser/EmperorParser.hs: ./parser/EmperorParser.y
 	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) $< -o $@
 .DELETE_ON_ERROR: ./parser/EmperorParser.hs
-
-./parser/EmperorParserData.hs: ./parser/EmperorParser.hs;
-.DELETE_ON_ERROR: ./parser/EmperorParserData.hs
 
 ./Args.hs: emperor.json
 	arggen_haskell < $^ > $@
