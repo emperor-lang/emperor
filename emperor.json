@@ -100,6 +100,22 @@
 			"metaDest": "file",
 			"mandatory": false,
 			"help": "Specify output file"
+		},
+		{
+			"short": "-C",
+			"long": "--use-colour",
+			"dest": "useColour",
+			"type": "flag",
+			"help": "Enable ANSI-coloured output",
+			"default": "false"
+		},
+		{
+			"short": "-N",
+			"long": "--no-use-colour",
+			"dest": "noUseColour",
+			"type": "flag",
+			"help": "Disable ANSI-coloured output",
+			"default": "false"
 		}
 	]
 }
