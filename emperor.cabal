@@ -68,8 +68,8 @@ executable emperor
   
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.9 && <4.10,
-                       array >= 0.5.1.1
-                      --  TODO: Add the remainder of the dependencies here...
+                       array >= 0.5.1.1,
+                       ansi-terminal >= 0.9.1
   
   -- Directories containing source files.
   -- hs-source-dirs:      
