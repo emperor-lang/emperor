@@ -1,6 +1,6 @@
 module AST where
 
-data AST = AST [BodyLine]
+newtype AST = AST [BodyLine]
     deriving Show
 
 data BodyLine = BodyLine Tabs Ident Value
@@ -14,9 +14,9 @@ data Value = Integer Integer
            | Bool Bool
     deriving Show
 
-data Ident = Ident String
+newtype Ident = Ident String
     deriving Show
 
-data Tabs = Tabs Int
+newtype Tabs = Tabs Int
     deriving Show
 -- data Identifier = Ident String

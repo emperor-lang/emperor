@@ -19,5 +19,5 @@ main = do
     case parseResult of
         Left msg    -> err msg
         Right prog  -> do
-            scc $ "Compilation completed successfully, got AST: " ++ (show prog)
+            scc $ "Compilation completed successfully, got AST: " ++ show prog
             putStrLn $ formatFresh prog

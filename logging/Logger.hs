@@ -29,7 +29,7 @@ makeVerboseLogger a t = if verbose a
         trivialLogger
 
 makeLogger :: LogType -> Logger
-makeLogger t = \m -> putStrLn (colouriseLog t m)
+makeLogger t = putStrLn . colouriseLog t
 
 -- logError :: String -> IO ()
 -- logError = makeLogger Error
@@ -52,7 +52,7 @@ makeLogger t = \m -> putStrLn (colouriseLog t m)
 -- 	WARNING:str = '\033[01;93m'
 
 colouriseLog :: LogType -> String -> String
-colouriseLog t m = (messageHeader t) ++ " " ++ m
+colouriseLog t m = messageHeader t ++ " " ++ m
     where
         messageHeader :: LogType -> String
         messageHeader t' = colour t' ++ messageHeaderText t' ++ "\x1b[00;00m"

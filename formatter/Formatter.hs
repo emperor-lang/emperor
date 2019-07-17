@@ -16,7 +16,7 @@ instance Format AST where
     format ctx (AST a) = unlines $ format ctx <$> a
 
 instance Format BodyLine where
-    format ctx (BodyLine _ i v) = (indent ctx) ++ (format ctx i) ++ " = " ++ format ctx v
+    format ctx (BodyLine _ i v) = indent ctx ++ format ctx i ++ " = " ++ format ctx v
 
 instance Format Value where
     format _ (Integer i)    = show i
