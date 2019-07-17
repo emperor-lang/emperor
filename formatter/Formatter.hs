@@ -7,7 +7,7 @@ type FormatContext = Int
 defaultFormatContext :: FormatContext
 defaultFormatContext = 0
 
-class Show a => Format a where
+class Format a where
     format :: FormatContext -> a -> String
     formatFresh :: a -> String
     formatFresh = format defaultFormatContext
