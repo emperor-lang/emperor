@@ -25,18 +25,6 @@
 		{
 			"name": "gcc",
 			"manLocation": 1
-		},
-		{
-			"name": "dux",
-			"manLocation": 1
-		},
-		{
-			"name": "bison",
-			"manLocation": 1
-		},
-		{
-			"name": "flex",
-			"manLocation": 1
 		}
 	],
 	"bugs": "If you find any bugs, please report them at <https://github.com/TheSignPainter98/emperor/issues>",
@@ -57,7 +45,7 @@
 			"type": "flag",
 			"default": "false",
 			"mandatory": false,
-			"help": "Output verbosity"
+			"help": "Output verbosely"
 		},
 		{
 			"short": "-V",
