@@ -14,26 +14,26 @@ type Logger = String -> IO ()
 
 makeLoggers :: Args -> IO (Logger, Logger, Logger, Logger)
 makeLoggers args = do
-    logError <- makeLogger args Error
-    logInfo <- makeVerboseLogger args Info
-    logSuccess <- makeVerboseLogger args Success
-    logWarning <- makeVerboseLogger args Warning
+    colourCompat <- hSupportsANSIColor stderr
+
+    let logError = makeLogger colourCompat args Error
+    let logInfo = makeVerboseLogger colourCompat args Info
+    let logSuccess = makeVerboseLogger colourCompat args Success
+    let logWarning = makeVerboseLogger colourCompat args Warning
     return (logError, logInfo, logSuccess, logWarning)
 
 trivialLogger :: Logger
 trivialLogger _ = return ()
 
-makeVerboseLogger :: Args -> LogType -> IO Logger
-makeVerboseLogger a t = if verbose a
+makeVerboseLogger :: Bool -> Args -> LogType -> Logger
+makeVerboseLogger c a t = if verbose a
     then 
-        makeLogger a t
+        makeLogger c a t
     else
-        return trivialLogger
+        trivialLogger
 
-makeLogger :: Args -> LogType -> IO Logger
-makeLogger a t = do
-    colourCompat <- hSupportsANSIColor stderr
-    return $ hPutStrLn stderr . colouriseLog colourCompat a t
+makeLogger :: Bool -> Args -> LogType -> Logger
+makeLogger c a t = hPutStrLn stderr . colouriseLog c a t
 
 colouriseLog :: Bool -> Args -> LogType -> String -> String
 colouriseLog c args t m = messageHeader c t ++ " " ++ m
@@ -57,9 +57,8 @@ colouriseLog c args t m = messageHeader c t ++ " " ++ m
         useANSI colourSupported a s = if useANSIColour then s else ""
             where 
                 useANSIColour :: Bool
-                useANSIColour = (colourSupported && not ((useColour a) && (not $ noUseColour a))) || (useColour a)
-                    -- if useColour a
-                    -- then True
-                    -- else if not (noUseColour a)
-                    --     then False
-                    --     else colourSupported 
+                useANSIColour = if useColour a
+                    then True
+                    else if noUseColour a
+                        then False
+                        else colourSupported
