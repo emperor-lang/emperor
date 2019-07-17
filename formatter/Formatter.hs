@@ -26,7 +26,7 @@ instance Format Value where
     format _ (Bool b)       = show b
 
 instance Format Ident where
-    format _ (Ident i)      = i
+    format _ (Ident i) = i
 
 instance Format Tabs where
     format ctx _ = indent ctx
