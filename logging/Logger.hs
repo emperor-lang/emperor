@@ -32,26 +32,6 @@ makeVerboseLogger a t = if verbose a
 makeLogger :: Args -> LogType -> Logger
 makeLogger a t = hPutStrLn stderr . colouriseLog a t
 
--- logError :: String -> IO ()
--- logError = makeLogger Error
-
--- logWarning :: String -> IO ()
--- logWarning = makeLogger Warning
-
--- logInfo :: String -> IO ()
--- logInfo = makeLogger Info
-
--- logSuccess :: String -> IO ()
--- logSuccess = makeLogger Success
-
--- class Colours:
--- 	BOLD:str = '\033[01m'
--- 	ERROR:str = '\033[01;31m'
--- 	INFO:str = '\033[00;34m'
--- 	NORMAL:str = '\033[0m'
--- 	SUCCESS:str = '\033[00;32m'
--- 	WARNING:str = '\033[01;93m'
-
 colouriseLog :: Args -> LogType -> String -> String
 colouriseLog args t m = messageHeader t ++ " " ++ m
     where
