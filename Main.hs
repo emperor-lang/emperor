@@ -10,7 +10,7 @@ import Formatter (formatFresh)
 main :: IO ()
 main = do
     args <- parseArgv
-    let (err, inf, scc, _) = makeLoggers args
+    (err, inf, scc, _) <- makeLoggers args
 
     inf $ "Using input file " ++ input args
     
