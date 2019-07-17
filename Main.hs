@@ -2,12 +2,21 @@
 
 module Main where
 
-import Args (parseArgv, __help__)
-import Parser (parse)
+import Args (parseArgv, Args, input)
+import EmperorParserWrapper (parse)
+import Logger (makeLoggers)
 
 main :: IO ()
 main = do
-    putStrLn "Hello, world!"
     args <- parseArgv
-    putStrLn $ show args
-    putStrLn $ "Showing help?: " ++ show (__help__ args)
+    let (err, inf, scc, _) = makeLoggers args
+
+    inf $ "Using input file " ++ input args
+    
+    parseResult <- parse (input args)
+
+    case parseResult of
+        Left msg    -> err msg
+        Right prog  -> do
+            scc $ "Compilation completed successfully" ++ "\n" ++ (show prog)
+            putStrLn $ format prog

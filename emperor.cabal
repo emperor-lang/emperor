@@ -54,11 +54,11 @@ executable emperor
   main-is:             Main.hs
   
   -- Compiler flags
-  ghc-options:         -Wall -Wextra -Werror -O2 
-                       -- -Wno-unused-imports
+  ghc-options:         -Wall -Wextra -Werror -O2 -Wno-unused-imports
+                       --  TODO: Fix the unused imports warning
 
   -- Source directories
-  hs-source-dirs:      ., ./parser/ 
+  hs-source-dirs:      ., ./parser/, ./logging/
   
   -- Modules included in this executable, other than Main.
   -- other-modules:       
