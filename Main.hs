@@ -5,6 +5,7 @@ module Main where
 import Args (parseArgv, Args, input)
 import EmperorParserWrapper (parse)
 import Logger (makeLoggers)
+import Formatter (formatFresh)
 
 main :: IO ()
 main = do
@@ -18,5 +19,5 @@ main = do
     case parseResult of
         Left msg    -> err msg
         Right prog  -> do
-            scc $ "Compilation completed successfully" ++ "\n" ++ (show prog)
-            putStrLn $ format prog
+            scc $ "Compilation completed successfully, got AST: " ++ (show prog)
+            putStrLn $ formatFresh prog
