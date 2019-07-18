@@ -24,24 +24,8 @@ $alphaNum = [$alpha$num]
 @docAssignmentLine = @docLineStart @spaces? "~" @ident ("(" @ident ")")? ":" .*
 @docLine = @docLineStart .*
 
--- @string = \"\"
-
 @lineComment = \/\/ .* \n
 @ignoredWhitespace = \\\n
-
-
--- $spaces = [\ \t]
--- $alpha = [a-zA-Z]
--- $digits = [0-9]
--- $alnum = [$alpha$digits]
-
--- @identifier = $alpha $alnum*
-
--- @comment = \#.*
-
--- @integer = $digits+
-
--- @boolean = (true) | (false)
 
 -- @string = \"[^\"]*\"
 
@@ -113,22 +97,6 @@ $alphaNum = [$alpha$num]
 -- Significant whitespace
 @tabs               { mkL LTabs }
 \n                  { mkL LEoL }
-
-
--- @integer    { mkL LInteger }
--- @boolean    { mkL LBoolean }
--- @string     { mkL LString }
-
--- @identifier  { mkL LIdentifier }
-
--- \[@identifier\] { mkL LSection }
-
--- =           { mkL LAssign }
-
--- \;          { mkL LEndAssign }
--- @comment    ;
--- [\ \t \n]+  ;
-
 
 {
 
@@ -232,18 +200,6 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LComma              -> return (TComma              p)
                                 LTabs               -> return (TTabs               len p)
                                 LEoL                -> return (TEoL                p)
-                        --    in case c of
-                        --         LInteger -> return (IntegerNum ((read t) :: Integer) p)
-                        --         LBoolean -> return (BooleanVal (if t == "true"
-                        --                                            then True
-                        --                                            else False
-                        --                                        ) p)
-                        --         LString -> return (StringTxt (take (length t - 2) (drop 1 t)) p)
-                        --         LIdentifier -> return (Identifier t p)
-                        --         LSection -> return (SectionHeader (take (length t - 2) (drop 1 t)) p)
-                        --         LAssign -> return (Assignment p)
-                        --         LEndAssign -> return (EndAssignment p)
-
 
 alexEOF :: Alex Token
 alexEOF = return TEoF
@@ -300,128 +256,9 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TEoL                {                          position :: AlexPosn }
            | TEoF
     deriving (Eq, Ord, Show)
--- data Token = SectionHeader {identifier :: String, position :: AlexPosn} |
---              Identifier {name :: String, position :: AlexPosn}          |
---              Assignment {position :: AlexPosn}                          |
---              EndAssignment {position :: AlexPosn}                       |
---              IntegerNum {value :: Integer, position :: AlexPosn}        |
---              BooleanVal {istrue :: Bool, position :: AlexPosn}          |
---              StringTxt  {text :: String, position :: AlexPosn}          |
---              Eof
---     deriving (Eq, Show, Ord)
 
 instance Ord AlexPosn where
     (AlexPn a _ _) < (AlexPn b _ _) = a < b
     a <= b = (a < b) || (a == b)
 
 }
-
--- {
--- module EmperorLexer where
--- }
-
--- %wrapper "monad"
-
--- -- Whitespace
--- $space = [\ \t]
-
--- $alpha = [a-zA-Z]
--- $num = [0-9]
--- $alphaNum = [$alpha$num]
--- -- $operator = [<>+-*/]
-
--- @var = $alpha$alphaNum+
--- @comment = \/\/.*
--- @int = $num+
-
--- -- $spaces = [\ \t]
--- -- $alpha = [a-zA-Z]
--- -- $digits = [0-9]
--- -- $alnum = [$alpha$digits]
-
--- -- @identifier = $alpha $alnum*
-
--- -- @comment = \#.*
-
--- -- @integer = $digits+
-
--- -- @boolean = (true) | (false)
-
--- -- @string = \"[^\"]*\"
-
-
--- tokens :-
---         @comment        ;
---         $space+         ;
---         "<-"            { mkL LAssign }
---         '+'             { mkL LPlus }
---         -- '-'             { mkL LMinus }
---         -- '*'             { mkL LTimes }
---         -- '/'             { mkL LDivide }
---         @int            { mkL LInteger }
---         @var            { mkL LVariable }
---         [\n]            ;
---         -- .               { alexError "Unrecognised character" } -- Causes error!
-
--- {
---     -- data LexemeClass = LVariable | LInteger | LPlus | LMinus | LTimes | LDivide | LAssign | LEOF
---     data LexemeClass = LVariable | LInteger | LPlus | LAssign | LEOF
---         deriving (Eq, Show)
---     -- data LexemeClass = LInteger | LBoolean | LString | LIdentifier | LSection | LAssign | LEndAssign | LEOF
---     -- data LexemeClass = LInteger | LBoolean | LIdentifier | LSection | LAssign | LEndAssign | LEOF
---     --     deriving (Eq, Show)
-
---     lexWrap :: (Token -> Alex a) -> Alex a
---     lexWrap = (alexMonadScan >>=)
-
---     mkL :: LexemeClass -> AlexInput -> Int -> Alex Token
---     mkL c (p, _, _, str) len = let t = take len str
---         in case c of
---             LVariable -> return $ TokenVariable (read t) p
---             LInteger -> return $ TokenInteger ((read t) :: Int) p
---             LPlus -> return $ TokenPlus p
---             -- LMinus -> return $ TokenMinus p
---             -- LTimes -> return $ TokenTimes p
---             -- LDivide -> return $ TokenDivide p
---             LAssign -> return $ TokenAssign p
---             LEOF -> return TokenEoF
---             -- LInteger -> return (IntegerNum ((read t) :: Integer) p)
---             -- LBoolean -> return (BooleanVal (if t == "true"
---             --                                 then True
---             --                                 else False
---             --                             ) p)
---             -- -- LString -> return (StringTxt (take (length t - 2) (drop 1 t)) p)
---             -- LIdentifier -> return (Identifier t p)
---             -- LSection -> return (SectionHeader (take (length t - 2) (drop 1 t)) p)
---             -- LAssign -> return (Assignment p)
---             -- LEndAssign -> return (EndAssignment p)
---             -- LEOF -> return Eof
-
-
---     -- No idea why I have to write this myself. Documentation doesn't mention it.
---     alexEOF :: Alex Token
---     alexEOF = return TokenEoF
-
---     data Token = TokenVariable { name :: String, position :: AlexPosn }
---                | TokenInteger { value :: Int, position :: AlexPosn }
---                | TokenPlus { position :: AlexPosn }
---                --    | TokenMinus { position :: AlexPosn }
---                --    | TokenTimes { position :: AlexPosn }
---                --    | TokenDivide { position :: AlexPosn }
---                | TokenAssign { position :: AlexPosn }
---                | TokenEoF
---         deriving (Eq, Ord, Show)
-
---     instance Ord AlexPosn where
---         (AlexPn a _ _) < (AlexPn b _ _) = a < b
---         a <= b = not (a > b)
-
---     -- data Token = SectionHeader {identifier :: String, position :: AlexPosn} |
---     --             Identifier {name :: String, position :: AlexPosn}           |
---     --             Assignment {position :: AlexPosn}                           |
---     --             EndAssignment {position :: AlexPosn}                        |
---     --             IntegerNum {value :: Integer, position :: AlexPosn}         |
---     --             BooleanVal {istrue :: Bool, position :: AlexPosn}           |
---     --             Eof
---     --     deriving (Eq, Show)
--- }
