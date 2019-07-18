@@ -13,6 +13,8 @@ LEXER_GENERATOR_FLAGS := -g
 PARSER_GENERATOR := happy
 PARSER_GENERATOR_FLAGS := -ga # -m emperor_lang
 
+SOFT_LINK_COMMAND := [[ ! -f $@ ]] && ln -s $^ $@
+
 COMPLETION_INSTALL_LOCATION := /usr/share/bash-completion/completions/emperor
 
 .DEFAULT_GOAL := all
@@ -24,6 +26,7 @@ build: ./emperor
 .PHONY: build
 
 ./emperor: ./dist/build/emperor/emperor
+	@echo "[[ ! -f $@ ]] && ln -s $^ $@"
 	$(shell [[ ! -f $@ ]] && ln -s $^ $@)
 
 ./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
@@ -34,7 +37,7 @@ build: ./emperor
 .DELETE_ON_ERROR: ./parser/EmperorLexer.hs
 
 ./parser/EmperorParser.hs: ./parser/EmperorParser.y
-	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) $< -o $@
+	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/emperorParser.info $< -o $@
 .DELETE_ON_ERROR: ./parser/EmperorParser.hs
 
 ./Args.hs: emperor.json
@@ -81,4 +84,5 @@ clean:
 	-@$(RM) *_completions.sh								2>/dev/null || true
 	-@$(RM) ./emperor										2>/dev/null || true
 	-@$(RM) ./parser/Emperor{Lexer,Parser,ParserData}.hs	2>/dev/null || true
+	-@$(RM) ./parser/emperorParser.info						2>/dev/null || true
 .PHONY: clean
