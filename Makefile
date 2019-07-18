@@ -11,7 +11,7 @@ SHELL := bash
 LEXER_GENERATOR := alex
 LEXER_GENERATOR_FLAGS := -g
 PARSER_GENERATOR := happy
-PARSER_GENERATOR_FLAGS := -ga # -m emperor_lang
+PARSER_GENERATOR_FLAGS := -ga -m emperorParser
 
 SOFT_LINK_COMMAND := [[ ! -f $@ ]] && ln -s $^ $@
 
