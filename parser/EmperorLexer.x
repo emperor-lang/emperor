@@ -26,7 +26,7 @@ $alphaNum = [$alpha$num]
 
 -- @string = \"\"
 
-@lineComment = \/\/ .*
+@lineComment = \/\/ .* \n
 @ignoredWhitespace = \\\n
 
 
@@ -77,9 +77,16 @@ $alphaNum = [$alpha$num]
 
 -- Syntax things
 "<-"                { mkL LQueue }
+"->"                { mkL LGoesTo }
 "="                 { mkL LGets }
-"("                 { mkL LLBracket }
-")"                 { mkL LRBracket }
+","                 { mkL LComma}
+"("                 { mkL LLParenth }
+")"                 { mkL LRParenth }
+"["                 { mkL LLBracket }
+"]"                 { mkL LRBracket }
+"{"                 { mkL LLBrace }
+"}"                 { mkL LRBrace }
+"@"                 { mkL LImpure }
 
 -- Operators
 "\+"                { mkL LPlus }
@@ -100,6 +107,8 @@ $alphaNum = [$alpha$num]
 ">"                 { mkL LGreaterThan }
 ">="                { mkL LGreaterThanOrEqual }
 "=>"                { mkL LImplies }
+"=="                { mkL LEqual }
+"!="                { mkL LNotEqual }
 
 -- Significant whitespace
 @tabs               { mkL LTabs }
@@ -138,9 +147,15 @@ data LexemeClass = LDocAssignmentLine
                  | LFor
                  | LIdent
                  | LQueue
+                 | LGoesTo
                  | LGets
+                 | LLParenth
+                 | LRParenth
                  | LLBracket
                  | LRBracket
+                 | LLBrace
+                 | LRBrace
+                 | LImpure
                  | LPlus
                  | LMinus
                  | LDivide
@@ -159,6 +174,9 @@ data LexemeClass = LDocAssignmentLine
                  | LGreaterThan
                  | LGreaterThanOrEqual
                  | LImplies
+                 | LEqual
+                 | LNotEqual
+                 | LComma
                  | LTabs
                  | LEoL
     deriving (Eq, Show)
@@ -182,9 +200,15 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LFor                -> return (TFor                p)
                                 LIdent              -> return (TIdent              t p)
                                 LQueue              -> return (TQueue              p)
+                                LGoesTo             -> return (TGoesTo             p)
                                 LGets               -> return (TGets               p)
+                                LLParenth           -> return (TLParenth           p)
+                                LRParenth           -> return (TRParenth           p)
                                 LLBracket           -> return (TLBracket           p)
                                 LRBracket           -> return (TRBracket           p)
+                                LLBrace             -> return (TLBrace             p)
+                                LRBrace             -> return (TRBrace             p)
+                                LImpure             -> return (TImpure             p)
                                 LPlus               -> return (TPlus               p)
                                 LMinus              -> return (TMinus              p)
                                 LDivide             -> return (TDivide             p)
@@ -203,6 +227,9 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LGreaterThan        -> return (TGreaterThan        p)
                                 LGreaterThanOrEqual -> return (TGreaterThanOrEqual p)
                                 LImplies            -> return (TImplies            p)
+                                LEqual              -> return (TEqual              p)
+                                LNotEqual           -> return (TNotEqual           p)
+                                LComma              -> return (TComma              p)
                                 LTabs               -> return (TTabs               len p)
                                 LEoL                -> return (TEoL                p)
                         --    in case c of
@@ -239,9 +266,15 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TFor                {                          position :: AlexPosn }
            | TIdent              { identifierVal :: String, position :: AlexPosn }
            | TQueue              {                          position :: AlexPosn }
+           | TGoesTo             {                          position :: AlexPosn }
            | TGets               {                          position :: AlexPosn }
+           | TLParenth           {                          position :: AlexPosn }
+           | TRParenth           {                          position :: AlexPosn }
            | TLBracket           {                          position :: AlexPosn }
            | TRBracket           {                          position :: AlexPosn }
+           | TLBrace             {                          position :: AlexPosn }
+           | TRBrace             {                          position :: AlexPosn }
+           | TImpure             {                          position :: AlexPosn }
            | TPlus               {                          position :: AlexPosn }
            | TMinus              {                          position :: AlexPosn }
            | TDivide             {                          position :: AlexPosn }
@@ -260,6 +293,9 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TGreaterThan        {                          position :: AlexPosn }
            | TGreaterThanOrEqual {                          position :: AlexPosn }
            | TImplies            {                          position :: AlexPosn }
+           | TEqual              {                          position :: AlexPosn }
+           | TNotEqual           {                          position :: AlexPosn }
+           | TComma              {                          position :: AlexPosn }
            | TTabs               { numTabs :: Int,          position :: AlexPosn }
            | TEoL                {                          position :: AlexPosn }
            | TEoF
