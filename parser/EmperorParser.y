@@ -24,6 +24,10 @@ import EmperorLexer
 %lexer  { lexWrap } { TEoF }
 %monad { Alex }
 %tokentype { Token }
+
+-- Enforce perfection
+%expect 0
+
 %token
     DOCASSIGNMENTLINE   { TDocAssignmentLine    _ }
     DOCLINE             { TDocLine              _ }
