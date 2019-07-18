@@ -20,4 +20,5 @@ main = do
         Left msg    -> err msg
         Right prog  -> do
             scc $ "Compilation completed successfully, got AST: " ++ show prog
+            putStrLn "==="
             putStr $ formatFresh prog
