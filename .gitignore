@@ -34,7 +34,8 @@ Args.hs
 # Generated lexers and parser
 parser/*.x.*
 parser/EmperorLexer.hs
-parser/EmperorParser*.hs
+parser/EmperorParser.hs
+parser/*.info
 
 # Cabal generated files
 ./dist/*
