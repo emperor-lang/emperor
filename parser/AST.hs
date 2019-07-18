@@ -57,6 +57,7 @@ data Expr = Value Value
           | ShiftLeft Expr Expr
           | ShiftRight Expr Expr
           | ShiftRightSameSign Expr Expr
+          | Set [Expr]
           | Tuple [Expr]
           | List [Expr]
           | PureCallExpr PureCall

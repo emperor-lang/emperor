@@ -91,8 +91,8 @@ ast :: {AST}
 ast : body                  { AST $1 }
 
 body :: {[BodyBlock]}
-body : {- empty -}          { [] }
-     | bodyBlock EOL body   { $1 : $3 }
+body : {- empty -}  { [] }
+     | bodyBlock EOL body { $1 : $3 }
 
 bodyBlock :: {BodyBlock}
 bodyBlock : bodyLine                        { Line $1 }
@@ -147,6 +147,7 @@ expr : value                            { Value $1 }
      | expr "<<" expr                   { ShiftLeft $1 $3 }
      | expr ">>" expr                   { ShiftRight $1 $3 }
      | expr ">>>" expr                  { ShiftRightSameSign $1 $3 }
+     | "{" exprList "}"                 { Set $2 }
      | "(" exprList ")"                 { Tuple $2 }
      | "[" exprList "]"                 { List $2 }
      | pureCall                         { PureCallExpr $1 }

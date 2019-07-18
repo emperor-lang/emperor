@@ -68,8 +68,9 @@ instance Format Expr where
     format ctx (ShiftLeft e1 e2)                                = format ctx e1 ++ "<<" ++ format ctx e2                   
     format ctx (ShiftRight e1 e2)                               = format ctx e1 ++ ">>" ++ format ctx e2                   
     format ctx (ShiftRightSameSign e1 e2)                       = format ctx e1 ++ ">>>" ++ format ctx e2                  
-    format ctx (Tuple l)                                        = "(" ++ format ctx l ++ ")"                 
-    format ctx (List l)                                         = "[" ++ format ctx l ++ "]"                 
+    format ctx (Set l)                                          = "(" ++ format ctx l ++ "}"
+    format ctx (Tuple l)                                        = "(" ++ format ctx l ++ ")"
+    format ctx (List l)                                         = "[" ++ format ctx l ++ "]"
     format ctx (PureCallExpr c)                                 = format ctx c
     format ctx (ImpureCallExpr c)                               = format ctx c
 
