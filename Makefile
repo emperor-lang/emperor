@@ -71,9 +71,11 @@ $(COMPLETION_INSTALL_LOCATION): ./emperor_completions.sh;
 	argcompgen < $< > $@
 .DELETE_ON_ERROR: ./emperor_completions.sh
 
-doc: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
-	cabal haddock --executables
+doc: dist/doc/html/emperor/emperor/index.html
 .PHONY: doc
+
+dist/doc/html/emperor/emperor/index.html: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
+	cabal haddock --executables
 
 clean-installation:
 	sudo $(RM) /usr/bin/emperor
