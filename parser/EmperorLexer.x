@@ -73,21 +73,21 @@ $alphaNum = [$alpha$num]
 "@"                 { mkL LImpure }
 
 -- Operators
-"\+"                { mkL LPlus }
-"\-"                { mkL LMinus }
-"\/"                { mkL LDivide }
-"\*"                { mkL LTimes }
-"\<\<"              { mkL LShiftLeft }
+"+"                { mkL LPlus }
+"-"                { mkL LMinus }
+"/"                { mkL LDivide }
+"*"                { mkL LTimes }
+"<<"              { mkL LShiftLeft }
 ">>"                { mkL LShiftRight }
 ">>>"               { mkL LShiftRightSameSign }
 "&"                 { mkL LAndScrict }
 "&&"                { mkL LAndLazy }
-"\|"                { mkL LOrStrict }
-"\|\|"              { mkL LOrLazy }
+"|"                { mkL LOrStrict }
+"||"              { mkL LOrLazy }
 "!"                 { mkL LNot }
-"\^"                { mkL LXor }
-"\<"                { mkL LLessThan }
-"\<="               { mkL LLessThanOrEqual }
+"^"                { mkL LXor }
+"<"                { mkL LLessThan }
+"<="               { mkL LLessThanOrEqual }
 ">"                 { mkL LGreaterThan }
 ">="                { mkL LGreaterThanOrEqual }
 "=>"                { mkL LImplies }
