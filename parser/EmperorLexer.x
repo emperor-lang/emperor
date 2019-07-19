@@ -1,5 +1,17 @@
 {
-module EmperorLexer where
+{-|
+Module      : EmperorLexer
+Description : Lexer for the emperor language
+Copyright   : (c) Edward Jones, 2019
+License     : GPL-3
+Maintainer  : Edward Jones
+Stability   : experimental
+Portability : POSIX
+Language    : Haskell2010
+
+This module defines the machinery to lexically analyse the Emperor language given in an input string.
+-}
+module EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex, AlexPosn) where
 
 import AST
 }
