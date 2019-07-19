@@ -76,6 +76,7 @@ $alphaNum = [$alpha$num]
 "+"                { mkL LPlus }
 "-"                { mkL LMinus }
 "/"                { mkL LDivide }
+"%"                { mkL LModulo }
 "*"                { mkL LTimes }
 "<<"              { mkL LShiftLeft }
 ">>"                { mkL LShiftRight }
@@ -127,6 +128,7 @@ data LexemeClass = LDocAssignmentLine
                  | LPlus
                  | LMinus
                  | LDivide
+                 | LModulo
                  | LTimes
                  | LShiftLeft
                  | LShiftRight
@@ -180,6 +182,7 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LPlus               -> return (TPlus               p)
                                 LMinus              -> return (TMinus              p)
                                 LDivide             -> return (TDivide             p)
+                                LModulo             -> return (TModulo             p)
                                 LTimes              -> return (TTimes              p)
                                 LShiftLeft          -> return (TShiftLeft          p)
                                 LShiftRight         -> return (TShiftRight         p)
@@ -234,6 +237,7 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TPlus               {                          position :: AlexPosn }
            | TMinus              {                          position :: AlexPosn }
            | TDivide             {                          position :: AlexPosn }
+           | TModulo             {                          position :: AlexPosn }
            | TTimes              {                          position :: AlexPosn }
            | TShiftLeft          {                          position :: AlexPosn }
            | TShiftRight         {                          position :: AlexPosn }

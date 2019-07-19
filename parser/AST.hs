@@ -41,6 +41,7 @@ data Expr = Value Value
           | Subtract Expr Expr
           | Multiply Expr Expr
           | Divide Expr Expr
+          | Modulo Expr Expr
           | Less Expr Expr
           | LessOrEqual Expr Expr
           | Greater Expr Expr

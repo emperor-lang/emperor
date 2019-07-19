@@ -48,31 +48,35 @@ instance Format Queue where
 instance Format Expr where
     format ctx (Value v)                                        = format ctx v
     format ctx (Neg e)                                          = '-' : format ctx e
-    format ctx (Add e1 e2)                                      = format ctx e1 ++ "+" ++ format ctx e2
-    format ctx (Subtract e1 e2)                                 = format ctx e1 ++ "-" ++ format ctx e2                    
-    format ctx (Multiply e1 e2)                                 = format ctx e1 ++ "*" ++ format ctx e2                    
-    format ctx (Divide e1 e2)                                   = format ctx e1 ++ "/" ++ format ctx e2                    
-    format ctx (Less e1 e2)                                     = format ctx e1 ++ "<" ++ format ctx e2                    
-    format ctx (LessOrEqual e1 e2)                              = format ctx e1 ++ "<=" ++ format ctx e2                   
-    format ctx (Greater e1 e2)                                  = format ctx e1 ++ ">" ++ format ctx e2                    
-    format ctx (GreaterOrEqual e1 e2)                           = format ctx e1 ++ ">=" ++ format ctx e2                   
-    format ctx (Equal e1 e2)                                    = format ctx e1 ++ "==" ++ format ctx e2                   
-    format ctx (NotEqual e1 e2)                                 = format ctx e1 ++ "!=" ++ format ctx e2                   
     format ctx (Not e)                                          = '!' : format ctx e                         
-    format ctx (AndStrict e1 e2)                                = format ctx e1 ++ "&" ++ format ctx e2                    
-    format ctx (AndLazy e1 e2)                                  = format ctx e1 ++ "&&" ++ format ctx e2                   
-    format ctx (OrStrict e1 e2)                                 = format ctx e1 ++ "|" ++ format ctx e2                    
-    format ctx (OrLazy e1 e2)                                   = format ctx e1 ++ "||" ++ format ctx e2                   
-    format ctx (Implies e1 e2)                                  = format ctx e1 ++ "=>" ++ format ctx e2                   
-    format ctx (Xor e1 e2)                                      = format ctx e1 ++ "^" ++ format ctx e2                    
-    format ctx (ShiftLeft e1 e2)                                = format ctx e1 ++ "<<" ++ format ctx e2                   
-    format ctx (ShiftRight e1 e2)                               = format ctx e1 ++ ">>" ++ format ctx e2                   
-    format ctx (ShiftRightSameSign e1 e2)                       = format ctx e1 ++ ">>>" ++ format ctx e2                  
+    format ctx (Add e1 e2)                                      = formatBinOp ctx "+" e1 e2
+    format ctx (Subtract e1 e2)                                 = formatBinOp ctx "-" e1 e2
+    format ctx (Multiply e1 e2)                                 = formatBinOp ctx "*" e1 e2
+    format ctx (Divide e1 e2)                                   = formatBinOp ctx "/" e1 e2
+    format ctx (Modulo e1 e2)                                   = formatBinOp ctx "%" e1 e2
+    format ctx (Less e1 e2)                                     = formatBinOp ctx "<" e1 e2
+    format ctx (LessOrEqual e1 e2)                              = formatBinOp ctx "<=" e1 e2
+    format ctx (Greater e1 e2)                                  = formatBinOp ctx ">" e1 e2
+    format ctx (GreaterOrEqual e1 e2)                           = formatBinOp ctx ">=" e1 e2
+    format ctx (Equal e1 e2)                                    = formatBinOp ctx "==" e1 e2
+    format ctx (NotEqual e1 e2)                                 = formatBinOp ctx "!=" e1 e2
+    format ctx (AndStrict e1 e2)                                = formatBinOp ctx "&" e1 e2
+    format ctx (AndLazy e1 e2)                                  = formatBinOp ctx "&&" e1 e2
+    format ctx (OrStrict e1 e2)                                 = formatBinOp ctx "|" e1 e2
+    format ctx (OrLazy e1 e2)                                   = formatBinOp ctx "||" e1 e2
+    format ctx (Implies e1 e2)                                  = formatBinOp ctx "=>" e1 e2
+    format ctx (Xor e1 e2)                                      = formatBinOp ctx "^" e1 e2
+    format ctx (ShiftLeft e1 e2)                                = formatBinOp ctx "<<" e1 e2
+    format ctx (ShiftRight e1 e2)                               = formatBinOp ctx ">>" e1 e2
+    format ctx (ShiftRightSameSign e1 e2)                       = formatBinOp ctx ">>>" e1 e2
     format ctx (Set l)                                          = "(" ++ format ctx l ++ "}"
     format ctx (Tuple l)                                        = "(" ++ format ctx l ++ ")"
     format ctx (List l)                                         = "[" ++ format ctx l ++ "]"
     format ctx (PureCallExpr c)                                 = format ctx c
     format ctx (ImpureCallExpr c)                               = format ctx c
+
+formatBinOp :: Format a => Format b => FormatContext -> String -> a -> b -> String
+formatBinOp ctx op e1 e2 = format ctx e1 ++ " " ++ op ++ " " ++ format ctx e2
 
 instance Format PureCall where
     format ctx (PureCall i e) = format ctx i ++ "(" ++ format (ctx + 1) e ++ ")"

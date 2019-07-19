@@ -55,6 +55,7 @@ import EmperorLexer
     "+"                 { TPlus                 _ }
     "-"                 { TMinus                _ }
     "/"                 { TDivide               _ }
+    "%"                 { TModulo               _ }
     "*"                 { TTimes                _ }
     "<<"                { TShiftLeft            _ }
     ">>"                { TShiftRight           _ }
@@ -77,17 +78,19 @@ import EmperorLexer
     TABS                { TTabs                 numTabs _ }
     EOL                 { TEoL                  _ }
 
-%left "<" "<=" ">" ">="
-%left "==" "!="
-%left "&" "|" "^"
-%left "&&" "||"
+%left "||"
+%left "&&"
+%left "|"
+%left "^"
+%left "&"
 %left "=>"
+%left "==" "!="
+%left "<" "<=" ">" ">="
 %left "<<" ">>" ">>>"
 %left "+" "-"
-%left "*" "/"
-%left NEG
+%left "*" "/" "%"
+%right NEG "!"
 %right "@"
-%right "!"
 
 %%
 
@@ -136,6 +139,7 @@ expr : value                            { Value $1 }
      | expr "-" expr                    { Subtract $1 $3 }
      | expr "*" expr                    { Multiply $1 $3 }
      | expr "/" expr                    { Divide $1 $3 }
+     | expr "%" expr                    { Modulo $1 $3 }
      | expr "<" expr                    { Less $1 $3 }
      | expr "<=" expr                   { LessOrEqual $1 $3 }
      | expr ">" expr                    { Greater $1 $3 }
