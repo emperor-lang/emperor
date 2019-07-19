@@ -19,7 +19,7 @@ makeLoggers args = do
     let logError = makeLogger colourCompat args Error
     let logInfo = makeVerboseLogger colourCompat args Info
     let logSuccess = makeVerboseLogger colourCompat args Success
-    let logWarning = makeVerboseLogger colourCompat args Warning
+    let logWarning = makeLogger colourCompat args Warning
     return (logError, logInfo, logSuccess, logWarning)
 
 trivialLogger :: Logger
