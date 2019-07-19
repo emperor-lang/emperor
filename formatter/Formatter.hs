@@ -32,7 +32,7 @@ instance Format SwitchCase where
     format ctx (SwitchCase e b) = indent ctx ++ format (ctx + 1) e ++ " -> " ++ format (ctx + 1) b
 
 instance Format BodyLine where
-    format ctx (BodyLine _ b) = indent ctx ++ format ctx b
+    format ctx (BodyLine b) = indent ctx ++ format ctx b
 
 instance Format BodyLineContent where
     format ctx (AssignmentC a) = format ctx a

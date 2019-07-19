@@ -12,16 +12,10 @@ data BodyBlock = Line BodyLine
                | Switch Expr [SwitchCase]
     deriving Show
 
--- instance Functor SwitchCases where
---     fmap f (SwitchCases as) = SwitchCases (fmap f as)
-
 data SwitchCase = SwitchCase Expr BodyBlock
     deriving Show
-    
--- append :: SwitchCase -> SwitchCases -> SwitchCases
--- append a (SwitchCases as) = SwitchCases (a:as)
 
-data BodyLine = BodyLine Tabs BodyLineContent
+data BodyLine = BodyLine BodyLineContent
     deriving Show
 
 data BodyLineContent = AssignmentC Assignment
