@@ -21,4 +21,6 @@ main = do
         Right prog  -> do
             scc $ "Compilation completed successfully, got AST: " ++ show prog
             putStrLn "==="
-            putStr $ ">>>" ++ formatFresh prog ++ "<<<"
+            putStrLn $ ">>>" ++ show prog ++ "<<<"
+            putStrLn "=!=!=!="
+            putStrLn $ ">>>" ++ formatFresh prog ++ "<<<"
