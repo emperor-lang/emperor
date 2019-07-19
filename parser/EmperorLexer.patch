@@ -1,0 +1,12 @@
+--- ./EmperorLexer.hs	2019-07-19 23:47:59.119433325 +0100
++++ ./EmperorLexer.hs2	2019-07-19 23:43:50.062243020 +0100
+@@ -367,6 +367,9 @@
+ -- assuming the usual eight character tab stops.
+ 
+ 
++-- | Constructor to represent the position of a token in code.
++-- Format: current line, current character on line, current total character over
++-- all lines
+ data AlexPosn = AlexPn !Int !Int !Int
+         deriving (Eq,Show)
+ 
