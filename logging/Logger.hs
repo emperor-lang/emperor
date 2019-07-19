@@ -10,7 +10,7 @@ Language    : Haskell2010
 
 Used to create loggers which output to @stderr@ using ANSI formatted output.
 -}
-module Logger (makeLoggers, Loggers) where
+module Logger (makeLoggers, Loggers, Logger) where
 
 import Args (Args, verbose, useColour, noUseColour)
 import System.IO (hPutStrLn, stderr)
@@ -24,6 +24,8 @@ data LogType = Info
 -- | Defines a set of logger functions.
 -- From left to right these are: errorLogger, infoLogger, successLogger, warningLogger
 type Loggers = (Logger, Logger, Logger, Logger)
+
+-- | Type of a logger function which writes to some output
 type Logger = String -> IO ()
 
 -- | Make a set of loggers according to the command-line argument. (Specifically 
