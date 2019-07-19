@@ -16,14 +16,17 @@ import EmperorLexer
 }
 
 
-%name parseEmperor ast
--- %name parseREPL ...
--- TODO: Add a repl parser
 
 %error { parseError }
 %lexer  { lexWrap } { TEoF }
 %monad { Alex }
 %tokentype { Token }
+
+%attributetype { ParserContext a }
+%attribute value { a }
+-- %attribute indent { Int }
+
+%name parseEmperor assignment
 
 -- Enforce perfection
 %expect 0
@@ -91,101 +94,98 @@ import EmperorLexer
 
 %%
 
-ast :: {AST}
-ast : body                  { AST $1 }
+-- ast :: {ParserContext AST}
+-- ast : body                  { $$ = AST $1 }
 
-body :: {[BodyBlock]}
-body : {- empty -}  { [] }
-     | bodyBlock EOL body { $1 : $3 }
+-- body :: {ParserContext [BodyBlock]}
+-- body : {- empty -}  { $$ = [] }
+--      | bodyBlock EOL body { $$ = $1 : $3 }
 
-bodyBlock :: {BodyBlock}
-bodyBlock : bodyLine                        { Line $1 }
-          | "if" expr EOL body "else" body  { IfElse $2 $4 $6 }
-          | "while" expr EOL body           { While $2 $4 }
-          | "for" IDENT "<-" expr EOL body  { For (Ident (identifierVal $2)) $4 $6 }
-          | "repeat" expr EOL body          { Repeat $2 $4 }
-          | "with" assignment EOL body      { With $2 $4 }
-          | "switch" expr EOL switchBody    { Switch $2 $4 }
+-- bodyBlock :: {ParserContext BodyBlock}
+-- bodyBlock : bodyLine                        { $$ = Line $1 }
+--           | "if" expr EOL body "else" body  { $$ = IfElse $2 $4 $6 }
+--           | "while" expr EOL body           { $$ = While $2 $4 }
+--           | "for" IDENT "<-" expr EOL body  { $$ = For (Ident (identifierVal $2)) $4 $6 }
+--           | "repeat" expr EOL body          { $$ = Repeat $2 $4 }
+--           | "with" assignment EOL body      { $$ = With $2 $4 }
+--           | "switch" expr EOL switchBody    { $$ = Switch $2 $4 }
 
-switchBody :: {[SwitchCase]}
-switchBody : {- empty -}    { [] }
-           | switchCase EOL switchBody { $1 : $3 }
+-- switchBody :: {ParserContext [SwitchCase]}
+-- switchBody : {- empty -}    { $$ = [] }
+--            | switchCase EOL switchBody { $$ = $1 : $3 }
 
-switchCase :: {SwitchCase}
-switchCase : expr "->" bodyBlock    { SwitchCase $1 $3 }
+-- switchCase :: {ParserContext SwitchCase}
+-- switchCase : expr "->" bodyBlock    { $$ = SwitchCase $1 $3 }
 
-bodyLine :: {BodyLine}
-bodyLine : indentation bodyLineContent {BodyLine $1 $2}
+-- bodyLine :: {ParserContext BodyLine}
+-- bodyLine : indentation bodyLineContent { $$ = BodyLine $1 $2 }
 
-bodyLineContent :: {BodyLineContent}
-bodyLineContent : assignment            { AssignmentC $1 }
-                | queue                 { QueueC $1 }
-                | impureCall            { ImpureCallC $1 }
+-- bodyLineContent :: {ParserContext BodyLineContent}
+-- bodyLineContent : assignment            { $$ = AssignmentC $1 }
+--                 | queue                 { $$ = QueueC $1 }
+--                 | impureCall            { $$ = ImpureCallC $1 }
 
-assignment :: {Assignment}
-assignment : IDENT "=" expr { Assignment (Ident (identifierVal $1)) $3 } 
+assignment :: {ParserContext Assignment}
+assignment : IDENT "=" expr { $$ = Assignment (Ident (identifierVal $1)) $3 } 
 
-queue :: {Queue}
-queue : IDENT "<-" expr { Queue (Ident (identifierVal $1)) $3 }
+-- queue :: {ParserContext Queue}
+-- queue : IDENT "<-" expr { $$ = Queue (Ident (identifierVal $1)) $3 }
 
-expr :: {Expr}
-expr : value                            { Value $1 }
-     | "!" expr                         { Not $2 }
-     | "-" expr %prec NEG               { Neg $2 }
-     | expr "+" expr                    { Add $1 $3 }
-     | expr "-" expr                    { Subtract $1 $3 }
-     | expr "*" expr                    { Multiply $1 $3 }
-     | expr "/" expr                    { Divide $1 $3 }
-     | expr "<" expr                    { Less $1 $3 }
-     | expr "<=" expr                   { LessOrEqual $1 $3 }
-     | expr ">" expr                    { Greater $1 $3 }
-     | expr ">=" expr                   { GreaterOrEqual $1 $3 }
-     | expr "==" expr                   { Equal $1 $3 }
-     | expr "!=" expr                   { NotEqual $1 $3 }
-     | expr "&" expr                    { AndStrict $1 $3 }
-     | expr "&&" expr                   { AndLazy $1 $3 }
-     | expr "|" expr                    { OrStrict $1 $3 }
-     | expr "||" expr                   { OrLazy $1 $3 }
-     | expr "=>" expr                   { Implies $1 $3 }
-     | expr "^" expr                    { Xor $1 $3 }
-     | expr "<<" expr                   { ShiftLeft $1 $3 }
-     | expr ">>" expr                   { ShiftRight $1 $3 }
-     | expr ">>>" expr                  { ShiftRightSameSign $1 $3 }
-     | "{" exprList "}"                 { Set $2 }
-     | "(" exprList ")"                 { Tuple $2 }
-     | "[" exprList "]"                 { List $2 }
-     | pureCall                         { PureCallExpr $1 }
-     | impureCall                       { ImpureCallExpr $1 }
+expr :: {ParserContext Expr}
+expr : value                            { $$ = Value $1 }
+     | "!" expr                         { $$ = Not $2 }
+     | "-" expr %prec NEG               { $$ = Neg $2 }
+     | expr "+" expr                    { $$ = Add $1 $3 }
+     | expr "-" expr                    { $$ = Subtract $1 $3 }
+     | expr "*" expr                    { $$ = Multiply $1 $3 }
+     | expr "/" expr                    { $$ = Divide $1 $3 }
+    --  | expr "<" expr                    { $$ = Less $1 $3 }
+    --  | expr "<=" expr                   { $$ = LessOrEqual $1 $3 }
+    --  | expr ">" expr                    { $$ = Greater $1 $3 }
+    --  | expr ">=" expr                   { $$ = GreaterOrEqual $1 $3 }
+    --  | expr "==" expr                   { $$ = Equal $1 $3 }
+    --  | expr "!=" expr                   { $$ = NotEqual $1 $3 }
+    --  | expr "&" expr                    { $$ = AndStrict $1 $3 }
+    --  | expr "&&" expr                   { $$ = AndLazy $1 $3 }
+    --  | expr "|" expr                    { $$ = OrStrict $1 $3 }
+    --  | expr "||" expr                   { $$ = OrLazy $1 $3 }
+    --  | expr "=>" expr                   { $$ = Implies $1 $3 }
+    --  | expr "^" expr                    { $$ = Xor $1 $3 }
+    --  | expr "<<" expr                   { $$ = ShiftLeft $1 $3 }
+    --  | expr ">>" expr                   { $$ = ShiftRight $1 $3 }
+    --  | expr ">>>" expr                  { $$ = ShiftRightSameSign $1 $3 }
+    --  | "{" exprList "}"                 { $$ = Set $2 }
+    --  | "(" exprList ")"                 { $$ = Tuple $2 }
+    --  | "[" exprList "]"                 { $$ = List $2 }
+    --  | pureCall                         { $$ = PureCallExpr $1 }
+    --  | impureCall                       { $$ = ImpureCallExpr $1 }
 
-pureCall :: {PureCall}
-pureCall : IDENT "(" exprList ")"       { PureCall (Ident (identifierVal $1)) $3 }
+-- pureCall :: {ParserContext PureCall}
+-- pureCall : IDENT "(" exprList ")"       { $$ = PureCall (Ident (identifierVal $1)) $3 }
 
-impureCall :: {ImpureCall}
-impureCall : "@" IDENT "(" exprList ")"  { ImpureCall (Ident (identifierVal $2)) $4 }
+-- impureCall :: {ParserContext ImpureCall}
+-- impureCall : "@" IDENT "(" exprList ")"  { $$ = ImpureCall (Ident (identifierVal $2)) $4 }
 
-exprList :: {[Expr]}
-exprList : {- empty -}          { [] }
-         | exprListNonZero      { $1 }
+-- exprList :: {ParserContext [Expr]}
+-- exprList : {- empty -}          { $$ = [] }
+--          | exprListNonZero      { $$ = $1 }
 
-exprListNonZero :: {[Expr]}
-exprListNonZero : expr                      { [$1] }
-                | expr "," exprListNonZero  { $1 : $3 }
+-- exprListNonZero :: {ParserContext [Expr]}
+-- exprListNonZero : expr                      { $$ = [$1] }
+--                 | expr "," exprListNonZero  { $$ = $1 : $3 }
 
-indentation :: {Tabs}
-indentation : {- empty -} { Tabs 0 }
-            | TABS        { Tabs (numTabs $1) }
+indentation :: {ParserContext Tabs}
+indentation : {- empty -} { $$ = Tabs 0 }
+            | TABS        { $$ = Tabs (numTabs $1) }
 
-value :: {Value}
-value : INT     { Integer (intVal $1) }
-      | REAL    { Real (realVal $1)}
-      | IDENT   { IdentV (identifierVal $1) }
-      | CHAR    { Char (charVal $1) }
-      | BOOL    { Bool (isTrue $1) }
-
+value :: {ParserContext Value}
+value : INT     { $$ = Integer (intVal $1) }
+    --   | REAL    { $$ = Real (realVal $1)}
+      | IDENT   { $$ = IdentV (identifierVal $1) }
+    --   | CHAR    { $$ = Char (charVal $1) }
+    --   | BOOL    { $$ = Bool (isTrue $1) }
 
 {
-
 parseError :: Token -> Alex a
 parseError t = alexError $ "Parser error on token " ++ show t
-
 }
