@@ -6,13 +6,6 @@ import EmperorLexer
 
 -- TODO:    Figure out why a Monad would be good? 
 --          Create a monad which allows the context to be assigned
-
-
--- data EmperorParserResult = EmperorParserResult Alexposn
-
--- instance Monad EmperorParserResult where
---     (>>=) = asdf
---     return = []
 }
 
 
@@ -24,9 +17,9 @@ import EmperorLexer
 
 %attributetype { ParserContext a }
 %attribute value { a }
--- %attribute indent { Int }
+%attribute indent { Int }
 
-%name parseEmperor assignment
+%name parseEmperor ast
 
 -- Enforce perfection
 %expect 0
@@ -95,16 +88,16 @@ import EmperorLexer
 %%
 
 -- ast :: {ParserContext AST}
--- ast : body                  { $$ = AST $1 }
+ast : body                  { $$ = AST $1 }
 
 -- body :: {ParserContext [BodyBlock]}
--- body : {- empty -}  { $$ = [] }
---      | bodyBlock EOL body { $$ = $1 : $3 }
+body : {- empty -}          { $$ = [] }
+     | bodyBlock EOL body   { $$ = $1 : $3 }
 
 -- bodyBlock :: {ParserContext BodyBlock}
--- bodyBlock : bodyLine                        { $$ = Line $1 }
+bodyBlock : bodyLine                        { $$ = Line $1 }
 --           | "if" expr EOL body "else" body  { $$ = IfElse $2 $4 $6 }
---           | "while" expr EOL body           { $$ = While $2 $4 }
+          | "while" expr EOL body           { $$ = While $2 $4; $2.indent = $$.indent; $4.indent = $$.indent + 1 }
 --           | "for" IDENT "<-" expr EOL body  { $$ = For (Ident (identifierVal $2)) $4 $6 }
 --           | "repeat" expr EOL body          { $$ = Repeat $2 $4 }
 --           | "with" assignment EOL body      { $$ = With $2 $4 }
@@ -118,20 +111,20 @@ import EmperorLexer
 -- switchCase : expr "->" bodyBlock    { $$ = SwitchCase $1 $3 }
 
 -- bodyLine :: {ParserContext BodyLine}
--- bodyLine : indentation bodyLineContent { $$ = BodyLine $1 $2 }
+bodyLine : indentation bodyLineContent { $$ = BodyLine $2; $2.indent = $$.indent; $1.indent = $$.indent}
 
 -- bodyLineContent :: {ParserContext BodyLineContent}
--- bodyLineContent : assignment            { $$ = AssignmentC $1 }
+bodyLineContent : assignment            { $$ = AssignmentC $1 }
 --                 | queue                 { $$ = QueueC $1 }
 --                 | impureCall            { $$ = ImpureCallC $1 }
 
-assignment :: {ParserContext Assignment}
+-- assignment :: {ParserContext Assignment}
 assignment : IDENT "=" expr { $$ = Assignment (Ident (identifierVal $1)) $3 } 
 
 -- queue :: {ParserContext Queue}
 -- queue : IDENT "<-" expr { $$ = Queue (Ident (identifierVal $1)) $3 }
 
-expr :: {ParserContext Expr}
+-- expr :: {ParserContext Expr}
 expr : value                            { $$ = Value $1 }
      | "!" expr                         { $$ = Not $2 }
      | "-" expr %prec NEG               { $$ = Neg $2 }
@@ -174,18 +167,33 @@ expr : value                            { $$ = Value $1 }
 -- exprListNonZero : expr                      { $$ = [$1] }
 --                 | expr "," exprListNonZero  { $$ = $1 : $3 }
 
-indentation :: {ParserContext Tabs}
-indentation : {- empty -} { $$ = Tabs 0 }
-            | TABS        { $$ = Tabs (numTabs $1) }
+-- indentation :: {ParserContext Tabs}
+indentation : {- empty -}   {
+                                where if $$.indent == 0 
+                                    then return () 
+                                    else alexError "Incorrect indentation";
+                                $$ = Tabs 0; 
+                                $$.indent = 0; 
+                            }
+            | TABS          {
+                                where if $$.indent == numTabs $1
+                                    then return ()
+                                    else alexError "IncorrectIndentation";
+                                $$ = Tabs (numTabs $1);
+                                $$.indent = numTabs $1;
+                            }
 
-value :: {ParserContext Value}
+-- value :: {ParserContext Value}
 value : INT     { $$ = Integer (intVal $1) }
     --   | REAL    { $$ = Real (realVal $1)}
-      | IDENT   { $$ = IdentV (identifierVal $1) }
+    --   | IDENT   { $$ = IdentV (identifierVal $1) }
     --   | CHAR    { $$ = Char (charVal $1) }
-    --   | BOOL    { $$ = Bool (isTrue $1) }
+      | BOOL    { $$ = Bool (isTrue $1) }
 
 {
 parseError :: Token -> Alex a
 parseError t = alexError $ "Parser error on token " ++ show t
+
+getIndentSize :: Tabs -> Int
+getIndentSize (Tabs t) = t
 }
