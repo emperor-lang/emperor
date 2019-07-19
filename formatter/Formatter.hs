@@ -31,7 +31,7 @@ class Format a where
     formatFresh :: a -> String
     formatFresh = format defaultFormatContext
 
--- | Lists are formattable by placing commas between them
+-- | Lists are formattable by placing commas between elements
 instance Format a => Format [a] where
     format ctx l = intercalate ", " $ format ctx <$> l
 
@@ -49,7 +49,7 @@ instance Format BodyBlock where
     format ctx (With a b)       = unlines $ [ indent ctx ++ "with " ++ format (ctx + 1) a] ++ (format (ctx + 1) <$> b)
     format ctx (Switch c s)     = unlines $ [ indent ctx ++ "switch " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> s)
 
--- | Switch-cases may be formatted with 
+-- | Switch-cases may be formatted with their case contents
 instance Format SwitchCase where
     format ctx (SwitchCase e b) = indent ctx ++ format (ctx + 1) e ++ " -> " ++ format (ctx + 1) b
 
@@ -63,11 +63,11 @@ instance Format BodyLineContent where
     format ctx (QueueC q) = format ctx q
     format ctx (ImpureCallC c) = format ctx c
 
--- | Assignments may be formatted by formatting their left and right sides
+-- | Assignments may be formatted using their left and right sides
 instance Format Assignment where
     format ctx (Assignment i e) = format ctx i ++ " = " ++ format (ctx + 1) e
     
--- | Queue statements may be formatted by formatting their left and right sides
+-- | Queue statements may be formatted using their left and right sides
 instance Format Queue where
     format ctx (Queue i e) = format ctx i ++ " <- " ++ format (ctx + 1) e
 
