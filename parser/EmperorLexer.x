@@ -219,62 +219,66 @@ mkL c (p, _, _, str) len = let t = take len str in
 alexEOF :: Alex Token
 alexEOF = return TEoF
 
+-- | Wrapper function for the lexer---allows the monadic lexer to be used with 
+-- a monadic parser
 lexWrap :: (Token -> Alex a) -> Alex a
 lexWrap = (alexMonadScan >>=)
 
-data Token = TDocAssignmentLine  {                          position :: AlexPosn }
-           | TDocLine            {                          position :: AlexPosn }
-           | TInteger            { intVal :: Integer,       position :: AlexPosn }
-           | TBool               { isTrue :: Bool,          position :: AlexPosn }
-           | TReal               { realVal :: Double,       position :: AlexPosn }
-           | TChar               { charVal :: Char,         position :: AlexPosn }
-           | TIf                 {                          position :: AlexPosn }
-           | TElse               {                          position :: AlexPosn }
-           | TWhile              {                          position :: AlexPosn }
-           | TRepeat             {                          position :: AlexPosn }
-           | TWith               {                          position :: AlexPosn }
-           | TSwitch             {                          position :: AlexPosn }
-           | TFor                {                          position :: AlexPosn }
-           | TIdent              { identifierVal :: String, position :: AlexPosn }
-           | TQueue              {                          position :: AlexPosn }
-           | TGoesTo             {                          position :: AlexPosn }
-           | TGets               {                          position :: AlexPosn }
-           | TLParenth           {                          position :: AlexPosn }
-           | TRParenth           {                          position :: AlexPosn }
-           | TLBracket           {                          position :: AlexPosn }
-           | TRBracket           {                          position :: AlexPosn }
-           | TLBrace             {                          position :: AlexPosn }
-           | TRBrace             {                          position :: AlexPosn }
-           | TImpure             {                          position :: AlexPosn }
-           | TPlus               {                          position :: AlexPosn }
-           | TMinus              {                          position :: AlexPosn }
-           | TDivide             {                          position :: AlexPosn }
-           | TModulo             {                          position :: AlexPosn }
-           | TTimes              {                          position :: AlexPosn }
-           | TShiftLeft          {                          position :: AlexPosn }
-           | TShiftRight         {                          position :: AlexPosn }
-           | TShiftRightSameSign {                          position :: AlexPosn }
-           | TAndScrict          {                          position :: AlexPosn }
-           | TAndLazy            {                          position :: AlexPosn }
-           | TOrStrict           {                          position :: AlexPosn }
-           | TOrLazy             {                          position :: AlexPosn }
-           | TNot                {                          position :: AlexPosn }
-           | TXor                {                          position :: AlexPosn }
-           | TLessThan           {                          position :: AlexPosn }
-           | TLessThanOrEqual    {                          position :: AlexPosn }
-           | TGreaterThan        {                          position :: AlexPosn }
-           | TGreaterThanOrEqual {                          position :: AlexPosn }
-           | TImplies            {                          position :: AlexPosn }
-           | TEqual              {                          position :: AlexPosn }
-           | TNotEqual           {                          position :: AlexPosn }
-           | TComma              {                          position :: AlexPosn }
-           | TTabs               { numTabs :: Int,          position :: AlexPosn }
-           | TEoL                {                          position :: AlexPosn }
-           | TEoF
+-- | Type to represent tokens in the output stream
+data Token = TDocAssignmentLine  {                          position :: AlexPosn } -- ^ Documentation field line
+           | TDocLine            {                          position :: AlexPosn } -- ^ Generic line of documentation
+           | TInteger            { intVal :: Integer,       position :: AlexPosn } -- ^ An integral literal
+           | TBool               { isTrue :: Bool,          position :: AlexPosn } -- ^ A boolean literal
+           | TReal               { realVal :: Double,       position :: AlexPosn } -- ^ A real/floating-point literal
+           | TChar               { charVal :: Char,         position :: AlexPosn } -- ^ A single character literal
+           | TIf                 {                          position :: AlexPosn } -- ^ Keyword: @if@
+           | TElse               {                          position :: AlexPosn } -- ^ Keyword: @else@
+           | TWhile              {                          position :: AlexPosn } -- ^ Keyword: @while@
+           | TRepeat             {                          position :: AlexPosn } -- ^ Keyword: @repeat@
+           | TWith               {                          position :: AlexPosn } -- ^ Keyword: @with@
+           | TSwitch             {                          position :: AlexPosn } -- ^ Keyword: @switch@
+           | TFor                {                          position :: AlexPosn } -- ^ Keyword: @for@
+           | TIdent              { identifierVal :: String, position :: AlexPosn } -- ^ An identifier
+           | TQueue              {                          position :: AlexPosn } -- ^ @<-@
+           | TGoesTo             {                          position :: AlexPosn } -- ^ @->@
+           | TGets               {                          position :: AlexPosn } -- ^ @=@
+           | TLParenth           {                          position :: AlexPosn } -- ^ @(@
+           | TRParenth           {                          position :: AlexPosn } -- ^ @)@
+           | TLBracket           {                          position :: AlexPosn } -- ^ @[@
+           | TRBracket           {                          position :: AlexPosn } -- ^ @]@
+           | TLBrace             {                          position :: AlexPosn } -- ^ @{@
+           | TRBrace             {                          position :: AlexPosn } -- ^ @}@
+           | TImpure             {                          position :: AlexPosn } -- ^ @\@@
+           | TPlus               {                          position :: AlexPosn } -- ^ @+@
+           | TMinus              {                          position :: AlexPosn } -- ^ @-@
+           | TDivide             {                          position :: AlexPosn } -- ^ @/@
+           | TModulo             {                          position :: AlexPosn } -- ^ @%@
+           | TTimes              {                          position :: AlexPosn } -- ^ @*@
+           | TShiftLeft          {                          position :: AlexPosn } -- ^ @<<@
+           | TShiftRight         {                          position :: AlexPosn } -- ^ @>>@
+           | TShiftRightSameSign {                          position :: AlexPosn } -- ^ @>>>@
+           | TAndScrict          {                          position :: AlexPosn } -- ^ @&@
+           | TAndLazy            {                          position :: AlexPosn } -- ^ @&&@
+           | TOrStrict           {                          position :: AlexPosn } -- ^ @|@
+           | TOrLazy             {                          position :: AlexPosn } -- ^ @||@
+           | TNot                {                          position :: AlexPosn } -- ^ @!@
+           | TXor                {                          position :: AlexPosn } -- ^ @^@
+           | TLessThan           {                          position :: AlexPosn } -- ^ @<@
+           | TLessThanOrEqual    {                          position :: AlexPosn } -- ^ @<=@
+           | TGreaterThan        {                          position :: AlexPosn } -- ^ @>@
+           | TGreaterThanOrEqual {                          position :: AlexPosn } -- ^ @>=@
+           | TImplies            {                          position :: AlexPosn } -- ^ @=>@
+           | TEqual              {                          position :: AlexPosn } -- ^ @==@
+           | TNotEqual           {                          position :: AlexPosn } -- ^ @!=@
+           | TComma              {                          position :: AlexPosn } -- ^ @,@
+           | TTabs               { numTabs :: Int,          position :: AlexPosn } -- ^ @\t@
+           | TEoL                {                          position :: AlexPosn } -- ^ @\\n@
+           | TEoF                                                                  -- ^ @\\0@
     deriving (Eq, Ord, Show)
 
+-- | AlexPosn is ordered by the total number of characters read (its final field)
 instance Ord AlexPosn where
-    (AlexPn a _ _) < (AlexPn b _ _) = a < b
+    (AlexPn _ _ c1) < (AlexPn _ _ c2) = c1 < c2
     a <= b = (a < b) || (a == b)
 
 }

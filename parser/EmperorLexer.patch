@@ -1,5 +1,5 @@
---- ./EmperorLexer.hs	2019-07-19 23:47:59.119433325 +0100
-+++ ./EmperorLexer.hs2	2019-07-19 23:43:50.062243020 +0100
+--- ./EmperorLexer.hs	2019-07-20 13:10:28.187144766 +0100
++++ ./EmperorLexer.hs2	2019-07-20 13:23:20.715858038 +0100
 @@ -367,6 +367,9 @@
  -- assuming the usual eight character tab stops.
  
@@ -9,4 +9,29 @@
 +-- all lines
  data AlexPosn = AlexPn !Int !Int !Int
          deriving (Eq,Show)
+ 
+@@ -395,7 +398,7 @@
+     }
+ 
+ -- Compile with -funbox-strict-fields for best results!
+-
++-- | Function to run the generated lexer
+ runAlex :: String -> Alex a -> Either String a
+ runAlex input__ (Alex f)
+    = case f (AlexState {alex_pos = alexStartPos,
+@@ -408,6 +411,7 @@
+                         alex_scd = 0}) of Left msg -> Left msg
+                                           Right ( _, a ) -> Right a
+ 
++-- | State information for an Alex lexer
+ newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
+ 
+ instance Functor Alex where
+@@ -439,6 +443,7 @@
+  = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} of
+                   state__@(AlexState{}) -> Right (state__, ())
+ 
++-- | Function to return an Alex error state
+ alexError :: String -> Alex a
+ alexError message = Alex $ const $ Left message
  
