@@ -40,8 +40,8 @@ For complete installation from the source, this project requires the following:
 
 The following are optional but may be useful development.
 
-- [`mangen`][mangen]
-- [`haddock`][haddock]
+- [`mangen`][mangen] an `argspec` to man-page generator
+- [`haddock`][haddock] the haskell documentation generator
 - Haskell platform documentation
 
 ## Contributing
