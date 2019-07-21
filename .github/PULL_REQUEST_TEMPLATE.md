@@ -1,4 +1,4 @@
-### What was a problem?
+### Problem description
 
 Please describe the problem you have noticed or encountered.
 
