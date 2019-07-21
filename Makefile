@@ -32,13 +32,17 @@ build: ./emperor
 ./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
 	cabal build $(CABALFLAGS)
 
-./parser/EmperorLexer.hs: ./parser/EmperorLexer.x
-	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $^ -o $@
+./parser/EmperorLexer.hs: ./parser/EmperorLexer.x ./parser/EmperorLexer.patch
+	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $< -o $@
+	patch -s $@ ./parser/EmperorLexer.patch
 .DELETE_ON_ERROR: ./parser/EmperorLexer.hs
 
-./parser/EmperorParser.hs: ./parser/EmperorParser.y
+./parser/EmperorParser.hs: ./parser/EmperorParser.y ./parser/EmperorParser.patch
 	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/emperorParser.info $< -o $@
+	patch -s $@ ./parser/EmperorParser.patch
 .DELETE_ON_ERROR: ./parser/EmperorParser.hs
+
+%.patch:;
 
 ./Args.hs: emperor.json
 	arggen_haskell < $^ > $@
@@ -70,6 +74,12 @@ $(COMPLETION_INSTALL_LOCATION): ./emperor_completions.sh;
 ./emperor_completions.sh: ./emperor.json
 	argcompgen < $< > $@
 .DELETE_ON_ERROR: ./emperor_completions.sh
+
+doc: dist/doc/html/emperor/emperor/index.html
+.PHONY: doc
+
+dist/doc/html/emperor/emperor/index.html: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
+	cabal haddock --executables
 
 clean-installation:
 	sudo $(RM) /usr/bin/emperor
