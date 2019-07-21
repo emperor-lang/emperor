@@ -75,7 +75,7 @@ $(COMPLETION_INSTALL_LOCATION): ./emperor_completions.sh;
 	argcompgen < $< > $@
 .DELETE_ON_ERROR: ./emperor_completions.sh
 
-doc: dist/doc/html/emperor/emperor/index.html
+doc: dist/doc/html/emperor/emperor/index.html ./dist/doc/man/emperor.1.gz
 .PHONY: doc
 
 dist/doc/html/emperor/emperor/index.html: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
