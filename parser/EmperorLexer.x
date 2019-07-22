@@ -1,4 +1,5 @@
 {
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 {-|
 Module      : EmperorLexer
 Description : Lexer for the emperor language
@@ -12,8 +13,6 @@ Language    : Haskell2010
 This module defines the machinery to lexically analyse the Emperor language given in an input string.
 -}
 module EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex, AlexPosn) where
-
-import AST
 }
 
 %wrapper "monad"
