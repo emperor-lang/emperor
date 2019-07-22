@@ -37,7 +37,7 @@ instance Format a => Format [a] where
 
 -- | The AST may be formatted by interspercing new-line characters
 instance Format AST where
-    format ctx (AST a) = unlines $ format ctx <$> a 
+    format ctx (AST d a) = (unlines $ format ctx <$> d) ++ (unlines $ format ctx <$> a)
 
 -- | Body block may be formatted with included code indented one layer further
 instance Format BodyBlock where
@@ -129,6 +129,10 @@ instance Format Ident where
 -- | Tabs are formatted as tabs
 instance Format Tabs where
     format ctx _ = indent ctx
+
+-- | Documentation lines are formatted according to their content
+instance Format DocLines where
+    format ctx (DocLines ds) = "///\n" ++ ((("// " ++) . format ctx) <$> ds) ++ "///"
 
 -- | Create the appropriate amount of indentation for the current context
 indent :: FormatContext -> String

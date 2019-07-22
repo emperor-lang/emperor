@@ -41,8 +41,7 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 %expect 0
 
 %token
-    DOCASSIGNMENTLINE   { TDocAssignmentLine    _ }
-    DOCLINE             { TDocLine              _ }
+    DOCLINE             { TDocLine              docLineContent _ }
     INT                 { TInteger              intVal _ }
     BOOL                { TBool                 isTrue _ }
     REAL                { TReal                 realVal _ }
@@ -107,7 +106,11 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 %%
 
 ast :: {AST}
-ast : body                  { AST $1 }
+ast : docs body                  { AST (foldr1 (:) $1) $2 }
+
+docs :: {[DocLine]}
+docs : {- empty -}  { [] }
+     | DOCLINE docs { (DocLine (docLineContent $1)) : $2 }
 
 body :: {[BodyBlock]}
 body : {- empty -}  { [] }
