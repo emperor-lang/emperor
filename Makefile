@@ -88,11 +88,12 @@ clean-installation:
 .PHONY: clean-installation
 
 clean:
-	-@cabal clean											1>/dev/null || true
-	-@$(RM) cabal.config									2>/dev/null || true
-	-@$(RM) Args.hs											2>/dev/null	|| true
-	-@$(RM) *_completions.sh								2>/dev/null || true
-	-@$(RM) ./emperor										2>/dev/null || true
-	-@$(RM) ./parser/Emperor{Lexer,Parser,ParserData}.hs	2>/dev/null || true
-	-@$(RM) ./parser/emperorParser.info						2>/dev/null || true
+	-@cabal clean												1>/dev/null || true
+	-@$(RM) cabal.config										2>/dev/null || true
+	-@$(RM) Args.hs												2>/dev/null	|| true
+	-@$(RM) *_completions.sh									2>/dev/null || true
+	-@$(RM) ./emperor											2>/dev/null || true
+	-@$(RM) ./parser/Emperor{Lexer,Parser,ParserData}.h{s,i}	2>/dev/null || true
+	-@$(RM) ./parser/emperorParser.info							2>/dev/null || true
+	-@$(RM) $(shell find . -name '*.o')							2>/dev/null || true
 .PHONY: clean
