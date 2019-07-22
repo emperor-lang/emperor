@@ -14,11 +14,10 @@ For details on how this is done, see @man emperor@ or @emperor.json@ in the GitH
 -}
 module Main where
 
-import Args (parseArgv, input, verbose)
+import Args (parseArgv, input)
 import EmperorParserWrapper (parse)
 import Logger (makeLoggers)
 import Formatter (formatFresh)
-import Control.Monad (when)
 
 -- | Provides the entry-point
 main :: IO ()
