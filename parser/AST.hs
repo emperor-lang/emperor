@@ -14,7 +14,7 @@ emperor language.
 module AST where
 
 -- | Data type to represent the abstract syntax tree
-data AST = AST DocLines [BodyBlock]
+data AST = AST (Maybe DocLines) [BodyBlock]
     deriving Show
 
 -- | Represents a single construction in the body of a function. This may be a
