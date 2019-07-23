@@ -10,21 +10,20 @@ Language    : Haskell2010
 
 This defines data to represent types in Emperor.
 -}
-module Types (EmperorType(..), EmperorPrimitiveType(..)) where
+module Types (EmperorType(..)) where
 
--- | Data to represent Emperor composite types
-data EmperorType = EPrimitive EmperorPrimitiveType
+import Data.Map
+
+-- | Data to represent all Emperor types
+data EmperorType = IntP
+                 | CharP
+                 | BoolP
+                 | RealP
                  | EList EmperorType
                  | ETuple [EmperorType]
-                 | ERecord [(String,EmperorType)]
-    deriving Eq
-
--- | A primitive Emperor type
-data EmperorPrimitiveType = IntP
-                          | CharP
-                          | BoolP
-                          | RealP
-    deriving Eq
+                 | ERecord (Map String EmperorType)
+                 | EFunction EmperorType EmperorType
+    deriving (Eq, Show)
 
 -- -- | A single Emperor type
 -- newtype EmperorTypeInstance = EmperorType String

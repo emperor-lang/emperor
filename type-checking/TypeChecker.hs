@@ -13,9 +13,7 @@ This module resolves types for Emperor programs given as an AST
 module TypeChecker (typeCheck, TypeCheckResult(..)) where
 
 import AST (AST)
-
-data TypeCheckResult = Fine
-                     | Bad String
+import Subtypes (TypeCheckResult(..))
 
 typeCheck :: AST -> TypeCheckResult
 typeCheck _ = Fine -- Bad "Type-checking has not been implemented yet"

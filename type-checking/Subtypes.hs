@@ -10,34 +10,73 @@ Language    : Haskell2010
 
 This modules defines sub-typing rules for Emperor types
 -}
-module Subtypes (typeCheck, Type) where
+module Subtypes (TypeCheckResult(..), (|-), (<:), newTypeEnvironment) where
 
 import AST
-import Data.Map
-import TypeChecker (TypeCheckResult(..))
-import Types (EmperorType(..), EmperorPrimitiveType(..))
+import Data.List ((\\))
+import Data.Map hiding ((\\), filter, null)
+import Types (EmperorType(..))
 
-newtype TypeEnvironment = TypeEnvironment (Map String EmperorType)
+type TypeEnvironment = Map String EmperorType
+
+newTypeEnvironment :: TypeEnvironment
+newTypeEnvironment = empty
 
 -- data TypePair = TypePair a b
 -- type TypePair a b = (a,b)
-data TypeComparison a b = SubType a b
+data TypeComparison = SubType EmperorType EmperorType
 
-(<:) :: Type a => Type b => a -> b -> TypeComparison a b
+(<:) :: EmperorType -> EmperorType -> TypeComparison
 infixl 1 <:
 a <: b = SubType a b
 
--- a <:> b = SuperType a b
--- infixl 1 <:>
+data TypeCheckResult = Fine
+                     | Bad String
+    deriving (Eq, Ord, Show)
 
-class Eq a => Type a where
-    infixl 0 |-
-    (|-) :: Type b => TypeEnvironment -> TypeComparison a b -> TypeCheckResult
+infixl 0 |-
+(|-) :: TypeEnvironment -> TypeComparison -> TypeCheckResult
+_ |- (SubType a b)
+    | a == b = Fine
+_ |- (SubType IntP RealP) = Fine
+e |- (SubType (EList a) (EList b)) = e |- (a <: b)
+e |- (SubType (ETuple as) (ETuple bs)) = if all (== Fine) typeResults
+        then Fine
+        else head $ dropWhile (== Fine) typeResults
+    where
+        typeResults = (e |-) <$> comparisons
+        comparisons = (<:) <$> as <*> bs
+e |- (SubType (ERecord as) (ERecord bs))
+    | keys bs `subset` keys as && all (\k -> (e |- ((as ! k) <: (bs ! k))) == Fine) (keys bs) = Fine
+    | otherwise = typeCheckFail (as ! b) (bs ! b)
+        where
+            b = head $ filter (\k -> (e |- ((as ! k) <: (bs ! k))) /= Fine) $ keys as
+e |- (SubType (EFunction i o) (EFunction i' o')) = case e |- (i' <: i) of
+                                                    Fine -> e |- (o <: o')
+                                                    x -> x 
+_ |- (SubType t1 t2)  = typeCheckFail t1 t2
 
-instance Type EmperorPrimitiveType where
-    _ |- (SubType IntP RealP) = Fine
-    _ |- (SubType a b) = if a == b then Fine else Bad $ "Type error: " ++ a ++ " <: " ++ b ++ " does not hold!"
+subset :: Eq a => [a] -> [a] -> Bool
+subset as bs = null $ bs \\ as
+
+typeCheckFail :: EmperorType -> EmperorType -> TypeCheckResult
+typeCheckFail a b = Bad $ "Type-checking error: " ++ show a ++ " <: " ++ show b ++ " does not hold!"
+
+-- class Eq a => Type a where
+--     infixl 0 |-
+--     -- (|-) :: TypeEnvironment -> TypeComparison a b -> TypeCheckResult
+--     -- (|>) :: 
+
+-- instance Type EmperorPrimitiveType where
+--     -- _ |- (SubType IntP RealP) = Fine
+--     _ |- (SubType a b)
+--         | a == b    = Fine 
+--         | otherwise = Bad $ "Type error: " ++ show a ++ " <: " ++ show b ++ " does not hold!"
     
+-- instance Type EmperorType where
+--     e |- (SubType a b)
+--         | a == b = Fine
+
 -- (<:>) :: Type a => Type b => a -> b -> (a, b)
 -- infixl 1 <:>
 -- a <:> b = (b, a)
