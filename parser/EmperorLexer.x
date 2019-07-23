@@ -21,6 +21,7 @@ $alpha = [A-Za-z]
 $num = [0-9]
 $alphaNum = [$alpha$num]
 
+@newline = \r\n | \r | \n
 @tabs = \t+
 @spaces = \ +
 
@@ -29,87 +30,91 @@ $alphaNum = [$alpha$num]
 @real = $num+ \. $num+
 @bool = (true) | (false)
 @char = \'$alphaNum\'
-@string = "$alphaNum*"
+-- @string = "$alphaNum*"
+@partSeparator = ";" @newline?
 
-@docDelimiter = @tabs? "///"
-@docLineStart = @tabs? "//"
+@docStart = @tabs? "/*" \n?
+@docEnd = @tabs? "*/" \n?
+@docLineStart = @tabs? " *" (@spaces | @tabs)?
 
-@lineComment = \/\/ .* \n
-@ignoredWhitespace = \\\n
+@lineComment = \/\/ .* @newline
+@ignoredWhitespace = \\ @newline
 
 :-
 
 -- Things to ignore
-<0>     @spaces             ;
-<0>     @lineComment        ;
-<0>     @ignoredWhitespace  ;
+<0>                 @spaces             ;
+<0>                 @ignoredWhitespace  ;
 
 -- Documentation
-<0>     @docDelimiter       { begin docs }
-<docs>  @docLineStart       { begin docLineContents }
-<docLineContents>   .*      { mkL LDocLine }
-<docLineContents>   \n      { begin docs }
-<docs>  @docDelimiter       { begin 0 }
--- <0>     @docLine            { mkL LDocLine }
+<0>                 @docStart           { begin docs }
+<docs>              @docLineStart       { begin docLineContents }
+<docLineContents>   .*                  { mkL LDocLine }
+<docLineContents>   \n                  { begin docs }
+<docLineContents>   @docEnd             { begin 0 }
+<docs>              @docEnd             { begin 0 }
+-- <0>                 @docLine            { mkL LDocLine }
+<0>                 @lineComment        ; -- Ignore comments
 
 -- Values
-<0>     @int                { mkL LInteger }
-<0>     @bool               { mkL LBool }
-<0>     @real               { mkL LReal }
-<0>     @char               { mkL LChar }
--- @string         { mkL LString }
+<0>                 @int                { mkL LInteger }
+<0>                 @bool               { mkL LBool }
+<0>                 @real               { mkL LReal }
+<0>                 @char               { mkL LChar }
+-- <0>                 @string             { mkL LString }
 
 -- Keywords
-<0>     "if"                { mkL LIf }
-<0>     "else"              { mkL LElse }
-<0>     "while"             { mkL LWhile }
-<0>     "repeat"            { mkL LRepeat }
-<0>     "with"              { mkL LWith }
-<0>     "switch"            { mkL LSwitch }
-<0>     "for"               { mkL LFor }
+<0>                 "if"                { mkL LIf }
+<0>                 "else"              { mkL LElse }
+<0>                 "while"             { mkL LWhile }
+<0>                 "repeat"            { mkL LRepeat }
+<0>                 "with"              { mkL LWith }
+<0>                 "switch"            { mkL LSwitch }
+<0>                 "for"               { mkL LFor }
 
 -- Identifiers
-<0>     @ident              { mkL LIdent }
+<0>                 @ident              { mkL LIdent }
 
 -- Syntax things
-<0>     "<-"                { mkL LQueue }
-<0>     "->"                { mkL LGoesTo }
-<0>     "="                 { mkL LGets }
-<0>     ","                 { mkL LComma}
-<0>     "("                 { mkL LLParenth }
-<0>     ")"                 { mkL LRParenth }
-<0>     "["                 { mkL LLBracket }
-<0>     "]"                 { mkL LRBracket }
-<0>     "{"                 { mkL LLBrace }
-<0>     "}"                 { mkL LRBrace }
-<0>     "@"                 { mkL LImpure }
+<0>                 @partSeparator      { mkL LPartSeparator }
+<0>                 "<-"                { mkL LQueue }
+<0>                 "->"                { mkL LGoesTo }
+<0>                 "="                 { mkL LGets }
+<0>                 ","                 { mkL LComma}
+<0>                 "("                 { mkL LLParenth }
+<0>                 ")"                 { mkL LRParenth }
+<0>                 "["                 { mkL LLBracket }
+<0>                 "]"                 { mkL LRBracket }
+<0>                 "{"                 { mkL LLBrace }
+<0>                 "}"                 { mkL LRBrace }
+<0>                 "@"                 { mkL LImpure }
 
 -- Operators
-<0>     "+"                { mkL LPlus }
-<0>     "-"                { mkL LMinus }
-<0>     "/"                { mkL LDivide }
-<0>     "%"                { mkL LModulo }
-<0>     "*"                { mkL LTimes }
-<0>     "<<"              { mkL LShiftLeft }
-<0>     ">>"                { mkL LShiftRight }
-<0>     ">>>"               { mkL LShiftRightSameSign }
-<0>     "&"                 { mkL LAndScrict }
-<0>     "&&"                { mkL LAndLazy }
-<0>     "|"                { mkL LOrStrict }
-<0>     "||"              { mkL LOrLazy }
-<0>     "!"                 { mkL LNot }
-<0>     "^"                { mkL LXor }
-<0>     "<"                { mkL LLessThan }
-<0>     "<="               { mkL LLessThanOrEqual }
-<0>     ">"                 { mkL LGreaterThan }
-<0>     ">="                { mkL LGreaterThanOrEqual }
-<0>     "=>"                { mkL LImplies }
-<0>     "=="                { mkL LEqual }
-<0>     "!="                { mkL LNotEqual }
+<0>                 "+"                 { mkL LPlus }
+<0>                 "-"                 { mkL LMinus }
+<0>                 "/"                 { mkL LDivide }
+<0>                 "%"                 { mkL LModulo }
+<0>                 "*"                 { mkL LTimes }
+<0>                 "<<"                { mkL LShiftLeft }
+<0>                 ">>"                { mkL LShiftRight }
+<0>                 ">>>"               { mkL LShiftRightSameSign }
+<0>                 "&"                 { mkL LAndScrict }
+<0>                 "&&"                { mkL LAndLazy }
+<0>                 "|"                 { mkL LOrStrict }
+<0>                 "||"                { mkL LOrLazy }
+<0>                 "!"                 { mkL LNot }
+<0>                 "^"                 { mkL LXor }
+<0>                 "<"                 { mkL LLessThan }
+<0>                 "<="                { mkL LLessThanOrEqual }
+<0>                 ">"                 { mkL LGreaterThan }
+<0>                 ">="                { mkL LGreaterThanOrEqual }
+<0>                 "=>"                { mkL LImplies }
+<0>                 "=="                { mkL LEqual }
+<0>                 "!="                { mkL LNotEqual }
 
 -- Significant whitespace
-<0>     @tabs               { mkL LTabs }
-<0>     \n                  { mkL LEoL }
+<0>                 @tabs               { mkL LTabs }
+<0>                 \n                  { mkL LEoL }
 
 {
 
@@ -126,6 +131,7 @@ data LexemeClass = LDocLine
                  | LSwitch
                  | LFor
                  | LIdent
+                 | LPartSeparator
                  | LQueue
                  | LGoesTo
                  | LGets
@@ -179,6 +185,7 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LSwitch             -> return (TSwitch             p)
                                 LFor                -> return (TFor                p)
                                 LIdent              -> return (TIdent              t p)
+                                LPartSeparator      -> return (TPartSeparator      p)
                                 LQueue              -> return (TQueue              p)
                                 LGoesTo             -> return (TGoesTo             p)
                                 LGets               -> return (TGets               p)
@@ -236,6 +243,7 @@ data Token = TDocLine            { docLineContent :: String,    position :: Alex
            | TSwitch             {                              position :: AlexPosn } -- ^ Keyword: @switch@
            | TFor                {                              position :: AlexPosn } -- ^ Keyword: @for@
            | TIdent              { identifierVal :: String,     position :: AlexPosn } -- ^ An identifier
+           | TPartSeparator      {                              position :: AlexPosn } -- ^ @;@
            | TQueue              {                              position :: AlexPosn } -- ^ @<-@
            | TGoesTo             {                              position :: AlexPosn } -- ^ @->@
            | TGets               {                              position :: AlexPosn } -- ^ @=@
@@ -275,7 +283,7 @@ data Token = TDocLine            { docLineContent :: String,    position :: Alex
 
 -- | AlexPosn is ordered by the total number of characters read (its final field)
 instance Ord AlexPosn where
-    (AlexPn _ _ c1) < (AlexPn _ _ c2) = c1 < c2
+    (AlexPn c1 _ _ ) < (AlexPn c2 _ _) = c1 < c2
     a <= b = (a < b) || (a == b)
 
 }
