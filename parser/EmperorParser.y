@@ -86,6 +86,7 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
     "!="                { TNotEqual             _ }
     "@"                 { TImpure               _ }
     ","                 { TComma                _ }
+    ";\n"               { TPartSeparator        _ }
     TABS                { TTabs                 numTabs _ }
     EOL                 { TEoL                  _ }
 
@@ -106,28 +107,36 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 %%
 
 ast :: {AST}
-ast : docs body                  { AST (foldr1 (:) $1) $2 }
+ast : maybeDocs body    { AST (Just DocLines <*> $1) $2 }
+
+maybeDocs :: {Maybe [DocLine]}
+maybeDocs : {- empty -} { Nothing }
+          | docs        { Just $1 }
 
 docs :: {[DocLine]}
-docs : {- empty -}  { [] }
+docs : DOCLINE     { [(DocLine (docLineContent $1))] }
      | DOCLINE docs { (DocLine (docLineContent $1)) : $2 }
 
 body :: {[BodyBlock]}
-body : {- empty -}  { [] }
-     | bodyBlock EOL body { $1 : $3 }
+body : {- empty -}          { [] }
+     | bodyBlock ";\n" body { $1 : $3 }
+
+-- maybeEoL :: {()}
+-- maybeEoL : {- empty -}  {()}
+--          | EOL          {()}
 
 bodyBlock :: {BodyBlock}
 bodyBlock : bodyLine                        { Line $1 }
-          | "if" expr EOL body "else" body  { IfElse $2 $4 $6 }
-          | "while" expr EOL body           { While $2 $4 }
-          | "for" IDENT "<-" expr EOL body  { For (Ident (identifierVal $2)) $4 $6 }
-          | "repeat" expr EOL body          { Repeat $2 $4 }
-          | "with" assignment EOL body      { With $2 $4 }
-          | "switch" expr EOL switchBody    { Switch $2 $4 }
+          | "if" expr ";\n" body "else" body  { IfElse $2 $4 $6 }
+          | "while" expr ";\n" body           { While $2 $4 }
+          | "for" IDENT "<-" expr ";\n" body  { For (Ident (identifierVal $2)) $4 $6 }
+          | "repeat" expr ";\n" body          { Repeat $2 $4 }
+          | "with" assignment ";\n" body      { With $2 $4 }
+          | "switch" expr ";\n" switchBody    { Switch $2 $4 }
 
 switchBody :: {[SwitchCase]}
-switchBody : {- empty -}    { [] }
-           | switchCase EOL switchBody { $1 : $3 }
+switchBody : {- empty -}                    { [] }
+           | switchCase ";\n" switchBody    { $1 : $3 }
 
 switchCase :: {SwitchCase}
 switchCase : expr "->" bodyBlock    { SwitchCase $1 $3 }
@@ -200,7 +209,6 @@ value : INT     { Integer (intVal $1) }
       | IDENT   { IdentV (identifierVal $1) }
       | CHAR    { Char (charVal $1) }
       | BOOL    { Bool (isTrue $1) }
-
 
 {
 
