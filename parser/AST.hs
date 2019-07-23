@@ -14,7 +14,7 @@ emperor language.
 module AST where
 
 -- | Data type to represent the abstract syntax tree
-newtype AST = AST [BodyBlock]
+data AST = AST (Maybe DocLines) [BodyBlock]
     deriving Show
 
 -- | Represents a single construction in the body of a function. This may be a
@@ -111,3 +111,14 @@ data Value = Integer Integer
 -- | Data-structure to represent an identifier
 newtype Ident = Ident String
     deriving Show
+
+-- | Stores documentation strings
+newtype DocLines = DocLines [DocLine]
+    deriving Show
+    
+-- | Stores single lines of documentation strings
+newtype DocLine = DocLine String
+    deriving Show
+
+-- instance Functor DocLines where
+--     fmap f (DocLines xs) = DocLines (fmap f xs)
