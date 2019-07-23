@@ -10,9 +10,12 @@ Language    : Haskell2010
 
 This module resolves types for Emperor programs given as an AST
 -}
-module TypeChecker (typeCheck) where
+module TypeChecker (typeCheck, TypeCheckResult(..)) where
 
-import AST 
+import AST (AST)
 
-typeCheck :: AST -> Either String String
-typeCheck _ = Left "Type-checking has not been implemented yet"
+data TypeCheckResult = Fine
+                     | Bad String
+
+typeCheck :: AST -> TypeCheckResult
+typeCheck _ = Fine -- Bad "Type-checking has not been implemented yet"

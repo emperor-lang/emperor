@@ -14,6 +14,7 @@ module Subtypes (typeCheck, Type) where
 
 import AST
 import Data.Map
+import TypeChecker (TypeCheckResult(..))
 import Types (EmperorType(..), EmperorPrimitiveType(..))
 
 newtype TypeEnvironment = TypeEnvironment (Map String EmperorType)
@@ -31,11 +32,11 @@ a <: b = SubType a b
 
 class Eq a => Type a where
     infixl 0 |-
-    (|-) :: Type b => TypeEnvironment -> TypeComparison a b -> Bool
+    (|-) :: Type b => TypeEnvironment -> TypeComparison a b -> TypeCheckResult
 
 instance Type EmperorPrimitiveType where
-    _ |- (SubType IntP RealP) = True
-    _ |- (SubType a b) = a == b
+    _ |- (SubType IntP RealP) = Fine
+    _ |- (SubType a b) = if a == b then Fine else Bad $ "Type error: " ++ a ++ " <: " ++ b ++ " does not hold!"
     
 -- (<:>) :: Type a => Type b => a -> b -> (a, b)
 -- infixl 1 <:>
