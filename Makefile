@@ -12,6 +12,8 @@ LEXER_GENERATOR := alex
 LEXER_GENERATOR_FLAGS := -g
 PARSER_GENERATOR := happy
 PARSER_GENERATOR_FLAGS := -ga -m emperorParser
+PATCH := patch
+PATCHFLAGS := -F 0 -s 
 
 SOFT_LINK_COMMAND := [[ ! -f $@ ]] && ln -s $^ $@
 
@@ -34,12 +36,12 @@ build: ./emperor
 
 ./parser/EmperorLexer.hs: ./parser/EmperorLexer.x ./parser/EmperorLexer.patch
 	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $< -o $@
-	patch -s $@ ./parser/EmperorLexer.patch
+	$(PATCH) $(PATCHFLAGS) $@ ./parser/EmperorLexer.patch
 .DELETE_ON_ERROR: ./parser/EmperorLexer.hs
 
 ./parser/EmperorParser.hs: ./parser/EmperorParser.y ./parser/EmperorParser.patch
 	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/emperorParser.info $< -o $@
-	patch -s $@ ./parser/EmperorParser.patch
+	$(PATCH) $(PATCHFLAGS) $@ ./parser/EmperorParser.patch
 .DELETE_ON_ERROR: ./parser/EmperorParser.hs
 
 %.patch:;
