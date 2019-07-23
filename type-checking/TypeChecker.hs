@@ -15,5 +15,6 @@ module TypeChecker (typeCheck, TypeCheckResult(..)) where
 import AST (AST)
 import Subtypes (TypeCheckResult(..))
 
+-- | Perform a run of type-checking
 typeCheck :: AST -> TypeCheckResult
-typeCheck _ = Fine -- Bad "Type-checking has not been implemented yet"
+typeCheck _ = Bad "Type-checking has not been implemented yet"

@@ -23,13 +23,6 @@ data EmperorType = IntP
                  | ETuple [EmperorType]
                  | ERecord (Map String EmperorType)
                  | EFunction EmperorType EmperorType
+                 | Any
+                 | Unit
     deriving (Eq, Show)
-
--- -- | A single Emperor type
--- newtype EmperorTypeInstance = EmperorType String
-
--- -- | List type for emperor objects
--- newtype EmperorList a = EmperorList a
-
--- -- | Tuple type for emperor objects
--- newtype EmperorTuple 
