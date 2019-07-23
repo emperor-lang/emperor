@@ -34,14 +34,18 @@ build: ./emperor
 ./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
 	cabal build $(CABALFLAGS)
 
-./parser/EmperorLexer.hs: ./parser/EmperorLexer.x ./parser/EmperorLexer.patch
+./parser/EmperorLexer.hs: ./parser/EmperorLexer.x ./parser/EmperorLexer.hs.patch
 	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $< -o $@
-	$(PATCH) $(PATCHFLAGS) $@ ./parser/EmperorLexer.patch
+	$(PATCH) $(PATCHFLAGS) $@ $@.patch
+	@echo "[[ -f $@.orig ]] && diff -u $@.orig $@ > $@.patch"
+	$(shell [[ -f $@.orig ]] && diff -u $@.orig $@ > $@.patch)
 .DELETE_ON_ERROR: ./parser/EmperorLexer.hs
 
-./parser/EmperorParser.hs: ./parser/EmperorParser.y ./parser/EmperorParser.patch
+./parser/EmperorParser.hs: ./parser/EmperorParser.y ./parser/EmperorParser.hs.patch
 	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/emperorParser.info $< -o $@
-	$(PATCH) $(PATCHFLAGS) $@ ./parser/EmperorParser.patch
+	$(PATCH) $(PATCHFLAGS) $@ $@.patch
+	@echo "[[ -f $@.orig ]] && diff -u $@.orig $@ > $@.patch"
+	$(shell [[ -f $@.orig ]] && diff -u $@.orig $@ > $@.patch)
 .DELETE_ON_ERROR: ./parser/EmperorParser.hs
 
 %.patch:;
@@ -98,4 +102,5 @@ clean:
 	-@$(RM) ./parser/Emperor{Lexer,Parser,ParserData}.h{s,i}	2>/dev/null || true
 	-@$(RM) ./parser/emperorParser.info							2>/dev/null || true
 	-@$(RM) $(shell find . -name '*.o')							2>/dev/null || true
+	-@$(RM) $(shell find . -name '*.orig')						2>/dev/null || true
 .PHONY: clean
