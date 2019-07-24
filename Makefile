@@ -37,15 +37,11 @@ build: ./emperor
 ./parser/EmperorLexer.hs: ./parser/EmperorLexer.x ./parser/EmperorLexer.hs.patch
 	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $< -o $@
 	$(PATCH) $(PATCHFLAGS) $@ $@.patch
-	@echo "[[ -f $@.orig ]] && diff -u $@.orig $@ > $@.patch"
-	$(shell [[ -f $@.orig ]] && diff -u $@.orig $@ > $@.patch)
 .DELETE_ON_ERROR: ./parser/EmperorLexer.hs
 
 ./parser/EmperorParser.hs: ./parser/EmperorParser.y ./parser/EmperorParser.hs.patch
 	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/emperorParser.info $< -o $@
 	$(PATCH) $(PATCHFLAGS) $@ $@.patch
-	@echo "[[ -f $@.orig ]] && diff -u $@.orig $@ > $@.patch"
-	$(shell [[ -f $@.orig ]] && diff -u $@.orig $@ > $@.patch)
 .DELETE_ON_ERROR: ./parser/EmperorParser.hs
 
 %.patch:;
