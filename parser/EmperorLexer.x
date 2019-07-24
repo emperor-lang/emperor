@@ -37,7 +37,7 @@ $alphaNum = [$alpha$num]
 @docEnd = @tabs? "*/" \n?
 @docLineStart = @tabs? " *" (@spaces | @tabs)?
 
-@lineComment = \/\/ .* @newline
+@lineComment = \/\/ .* @newline @tabs?
 @ignoredWhitespace = \\ @newline
 
 :-
@@ -45,6 +45,7 @@ $alphaNum = [$alpha$num]
 -- Things to ignore
 <0>                 @spaces             ;
 <0>                 @ignoredWhitespace  ;
+<0>                 @lineComment        ;
 
 -- Documentation
 <0>                 @docStart           { begin docs }
@@ -54,7 +55,6 @@ $alphaNum = [$alpha$num]
 <docLineContents>   @docEnd             { begin 0 }
 <docs>              @docEnd             { begin 0 }
 -- <0>                 @docLine            { mkL LDocLine }
-<0>                 @lineComment        ; -- Ignore comments
 
 -- Values
 <0>                 @int                { mkL LInteger }
