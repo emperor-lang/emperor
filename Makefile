@@ -8,6 +8,8 @@ SHELL := bash
 # HC := ghc
 # HC_FLAGS := -Wall -Wextra -Werror -O2
 
+OPEN := xdg-open
+
 LEXER_GENERATOR := alex
 LEXER_GENERATOR_FLAGS := -g
 PARSER_GENERATOR := happy
@@ -79,6 +81,10 @@ $(COMPLETION_INSTALL_LOCATION): ./emperor_completions.sh;
 
 doc: dist/doc/html/emperor/emperor/index.html ./dist/doc/man/emperor.1.gz
 .PHONY: doc
+
+open-doc: dist/doc/html/emperor/emperor/index.html
+	$(OPEN) $<
+.PHONY: open-doc
 
 dist/doc/html/emperor/emperor/index.html: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
 	cabal haddock --executables
