@@ -9,14 +9,7 @@
 $headerTypeface: 'Noto-Sans', sans-serif;
 $bodyTypeface: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'Helvetica Neue', sans-serif;
 
-h1 {
-	font-family: 'Playfair Display', serif;
-	font-kerning: auto;
-	font-weight: 400;
-	font-variant-ligatures: contextual;
-}
-
-@for $i from 2 through 6 {
+@for $i from 1 through 6 {
   h#{$i} {
 	// font-size: $base-font-size + $heading-scale * (6 - $i);
 	font-family: $headerTypeface;
