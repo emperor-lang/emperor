@@ -31,7 +31,10 @@ $alphaNum = [$alpha$num]
 @bool = (true) | (false)
 @char = \'$alphaNum\'
 -- @string = "$alphaNum*"
-@partSeparator = ";" @newline?
+
+@partSeparator = (";" @newline?) | (@newline)
+@blockStarter = ":" @newline?
+@blockSeparator = "#" @newline?
 
 @docStart = @tabs? "/*" \n?
 @docEnd = @tabs? "*/" \n?
@@ -41,11 +44,6 @@ $alphaNum = [$alpha$num]
 @ignoredWhitespace = \\ @newline
 
 :-
-
--- Things to ignore
-<0>                 @spaces             ;
-<0>                 @ignoredWhitespace  ;
-<0>                 @lineComment        ;
 
 -- Documentation
 <0>                 @docStart           { begin docs }
@@ -75,8 +73,17 @@ $alphaNum = [$alpha$num]
 -- Identifiers
 <0>                 @ident              { mkL LIdent }
 
+-- Things to ignore
+<0>                 @lineComment        ;
+<0>                 @spaces             ;
+<0>                 @ignoredWhitespace  ;
+<0>                 @tabs               ; -- { mkL LTabs }
+
 -- Syntax things
+<0>                 @ignoredWhitespace  ;
 <0>                 @partSeparator      { mkL LPartSeparator }
+<0>                 @blockSeparator     { mkL LBlockSeparator }
+<0>                 @blockStarter       { mkL LColon }
 <0>                 "<-"                { mkL LQueue }
 <0>                 "->"                { mkL LGoesTo }
 <0>                 "="                 { mkL LGets }
@@ -88,6 +95,9 @@ $alphaNum = [$alpha$num]
 <0>                 "{"                 { mkL LLBrace }
 <0>                 "}"                 { mkL LRBrace }
 <0>                 "@"                 { mkL LImpure }
+
+-- Ignore other newlines
+-- <0>                 \n                  ; -- { mkL LEoL }
 
 -- Operators
 <0>                 "+"                 { mkL LPlus }
@@ -112,10 +122,6 @@ $alphaNum = [$alpha$num]
 <0>                 "=="                { mkL LEqual }
 <0>                 "!="                { mkL LNotEqual }
 
--- Significant whitespace
-<0>                 @tabs               { mkL LTabs }
-<0>                 \n                  { mkL LEoL }
-
 {
 
 data LexemeClass = LDocLine
@@ -132,6 +138,7 @@ data LexemeClass = LDocLine
                  | LFor
                  | LIdent
                  | LPartSeparator
+                 | LBlockSeparator
                  | LQueue
                  | LGoesTo
                  | LGets
@@ -164,8 +171,9 @@ data LexemeClass = LDocLine
                  | LEqual
                  | LNotEqual
                  | LComma
+                 | LColon
                  | LTabs
-                 | LEoL
+                --  | LEoL
     deriving (Eq, Show)
 
 
@@ -186,6 +194,7 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LFor                -> return (TFor                p)
                                 LIdent              -> return (TIdent              t p)
                                 LPartSeparator      -> return (TPartSeparator      p)
+                                LBlockSeparator     -> return (TBlockSeparator     p)
                                 LQueue              -> return (TQueue              p)
                                 LGoesTo             -> return (TGoesTo             p)
                                 LGets               -> return (TGets               p)
@@ -218,8 +227,9 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LEqual              -> return (TEqual              p)
                                 LNotEqual           -> return (TNotEqual           p)
                                 LComma              -> return (TComma              p)
+                                LColon              -> return (TColon              p)
                                 LTabs               -> return (TTabs               len p)
-                                LEoL                -> return (TEoL                p)
+                                -- LEoL                -> return (TEoL                p)
 
 alexEOF :: Alex Token
 alexEOF = return TEoF
@@ -243,6 +253,7 @@ data Token = TDocLine            { docLineContent :: String,    position :: Alex
            | TSwitch             {                              position :: AlexPosn } -- ^ Keyword: @switch@
            | TFor                {                              position :: AlexPosn } -- ^ Keyword: @for@
            | TIdent              { identifierVal :: String,     position :: AlexPosn } -- ^ An identifier
+           | TBlockSeparator     {                              position :: AlexPosn } -- ^ @;@
            | TPartSeparator      {                              position :: AlexPosn } -- ^ @;@
            | TQueue              {                              position :: AlexPosn } -- ^ @<-@
            | TGoesTo             {                              position :: AlexPosn } -- ^ @->@
@@ -276,8 +287,9 @@ data Token = TDocLine            { docLineContent :: String,    position :: Alex
            | TEqual              {                              position :: AlexPosn } -- ^ @==@
            | TNotEqual           {                              position :: AlexPosn } -- ^ @!=@
            | TComma              {                              position :: AlexPosn } -- ^ @,@
+           | TColon              {                              position :: AlexPosn } -- ^ @,@
            | TTabs               { numTabs :: Int,              position :: AlexPosn } -- ^ @\t@
-           | TEoL                {                              position :: AlexPosn } -- ^ @\\n@
+        --    | TEoL                {                              position :: AlexPosn } -- ^ @\\n@
            | TEoF                                                                      -- ^ @\\0@
     deriving (Eq, Ord, Show)
 

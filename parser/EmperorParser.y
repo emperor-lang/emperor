@@ -86,9 +86,11 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
     "!="                { TNotEqual             _ }
     "@"                 { TImpure               _ }
     ","                 { TComma                _ }
-    ";\n"               { TPartSeparator        _ }
+    ":"                 { TColon                _ }
+    ";"                 { TPartSeparator        _ }
+    "#"                 { TBlockSeparator       _ }
     TABS                { TTabs                 numTabs _ }
-    EOL                 { TEoL                  _ }
+    -- EOL                 { TEoL                  _ }
 
 %left "||"
 %left "&&"
@@ -118,25 +120,25 @@ docs : DOCLINE     { [(DocLine (docLineContent $1))] }
      | DOCLINE docs { (DocLine (docLineContent $1)) : $2 }
 
 body :: {[BodyBlock]}
-body : {- empty -}          { [] }
-     | bodyBlock ";\n" body { $1 : $3 }
+body : {- empty -}      { [] }
+     | bodyBlock body   { $1 : $2 }
 
 -- maybeEoL :: {()}
 -- maybeEoL : {- empty -}  {()}
 --          | EOL          {()}
 
 bodyBlock :: {BodyBlock}
-bodyBlock : bodyLine                                            { Line $1 }
-          | "if" expr ";\n" "{" body "}" "else" "{" body "}"    { IfElse $2 $5 $9 }
-          | "while" expr ";\n" "{" body "}"                     { While $2 $5 }
-          | "for" IDENT "<-" expr ";\n" "{" body "}"            { For (Ident (identifierVal $2)) $4 $7 }
-          | "repeat" expr ";\n" "{" body "}"                    { Repeat $2 $5 }
-          | "with" assignment ";\n" "{" body "}"                { With $2 $5 }
-          | "switch" expr ";\n" "{" switchBody "}"              { Switch $2 $5 }
+bodyBlock : bodyLine ";"                                    { Line $1 }
+          | "if" expr ":" body "else" ":" body "#"          { IfElse $2 $4 $7 }
+          | "while" expr ":" body "#"                       { While $2 $4 }
+          | "for" IDENT "<-" expr ":" body "#"              { For (Ident (identifierVal $2)) $4 $6 }
+          | "repeat" expr ":" body "#"                      { Repeat $2 $4 }
+          | "with" assignment ":" body "#"                  { With $2 $4 }
+          | "switch" expr ":" switchBody "#"                { Switch $2 $4 }
 
 switchBody :: {[SwitchCase]}
 switchBody : {- empty -}                    { [] }
-           | switchCase ";\n" switchBody    { $1 : $3 }
+           | switchCase ";" switchBody    { $1 : $3 }
 
 switchCase :: {SwitchCase}
 switchCase : expr "->" bodyBlock    { SwitchCase $1 $3 }
