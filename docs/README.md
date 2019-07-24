@@ -4,7 +4,7 @@ _A statically typed, automatically-threaded, imperative language with purity and
 
 ## Description
 
-This is the compiler for the [`emperor`](https://emperor-lang.github.io/emperor/index.html) language which is designed to be run from the command-line.
+This is the compiler for the [`emperor`](https://emperor-lang.github.io/emperor/) language which is designed to be run from the command-line.
 The CLI of this project is specified in [`emperor.json`][emperor.json] which conforms to [`argspec`][argspec].
 
 The language itself is intended to have similarities to functional languages, including an expressive type-system.
