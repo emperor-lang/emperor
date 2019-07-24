@@ -4,7 +4,7 @@
 @import "{{ site.theme }}";
 
 @import url('https://fonts.googleapis.com/css?family=Open+Sans|Noto+Sans');
-@import url('https://fonts.googleapis.com/css?family=Playfair+Display&display=swap&text=empr');
+@import url('https://fonts.googleapis.com/css?family=Playfair+Display&display=swap&text=Empro');
 
 $headerTypeface: 'Noto-Sans', sans-serif;
 $bodyTypeface: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'Helvetica Neue', sans-serif;
@@ -12,7 +12,7 @@ $bodyTypeface: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Robot
 h1 {
 	font-family: 'Playfair Display', serif;
 	font-kerning: auto;
-	font-weight: 400;
+	font-weight: 300;
 	font-variant-ligatures: contextual;
 }
 
