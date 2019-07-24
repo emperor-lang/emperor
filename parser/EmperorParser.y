@@ -126,13 +126,13 @@ body : {- empty -}          { [] }
 --          | EOL          {()}
 
 bodyBlock :: {BodyBlock}
-bodyBlock : bodyLine                        { Line $1 }
-          | "if" expr ";\n" body "else" body  { IfElse $2 $4 $6 }
-          | "while" expr ";\n" body           { While $2 $4 }
-          | "for" IDENT "<-" expr ";\n" body  { For (Ident (identifierVal $2)) $4 $6 }
-          | "repeat" expr ";\n" body          { Repeat $2 $4 }
-          | "with" assignment ";\n" body      { With $2 $4 }
-          | "switch" expr ";\n" switchBody    { Switch $2 $4 }
+bodyBlock : bodyLine                                            { Line $1 }
+          | "if" expr ";\n" "{" body "}" "else" "{" body "}"    { IfElse $2 $5 $9 }
+          | "while" expr ";\n" "{" body "}"                     { While $2 $5 }
+          | "for" IDENT "<-" expr ";\n" "{" body "}"            { For (Ident (identifierVal $2)) $4 $7 }
+          | "repeat" expr ";\n" "{" body "}"                    { Repeat $2 $5 }
+          | "with" assignment ";\n" "{" body "}"                { With $2 $5 }
+          | "switch" expr ";\n" "{" switchBody "}"              { Switch $2 $5 }
 
 switchBody :: {[SwitchCase]}
 switchBody : {- empty -}                    { [] }
