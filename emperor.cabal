@@ -13,7 +13,7 @@ name:                emperor
 version:             0.1.0.0
 
 -- A short (one-line) description of the package.
-synopsis:            Emperor homepage
+synopsis:            Emperor compiler
 
 -- A longer description of the package.
 description:         Compiler for the emperor language
