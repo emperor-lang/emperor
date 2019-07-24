@@ -1,4 +1,16 @@
-module Logger (makeLoggers, Loggers) where
+{-|
+Module      : Logger
+Description : Suppressable loggers with optional colour output
+Copyright   : (c) Edward Jones, 2019
+License     : GPL-3
+Maintainer  : Edward Jones
+Stability   : experimental
+Portability : POSIX
+Language    : Haskell2010
+
+Used to create loggers which output to @stderr@ using ANSI formatted output.
+-}
+module Logger (makeLoggers, Loggers, Logger) where
 
 import Args (Args, verbose, useColour, noUseColour)
 import System.IO (hPutStrLn, stderr)
@@ -9,9 +21,16 @@ data LogType = Info
              | Error
              | Success
 
+-- | Defines a set of logger functions.
+-- From left to right these are: errorLogger, infoLogger, successLogger, warningLogger
 type Loggers = (Logger, Logger, Logger, Logger)
+
+-- | Type of a logger function which writes to some output
 type Logger = String -> IO ()
 
+-- | Make a set of loggers according to the command-line argument. (Specifically 
+-- whether to print verbose output and whether to override the heuristic-based 
+-- method for checking colour-compatibility.)
 makeLoggers :: Args -> IO (Logger, Logger, Logger, Logger)
 makeLoggers args = do
     colourCompat <- hSupportsANSIColor stderr
@@ -19,7 +38,7 @@ makeLoggers args = do
     let logError = makeLogger colourCompat args Error
     let logInfo = makeVerboseLogger colourCompat args Info
     let logSuccess = makeVerboseLogger colourCompat args Success
-    let logWarning = makeVerboseLogger colourCompat args Warning
+    let logWarning = makeLogger colourCompat args Warning
     return (logError, logInfo, logSuccess, logWarning)
 
 trivialLogger :: Logger

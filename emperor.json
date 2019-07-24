@@ -62,7 +62,7 @@
 			"dest": "input",
 			"type": "string",
 			"metaDest": "file",
-			"default": "-",
+			"default": "",
 			"mandatory": false,
 			"help": "A file from which to take input or `-` for stdin"
 		},

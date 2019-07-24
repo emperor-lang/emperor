@@ -12,6 +12,8 @@ LEXER_GENERATOR := alex
 LEXER_GENERATOR_FLAGS := -g
 PARSER_GENERATOR := happy
 PARSER_GENERATOR_FLAGS := -ga -m emperorParser
+PATCH := patch
+PATCHFLAGS := -F 0 -s 
 
 SOFT_LINK_COMMAND := [[ ! -f $@ ]] && ln -s $^ $@
 
@@ -32,13 +34,17 @@ build: ./emperor
 ./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
 	cabal build $(CABALFLAGS)
 
-./parser/EmperorLexer.hs: ./parser/EmperorLexer.x
-	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $^ -o $@
+./parser/EmperorLexer.hs: ./parser/EmperorLexer.x ./parser/EmperorLexer.hs.patch
+	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $< -o $@
+	$(PATCH) $(PATCHFLAGS) $@ $@.patch
 .DELETE_ON_ERROR: ./parser/EmperorLexer.hs
 
-./parser/EmperorParser.hs: ./parser/EmperorParser.y
+./parser/EmperorParser.hs: ./parser/EmperorParser.y ./parser/EmperorParser.hs.patch
 	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/emperorParser.info $< -o $@
+	$(PATCH) $(PATCHFLAGS) $@ $@.patch
 .DELETE_ON_ERROR: ./parser/EmperorParser.hs
+
+%.patch:;
 
 ./Args.hs: emperor.json
 	arggen_haskell < $^ > $@
@@ -71,6 +77,12 @@ $(COMPLETION_INSTALL_LOCATION): ./emperor_completions.sh;
 	argcompgen < $< > $@
 .DELETE_ON_ERROR: ./emperor_completions.sh
 
+doc: dist/doc/html/emperor/emperor/index.html ./dist/doc/man/emperor.1.gz
+.PHONY: doc
+
+dist/doc/html/emperor/emperor/index.html: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
+	cabal haddock --executables
+
 clean-installation:
 	sudo $(RM) /usr/bin/emperor
 	sudo $(RM) /usr/share/man/man1/emperor.1.gz
@@ -78,11 +90,13 @@ clean-installation:
 .PHONY: clean-installation
 
 clean:
-	-@cabal clean											1>/dev/null || true
-	-@$(RM) cabal.config									2>/dev/null || true
-	-@$(RM) Args.hs											2>/dev/null	|| true
-	-@$(RM) *_completions.sh								2>/dev/null || true
-	-@$(RM) ./emperor										2>/dev/null || true
-	-@$(RM) ./parser/Emperor{Lexer,Parser,ParserData}.hs	2>/dev/null || true
-	-@$(RM) ./parser/emperorParser.info						2>/dev/null || true
+	-@cabal clean												1>/dev/null || true
+	-@$(RM) cabal.config										2>/dev/null || true
+	-@$(RM) Args.hs												2>/dev/null	|| true
+	-@$(RM) *_completions.sh									2>/dev/null || true
+	-@$(RM) ./emperor											2>/dev/null || true
+	-@$(RM) ./parser/Emperor{Lexer,Parser,ParserData}.h{s,i}	2>/dev/null || true
+	-@$(RM) ./parser/emperorParser.info							2>/dev/null || true
+	-@$(RM) $(shell find . -name '*.o')							2>/dev/null || true
+	-@$(RM) $(shell find . -name '*.orig')						2>/dev/null || true
 .PHONY: clean

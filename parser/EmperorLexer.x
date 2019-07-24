@@ -1,7 +1,18 @@
 {
-module EmperorLexer where
+{-# OPTIONS_GHC -Wno-unused-imports #-}
+{-|
+Module      : EmperorLexer
+Description : Lexer for the emperor language
+Copyright   : (c) Edward Jones, 2019
+License     : GPL-3
+Maintainer  : Edward Jones
+Stability   : experimental
+Portability : POSIX
+Language    : Haskell2010
 
-import AST
+This module defines the machinery to lexically analyse the Emperor language given in an input string.
+-}
+module EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex, AlexPosn) where
 }
 
 %wrapper "monad"
@@ -10,6 +21,7 @@ $alpha = [A-Za-z]
 $num = [0-9]
 $alphaNum = [$alpha$num]
 
+@newline = \r\n | \r | \n
 @tabs = \t+
 @spaces = \ +
 
@@ -18,90 +30,95 @@ $alphaNum = [$alpha$num]
 @real = $num+ \. $num+
 @bool = (true) | (false)
 @char = \'$alphaNum\'
-@string = "$alphaNum*"
+-- @string = "$alphaNum*"
+@partSeparator = ";" @newline?
 
-@docLineStart = @tabs? "///"
-@docAssignmentLine = @docLineStart @spaces? "~" @ident ("(" @ident ")")? ":" .*
-@docLine = @docLineStart .*
+@docStart = @tabs? "/*" \n?
+@docEnd = @tabs? "*/" \n?
+@docLineStart = @tabs? " *" (@spaces | @tabs)?
 
-@lineComment = \/\/ .* \n
-@ignoredWhitespace = \\\n
-
--- @string = \"[^\"]*\"
+@lineComment = \/\/ .* @newline @tabs?
+@ignoredWhitespace = \\ @newline
 
 :-
 
 -- Things to ignore
-@spaces             ;
-@lineComment        ;
-@ignoredWhitespace  ;
+<0>                 @spaces             ;
+<0>                 @ignoredWhitespace  ;
+<0>                 @lineComment        ;
 
 -- Documentation
-@docAssignmentLine  { mkL LDocAssignmentLine }
-@docLine            { mkL LDocLine }
+<0>                 @docStart           { begin docs }
+<docs>              @docLineStart       { begin docLineContents }
+<docLineContents>   .*                  { mkL LDocLine }
+<docLineContents>   \n                  { begin docs }
+<docLineContents>   @docEnd             { begin 0 }
+<docs>              @docEnd             { begin 0 }
+-- <0>                 @docLine            { mkL LDocLine }
 
 -- Values
-@int                { mkL LInteger }
-@bool               { mkL LBool }
-@real               { mkL LReal }
-@char               { mkL LChar }
--- @string         { mkL LString }
+<0>                 @int                { mkL LInteger }
+<0>                 @bool               { mkL LBool }
+<0>                 @real               { mkL LReal }
+<0>                 @char               { mkL LChar }
+-- <0>                 @string             { mkL LString }
 
 -- Keywords
-"if"                { mkL LIf }
-"else"              { mkL LElse }
-"while"             { mkL LWhile }
-"repeat"            { mkL LRepeat }
-"with"              { mkL LWith }
-"switch"            { mkL LSwitch }
-"for"               { mkL LFor }
+<0>                 "if"                { mkL LIf }
+<0>                 "else"              { mkL LElse }
+<0>                 "while"             { mkL LWhile }
+<0>                 "repeat"            { mkL LRepeat }
+<0>                 "with"              { mkL LWith }
+<0>                 "switch"            { mkL LSwitch }
+<0>                 "for"               { mkL LFor }
 
 -- Identifiers
-@ident              { mkL LIdent }
+<0>                 @ident              { mkL LIdent }
 
 -- Syntax things
-"<-"                { mkL LQueue }
-"->"                { mkL LGoesTo }
-"="                 { mkL LGets }
-","                 { mkL LComma}
-"("                 { mkL LLParenth }
-")"                 { mkL LRParenth }
-"["                 { mkL LLBracket }
-"]"                 { mkL LRBracket }
-"{"                 { mkL LLBrace }
-"}"                 { mkL LRBrace }
-"@"                 { mkL LImpure }
+<0>                 @partSeparator      { mkL LPartSeparator }
+<0>                 "<-"                { mkL LQueue }
+<0>                 "->"                { mkL LGoesTo }
+<0>                 "="                 { mkL LGets }
+<0>                 ","                 { mkL LComma}
+<0>                 "("                 { mkL LLParenth }
+<0>                 ")"                 { mkL LRParenth }
+<0>                 "["                 { mkL LLBracket }
+<0>                 "]"                 { mkL LRBracket }
+<0>                 "{"                 { mkL LLBrace }
+<0>                 "}"                 { mkL LRBrace }
+<0>                 "@"                 { mkL LImpure }
 
 -- Operators
-"+"                { mkL LPlus }
-"-"                { mkL LMinus }
-"/"                { mkL LDivide }
-"*"                { mkL LTimes }
-"<<"              { mkL LShiftLeft }
-">>"                { mkL LShiftRight }
-">>>"               { mkL LShiftRightSameSign }
-"&"                 { mkL LAndScrict }
-"&&"                { mkL LAndLazy }
-"|"                { mkL LOrStrict }
-"||"              { mkL LOrLazy }
-"!"                 { mkL LNot }
-"^"                { mkL LXor }
-"<"                { mkL LLessThan }
-"<="               { mkL LLessThanOrEqual }
-">"                 { mkL LGreaterThan }
-">="                { mkL LGreaterThanOrEqual }
-"=>"                { mkL LImplies }
-"=="                { mkL LEqual }
-"!="                { mkL LNotEqual }
+<0>                 "+"                 { mkL LPlus }
+<0>                 "-"                 { mkL LMinus }
+<0>                 "/"                 { mkL LDivide }
+<0>                 "%"                 { mkL LModulo }
+<0>                 "*"                 { mkL LTimes }
+<0>                 "<<"                { mkL LShiftLeft }
+<0>                 ">>"                { mkL LShiftRight }
+<0>                 ">>>"               { mkL LShiftRightSameSign }
+<0>                 "&"                 { mkL LAndScrict }
+<0>                 "&&"                { mkL LAndLazy }
+<0>                 "|"                 { mkL LOrStrict }
+<0>                 "||"                { mkL LOrLazy }
+<0>                 "!"                 { mkL LNot }
+<0>                 "^"                 { mkL LXor }
+<0>                 "<"                 { mkL LLessThan }
+<0>                 "<="                { mkL LLessThanOrEqual }
+<0>                 ">"                 { mkL LGreaterThan }
+<0>                 ">="                { mkL LGreaterThanOrEqual }
+<0>                 "=>"                { mkL LImplies }
+<0>                 "=="                { mkL LEqual }
+<0>                 "!="                { mkL LNotEqual }
 
 -- Significant whitespace
-@tabs               { mkL LTabs }
-\n                  { mkL LEoL }
+<0>                 @tabs               { mkL LTabs }
+<0>                 \n                  { mkL LEoL }
 
 {
 
-data LexemeClass = LDocAssignmentLine
-                 | LDocLine
+data LexemeClass = LDocLine
                  | LInteger
                  | LBool
                  | LReal
@@ -114,6 +131,7 @@ data LexemeClass = LDocAssignmentLine
                  | LSwitch
                  | LFor
                  | LIdent
+                 | LPartSeparator
                  | LQueue
                  | LGoesTo
                  | LGets
@@ -127,6 +145,7 @@ data LexemeClass = LDocAssignmentLine
                  | LPlus
                  | LMinus
                  | LDivide
+                 | LModulo
                  | LTimes
                  | LShiftLeft
                  | LShiftRight
@@ -153,8 +172,7 @@ data LexemeClass = LDocAssignmentLine
 mkL :: LexemeClass -> AlexInput -> Int -> Alex Token
 mkL c (p, _, _, str) len = let t = take len str in
                             case c of 
-                                LDocAssignmentLine  -> return (TDocAssignmentLine  p)
-                                LDocLine            -> return (TDocLine            p)
+                                LDocLine            -> return (TDocLine            t p)
                                 LInteger            -> return (TInteger            ((read t) :: Integer) p)
                                 LBool               -> return (TBool               (if t == "true" then True else False) p)
                                 LReal               -> return (TReal               ((read t) :: Double) p)
@@ -167,6 +185,7 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LSwitch             -> return (TSwitch             p)
                                 LFor                -> return (TFor                p)
                                 LIdent              -> return (TIdent              t p)
+                                LPartSeparator      -> return (TPartSeparator      p)
                                 LQueue              -> return (TQueue              p)
                                 LGoesTo             -> return (TGoesTo             p)
                                 LGets               -> return (TGets               p)
@@ -180,6 +199,7 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LPlus               -> return (TPlus               p)
                                 LMinus              -> return (TMinus              p)
                                 LDivide             -> return (TDivide             p)
+                                LModulo             -> return (TModulo             p)
                                 LTimes              -> return (TTimes              p)
                                 LShiftLeft          -> return (TShiftLeft          p)
                                 LShiftRight         -> return (TShiftRight         p)
@@ -204,61 +224,66 @@ mkL c (p, _, _, str) len = let t = take len str in
 alexEOF :: Alex Token
 alexEOF = return TEoF
 
+-- | Wrapper function for the lexer---allows the monadic lexer to be used with 
+-- a monadic parser
 lexWrap :: (Token -> Alex a) -> Alex a
 lexWrap = (alexMonadScan >>=)
 
-data Token = TDocAssignmentLine  {                          position :: AlexPosn }
-           | TDocLine            {                          position :: AlexPosn }
-           | TInteger            { intVal :: Integer,       position :: AlexPosn }
-           | TBool               { isTrue :: Bool,          position :: AlexPosn }
-           | TReal               { realVal :: Double,       position :: AlexPosn }
-           | TChar               { charVal :: Char,         position :: AlexPosn }
-           | TIf                 {                          position :: AlexPosn }
-           | TElse               {                          position :: AlexPosn }
-           | TWhile              {                          position :: AlexPosn }
-           | TRepeat             {                          position :: AlexPosn }
-           | TWith               {                          position :: AlexPosn }
-           | TSwitch             {                          position :: AlexPosn }
-           | TFor                {                          position :: AlexPosn }
-           | TIdent              { identifierVal :: String, position :: AlexPosn }
-           | TQueue              {                          position :: AlexPosn }
-           | TGoesTo             {                          position :: AlexPosn }
-           | TGets               {                          position :: AlexPosn }
-           | TLParenth           {                          position :: AlexPosn }
-           | TRParenth           {                          position :: AlexPosn }
-           | TLBracket           {                          position :: AlexPosn }
-           | TRBracket           {                          position :: AlexPosn }
-           | TLBrace             {                          position :: AlexPosn }
-           | TRBrace             {                          position :: AlexPosn }
-           | TImpure             {                          position :: AlexPosn }
-           | TPlus               {                          position :: AlexPosn }
-           | TMinus              {                          position :: AlexPosn }
-           | TDivide             {                          position :: AlexPosn }
-           | TTimes              {                          position :: AlexPosn }
-           | TShiftLeft          {                          position :: AlexPosn }
-           | TShiftRight         {                          position :: AlexPosn }
-           | TShiftRightSameSign {                          position :: AlexPosn }
-           | TAndScrict          {                          position :: AlexPosn }
-           | TAndLazy            {                          position :: AlexPosn }
-           | TOrStrict           {                          position :: AlexPosn }
-           | TOrLazy             {                          position :: AlexPosn }
-           | TNot                {                          position :: AlexPosn }
-           | TXor                {                          position :: AlexPosn }
-           | TLessThan           {                          position :: AlexPosn }
-           | TLessThanOrEqual    {                          position :: AlexPosn }
-           | TGreaterThan        {                          position :: AlexPosn }
-           | TGreaterThanOrEqual {                          position :: AlexPosn }
-           | TImplies            {                          position :: AlexPosn }
-           | TEqual              {                          position :: AlexPosn }
-           | TNotEqual           {                          position :: AlexPosn }
-           | TComma              {                          position :: AlexPosn }
-           | TTabs               { numTabs :: Int,          position :: AlexPosn }
-           | TEoL                {                          position :: AlexPosn }
-           | TEoF
+-- | Type to represent tokens in the output stream
+data Token = TDocLine            { docLineContent :: String,    position :: AlexPosn } -- ^ Line of documentation
+           | TInteger            { intVal :: Integer,           position :: AlexPosn } -- ^ An integral literal
+           | TBool               { isTrue :: Bool,              position :: AlexPosn } -- ^ A boolean literal
+           | TReal               { realVal :: Double,           position :: AlexPosn } -- ^ A real/floating-point literal
+           | TChar               { charVal :: Char,             position :: AlexPosn } -- ^ A single character literal
+           | TIf                 {                              position :: AlexPosn } -- ^ Keyword: @if@
+           | TElse               {                              position :: AlexPosn } -- ^ Keyword: @else@
+           | TWhile              {                              position :: AlexPosn } -- ^ Keyword: @while@
+           | TRepeat             {                              position :: AlexPosn } -- ^ Keyword: @repeat@
+           | TWith               {                              position :: AlexPosn } -- ^ Keyword: @with@
+           | TSwitch             {                              position :: AlexPosn } -- ^ Keyword: @switch@
+           | TFor                {                              position :: AlexPosn } -- ^ Keyword: @for@
+           | TIdent              { identifierVal :: String,     position :: AlexPosn } -- ^ An identifier
+           | TPartSeparator      {                              position :: AlexPosn } -- ^ @;@
+           | TQueue              {                              position :: AlexPosn } -- ^ @<-@
+           | TGoesTo             {                              position :: AlexPosn } -- ^ @->@
+           | TGets               {                              position :: AlexPosn } -- ^ @=@
+           | TLParenth           {                              position :: AlexPosn } -- ^ @(@
+           | TRParenth           {                              position :: AlexPosn } -- ^ @)@
+           | TLBracket           {                              position :: AlexPosn } -- ^ @[@
+           | TRBracket           {                              position :: AlexPosn } -- ^ @]@
+           | TLBrace             {                              position :: AlexPosn } -- ^ @{@
+           | TRBrace             {                              position :: AlexPosn } -- ^ @}@
+           | TImpure             {                              position :: AlexPosn } -- ^ @\@@
+           | TPlus               {                              position :: AlexPosn } -- ^ @+@
+           | TMinus              {                              position :: AlexPosn } -- ^ @-@
+           | TDivide             {                              position :: AlexPosn } -- ^ @/@
+           | TModulo             {                              position :: AlexPosn } -- ^ @%@
+           | TTimes              {                              position :: AlexPosn } -- ^ @*@
+           | TShiftLeft          {                              position :: AlexPosn } -- ^ @<<@
+           | TShiftRight         {                              position :: AlexPosn } -- ^ @>>@
+           | TShiftRightSameSign {                              position :: AlexPosn } -- ^ @>>>@
+           | TAndScrict          {                              position :: AlexPosn } -- ^ @&@
+           | TAndLazy            {                              position :: AlexPosn } -- ^ @&&@
+           | TOrStrict           {                              position :: AlexPosn } -- ^ @|@
+           | TOrLazy             {                              position :: AlexPosn } -- ^ @||@
+           | TNot                {                              position :: AlexPosn } -- ^ @!@
+           | TXor                {                              position :: AlexPosn } -- ^ @^@
+           | TLessThan           {                              position :: AlexPosn } -- ^ @<@
+           | TLessThanOrEqual    {                              position :: AlexPosn } -- ^ @<=@
+           | TGreaterThan        {                              position :: AlexPosn } -- ^ @>@
+           | TGreaterThanOrEqual {                              position :: AlexPosn } -- ^ @>=@
+           | TImplies            {                              position :: AlexPosn } -- ^ @=>@
+           | TEqual              {                              position :: AlexPosn } -- ^ @==@
+           | TNotEqual           {                              position :: AlexPosn } -- ^ @!=@
+           | TComma              {                              position :: AlexPosn } -- ^ @,@
+           | TTabs               { numTabs :: Int,              position :: AlexPosn } -- ^ @\t@
+           | TEoL                {                              position :: AlexPosn } -- ^ @\\n@
+           | TEoF                                                                      -- ^ @\\0@
     deriving (Eq, Ord, Show)
 
+-- | AlexPosn is ordered by the total number of characters read (its final field)
 instance Ord AlexPosn where
-    (AlexPn a _ _) < (AlexPn b _ _) = a < b
+    (AlexPn c1 _ _ ) < (AlexPn c2 _ _) = c1 < c2
     a <= b = (a < b) || (a == b)
 
 }
