@@ -10,7 +10,7 @@ Language    : Haskell2010
 
 This file defines the standard format for all Emperor programs.
 -}
-module Formatter where
+module Formatter (Format, FormatContext, formatFresh, format) where
 
 import AST
 import Data.List
