@@ -46,6 +46,11 @@ code {
 #project_title {
 	font-family: 'Playfair Display', serif;
 	font-kerning: auto;
-	font-weight: 900;
+	font-weight: inherit;
 	font-variant-ligatures: contextual;
+	text-transform: capitalize;
+}
+
+#project_tagline {
+	font-weight: bold;
 }
