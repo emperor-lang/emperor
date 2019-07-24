@@ -2,3 +2,19 @@
 ---
 
 @import "{{ site.theme }}";
+
+h1 {
+	/* font-family: 'Playfair Display', serif; */
+	/* font-family: 'Merriweather', serif; */
+	font-family: 'Slabo 27px', serif;
+	font-size: 27pt;
+	font-kerning: auto;
+	font-variant-ligatures: no-contextual;
+	text-align: center;
+}
+
+h2 {
+	font-family: 'Lato', sans-serif;
+	font-kerning: auto;
+	font-variant-ligatures: contextual;
+}
