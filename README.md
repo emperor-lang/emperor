@@ -56,6 +56,10 @@ A code of conduct can be found [here][code-of-conduct].
 
 This project is distributed under the [GPL-v3.0][license] license.
 
+## Author
+
+This project is primarily maintained by Edward Jones.
+
 [emperor.json]: https://github.com/emperor-lang/emperor/blob/master/emperor.json
 [ghc]: https://www.haskell.org/ghc/
 [alex]: https://www.haskell.org/alex/
