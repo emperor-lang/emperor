@@ -10,7 +10,7 @@ Language    : Haskell2010
 
 This file defines the standard format for all Emperor programs.
 -}
-module Formatter where
+module Formatter (Format, FormatContext, formatFresh, format) where
 
 import AST
 import Data.List
@@ -42,7 +42,7 @@ instance Format AST where
 
 -- | Doclines may be formatted as they appear
 instance Format DocLines where
-    format ctx (DocLines ds) = unlines $ [indent ctx ++ "/*"] ++ (format ctx <$> ds) ++ [indent ctx ++ "*/"] 
+    format ctx (DocLines ds) = makeLines $ [indent ctx ++ "/*"] ++ (format ctx <$> ds) ++ [indent ctx ++ "*/"] 
 
 -- | Doclines are formatted as comments
 instance Format DocLine where
@@ -51,12 +51,12 @@ instance Format DocLine where
 -- | Body block may be formatted with included code indented one layer further
 instance Format BodyBlock where
     format ctx (Line l)         = format ctx l
-    format ctx (IfElse c b1 b2) = unlines $ [ indent ctx ++ "if " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b1) ++ [indent ctx ++ "else"] ++ (format (ctx + 1) <$> b2) 
-    format ctx (While c b)      = unlines $ [ indent ctx ++ "while " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b)
-    format ctx (For i e b)      = unlines $ [ indent ctx ++ "for " ++ format (ctx + 1) i ++ " <- " ++ format (ctx + 1) e] ++ (format (ctx + 1) <$> b)
-    format ctx (Repeat c b)     = unlines $ [ indent ctx ++ "repeat " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b)
-    format ctx (With a b)       = unlines $ [ indent ctx ++ "with " ++ format (ctx + 1) a] ++ (format (ctx + 1) <$> b)
-    format ctx (Switch c s)     = unlines $ [ indent ctx ++ "switch " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> s)
+    format ctx (IfElse c b1 b2) = makeLines $ [ indent ctx ++ "if " ++ format (ctx + 1) c ++ ":"] ++ (format (ctx + 1) <$> b1) ++ [indent ctx ++ "#"] ++ [indent ctx ++ "else"] ++ (format (ctx + 1) <$> b2) 
+    format ctx (While c b)      = makeLines $ [ indent ctx ++ "while " ++ format (ctx + 1) c ++ ":"] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (For i e b)      = makeLines $ [ indent ctx ++ "for " ++ format (ctx + 1) i ++ " <- " ++ format (ctx + 1) e ++ ":"] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (Repeat c b)     = makeLines $ [ indent ctx ++ "repeat " ++ format (ctx + 1) c ++ ":"] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (With a b)       = makeLines $ [ indent ctx ++ "with " ++ format (ctx + 1) a ++ ":"] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (Switch c s)     = makeLines $ [ indent ctx ++ "switch " ++ format (ctx + 1) c ++ ":"] ++ (format (ctx + 1) <$> s) ++ [indent ctx ++ "#"]
 
 -- | Switch-cases may be formatted with their case contents
 instance Format SwitchCase where
@@ -142,3 +142,11 @@ instance Format Tabs where
 -- | Create the appropriate amount of indentation for the current context
 indent :: FormatContext -> String
 indent ctx = replicate ctx '\t'
+
+makeLines :: [String] -> String
+makeLines xs = concat $ makeLines' xs
+    where
+        makeLines' :: [String] -> [String]
+        makeLines' [] = []
+        makeLines' (x:[]) = [x]
+        makeLines' (x:xs') = x : "\n" : makeLines' xs'
