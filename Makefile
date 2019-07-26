@@ -28,6 +28,7 @@ build: ./emperor
 ./emperor: ./dist/build/emperor/emperor
 	@echo "[[ ! -f $@ ]] && ln -s $^ $@"
 	$(shell [[ ! -f $@ ]] && ln -s $^ $@)
+.DELETE_ON_ERROR: ./emperor
 
 ./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
 	cabal build $(CABALFLAGS)
@@ -88,11 +89,6 @@ clean-installation:
 .PHONY: clean-installation
 
 clean:
-	-@cabal clean											1>/dev/null || true
-	-@$(RM) cabal.config									2>/dev/null || true
-	-@$(RM) Args.hs											2>/dev/null	|| true
-	-@$(RM) *_completions.sh								2>/dev/null || true
-	-@$(RM) ./emperor										2>/dev/null || true
-	-@$(RM) ./parser/Emperor{Lexer,Parser,ParserData}.hs	2>/dev/null || true
-	-@$(RM) ./parser/emperorParser.info						2>/dev/null || true
+	cabal clean --verbose=0
+	$(RM) cabal.config Args.hs *_completions.sh ./emperor ./parser/Emperor{Lexer,Parser,ParserData}.h{s,i} ./parser/emperorParser.info
 .PHONY: clean
