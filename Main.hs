@@ -19,7 +19,7 @@ import EmperorParserWrapper (parse)
 import Logger (makeLoggers)
 import Formatter (formatFresh)
 import Control.Monad (when)
-import TypeChecker (typeCheck, TypeCheckResult(..))
+import Types (resolveTypes, TypeJudgementResult(..))
 
 -- | Provides the entry-point
 main :: IO ()
@@ -44,6 +44,6 @@ main = do
             scc $ "Parsing completed successfully, got AST: " ++ show prog
             putStr $ ">>>" ++ formatFresh prog ++ "<<<"
             inf $ "Checking types"
-            case typeCheck prog of
-                Fine     -> scc "Type-checking worked!"
-                Bad msg' -> err msg'
+            case resolveTypes prog of
+                Valid _ _ -> scc "Type-checking worked!"
+                Invalid x  -> err $ show x

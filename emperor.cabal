@@ -58,7 +58,7 @@ executable emperor
                        --  TODO: Fix the unused imports warning
 
   -- Source directories
-  hs-source-dirs:      ., ./parser/, ./logging/, ./formatter/, ./type-checking/
+  hs-source-dirs:      ., ./parser/, ./logging/, ./formatter/, ./types/
   
   -- Modules included in this executable, other than Main.
   -- other-modules:       
