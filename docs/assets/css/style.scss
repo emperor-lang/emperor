@@ -9,10 +9,12 @@
 $headerTypeface: "Open Sans", sans-serif;
 $bodyTypeface: "Noto Serif", "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
   "Helvetica Neue", sans-serif;
+$accentColour: rgb(40, 0, 40);
 
 @for $i from 1 through 6 {
   h#{$i} {
     font-family: $headerTypeface;
+    color: $accentColour;
     font-weight: bold;
     font-kerning: auto;
     font-variant-ligatures: contextual;
@@ -30,7 +32,7 @@ code {
 }
 
 .link {
-  color: #7c009c;
+  color: $accentColour;
 }
 .link:hover {
   color: #a700d1;
@@ -43,12 +45,18 @@ code {
 #project_title {
   font-family: $bodyTypeface;
   font-kerning: auto;
-  font-weight: inherit;
+  font-weight: normal;
+  letter-spacing: 0.01em;
   font-variant-ligatures: contextual;
   text-transform: capitalize;
 }
 
 #project_tagline {
   font-family: $headerTypeface;
-  font-weight: bold;
+  font-weight: normal;
+  letter-spacing: 0.0125;
+}
+
+#header_wrap {
+  background: $accentColour;
 }
