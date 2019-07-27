@@ -19,7 +19,7 @@ import EmperorParserWrapper (parse)
 import Logger (makeLoggers)
 import Formatter (formatFresh)
 import Control.Monad (when)
-import Types (resolveTypes, TypeJudgementResult(..))
+import Types.Types (resolveTypes, TypeJudgementResult(..))
 
 -- | Provides the entry-point
 main :: IO ()

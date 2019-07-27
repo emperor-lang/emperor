@@ -1,9 +1,21 @@
-module Checker ((|-), (<:)) where
+{-|
+Module      : Checker
+Description : Type checker for emperor
+Copyright   : (c) Edward Jones, 2019
+License     : GPL-3
+Maintainer  : Edward Jones
+Stability   : experimental
+Portability : POSIX
+Language    : Haskell2010
+
+This module defines the type-checker for Emperor
+-}
+module Types.Checker ((|-), (<:)) where
 
 import Data.List ((\\))
 import Data.Map ((!), empty, keys, Map)
-import Results (EmperorType(..), TypeCheckResult(..))
-import TypeEnvironment (TypeEnvironment)
+import Types.Results (EmperorType(..), TypeCheckResult(..))
+import Types.Environment (TypeEnvironment)
 
 -- | Represents a comparison between two types
 data TypeComparison = SubType EmperorType EmperorType

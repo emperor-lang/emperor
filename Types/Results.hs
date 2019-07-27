@@ -8,10 +8,10 @@ Stability   : experimental
 Portability : POSIX
 Language    : Haskell2010
 
-This module defines valid type structures, type environments and the results 
-which may be returned by the argument resolver.
+This module defines valid type structures and the results which may be returned
+by the argument checker or resolver.
 -}
-module Results (
+module Types.Results (
     EmperorType(..), TypeCheckResult(..), TypeJudgementResult(..)
 ) where
 
