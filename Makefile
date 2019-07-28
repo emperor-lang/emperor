@@ -23,6 +23,9 @@ COMPLETION_INSTALL_LOCATION := /usr/share/bash-completion/completions/emperor
 
 .DEFAULT_GOAL := all
 
+# All required source file 
+SOURCE_FILES = $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
+
 all: build 
 .PHONY: all
 
@@ -33,7 +36,7 @@ build: ./emperor
 	@echo "[[ ! -f $@ ]] && ln -s $^ $@"
 	$(shell [[ ! -f $@ ]] && ln -s $^ $@)
 
-./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
+./dist/build/emperor/emperor: $(SOURCE_FILES)
 	cabal build $(CABALFLAGS)
 
 ./parser/EmperorLexer.hs: ./parser/EmperorLexer.x ./parser/EmperorLexer.hs.patch
@@ -86,7 +89,7 @@ open-doc: dist/doc/html/emperor/emperor/index.html
 	$(OPEN) $<
 .PHONY: open-doc
 
-dist/doc/html/emperor/emperor/index.html: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
+dist/doc/html/emperor/emperor/index.html: $(SOURCE_FILES)
 	cabal haddock --executables
 
 clean-installation:
