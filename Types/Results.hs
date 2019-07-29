@@ -12,16 +12,16 @@ This module defines valid type structures and the results which may be returned
 by the argument checker or resolver.
 -}
 module Types.Results (
-    EmperorType(..), TypeCheckResult(..), TypeJudgementResult(..)
+    EmperorType(..), TypeCheckResult(..), TypeJudgementResult(..), Purity(..)
 ) where
 
 import Data.Map (Map)
 
 -- | The result of a typing judgement. This is either an error indicating a
 -- problem or a type
-data TypeJudgementResult a = Valid a EmperorType -- ^ Valid node with type
-                           | Invalid String -- ^ Indicates an incorrect type and 
-                                            -- gives an explanation
+data TypeJudgementResult = Valid EmperorType -- ^ Valid type
+                         | Invalid String -- ^ Indicates an incorrect type and 
+                                          -- gives an explanation
     deriving (Eq, Show)
 
 -- | The result of a type-check; this indicates a valid or invalid relation.
@@ -31,15 +31,25 @@ data TypeCheckResult = Pass -- ^ Indicates a correct type statement
                                    -- reason
     deriving (Eq)
 
+-- instance Functor TypeCheckResult where
+--     fmap f Pass = Pass
+--     fmap f (Fail s) = Fail $ f s
+
+-- | Marker for whether a function is pure or impure
+data Purity = Pure
+            | Impure
+    deriving (Eq, Show)
+
 -- | Data to represent all Emperor types
 data EmperorType = IntP -- ^ Integer primitive
                  | CharP -- ^ Character primitive
                  | BoolP -- ^ Boolean primitive
                  | RealP -- ^ Real number primitive
+                 | ESet EmperorType -- ^ Set composite
                  | EList EmperorType -- ^ List composite
                  | ETuple [EmperorType] -- ^ Tuple composite
                  | ERecord String (Map String EmperorType) -- ^ Record composite
-                 | EFunction EmperorType EmperorType -- ^ Function composite
+                 | EFunction Purity EmperorType EmperorType -- ^ Function composite
                  | Any -- ^ Universal super-type
                  | Unit -- ^ Universal sub-type
     deriving (Eq, Show)
