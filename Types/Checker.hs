@@ -14,7 +14,7 @@ module Types.Checker ((|-), (<:), SubTypable) where
 
 import Data.List ((\\))
 import Data.Map ((!), empty, keys, Map)
-import Types.Results (EmperorType(..), TypeCheckResult(..), Purity)
+import Types.Results (EmperorType(..), TypeCheckResult(..), Purity(..))
 import Types.Environment (TypeEnvironment)
 
 -- | Represents a comparison between two types
@@ -53,7 +53,7 @@ instance SubTypable EmperorType where
         | otherwise = typeCheckFail (SubType (as ! b) (bs ! b))
             where
                 b = head $ filter (\k -> (e |- ((as ! k) <: (bs ! k))) /= Pass) $ keys as
-    e |- (SubType (EFunction p i o) (EFunction p' i' o')) = case e |- (p <: p')
+    e |- (SubType (EFunction p i o) (EFunction p' i' o')) = case e |- (p <: p') of
                                                                 Pass -> case e |- (i' <: i) of
                                                                     Pass -> e |- (o <: o')
                                                                     x -> x 
