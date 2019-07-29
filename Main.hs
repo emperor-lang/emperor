@@ -28,8 +28,7 @@ main = do
     (err, inf, scc, wrn) <- makeLoggers args
 
     if input args == ""
-        then do
-            wrn "No input files detected, reading from stdin"
+        then wrn "No input files detected, reading from stdin"
         else inf $ "Using input file " ++ input args
 
     let sanitisedArguments = if input args == ""
@@ -43,7 +42,7 @@ main = do
         Right prog  -> do
             scc $ "Parsing completed successfully, got AST: " ++ show prog
             putStr $ ">>>" ++ formatFresh prog ++ "<<<"
-            inf $ "Checking types"
+            inf "Checking types"
             case resolveTypes prog of
                 Valid _ _ -> scc "Type-checking worked!"
                 Invalid x  -> err $ show x
