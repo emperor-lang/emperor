@@ -13,7 +13,7 @@ for compatibility.
 -}
 module Types.Resolver ((|>), judge, Typable) where
 
-import AST (Expr(..), Value(..), PureCall(..), ImpureCall(..), Ident (..))
+import AST (Expr(..), Value(..), PureCall(..), ImpureCall(..), Ident(..))
 import Types.Checker ((|-), (<:))
 import Types.Results (TypeJudgementResult(..), TypeCheckResult(..), EmperorType(..), Purity(..))
 import Types.Environment (get, newTypeEnvironment, TypeEnvironment, unsafeGet)
@@ -82,22 +82,32 @@ instance Typable Expr where
                                         where
                                             tjs = (g |>) <$> es
                                             ts = unbox tjs
-    g |> (PureCallExpr (PureCall (Ident p) es)) = case get p g of
+    -- g |> (PureCallExpr (PureCall (Ident p) es)) = case get p g of
+    --                                         Valid (EFunction pty ti to) ->
+    --                                             assert 
+    --                                                 (
+    --                                                     (g |- (pty <: Pure)) == Pass &&
+    --                                                     all validType ((g |>) <$> (\(x,y) -> (x <: y)) <$> zip <$> es ts)
+    --                                                     -- all (\(e,t) -> validType (g |> (e <: t))) (zip es ts)
+    --                                                 )
+    --                                                 (i ++ " cannot be used as a pure function")
+    --                                             to
+    --                                         x -> x
+    g |> (ImpureCallExpr (ImpureCall (Ident i) e)) = case get i g of
                                             Valid (EFunction pty ti to) ->
-                                                assert (g |- (pty <: Pure)) (p ++ " cannot be used as a pure function")
+                                                assert 
                                                     (
-                                                        let tjs = (g |>) <$> es
-                                                        if all validType tjs
-                                                        then
-                                                            let ts = unbox tjs in
-                                                            assert (all (\(j,e) -> (g |- (j <: e))))
-                                                        else
-                                                            head (filter (not . validType) tjs)
+                                                        (g |- (pty <: Impure)) == Pass &&
+                                                        (g |- (ti <: e)) == Pass
+                                                        -- all validType ((g |>) <$> (\(x,y) -> (x <: y)) <$> zip <$> es ts)
+                                                        -- all (\(e,t) -> validType (g |> (e <: t))) (zip es ts)
                                                     )
+                                                    (i ++ " cannot be used as an impure function")
+                                                to
                                             x -> x
     -- g |> (ImpureCallExpr (ImpureCall (Ident i) _)) = case get i g of
-    --                                         Valid t -> EFunction Impure t
-    --                                         x -> x
+    --                                                     Valid t -> EFunction Impure t
+    --                                                     x -> x
 
 assertExpr :: Typable a => Typable b => TypeEnvironment -> EmperorType -> a -> b -> TypeJudgementResult
 assertExpr g t e1 e2 = let t1 = g |> e1 in 
