@@ -29,6 +29,7 @@ body {
 	background-color: $backgroundColour;
 	font-kerning: auto;
 	font-variant-ligatures: contextual;
+	line-height: 1.55;
 }
 
 code {
@@ -73,6 +74,6 @@ a:hover {
 	color: $backgroundColour;
 }
 
-span.k {
+.k {
 	font-weight: normal;
 }
