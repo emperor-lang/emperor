@@ -3,7 +3,7 @@
 
 @import '{{ site.theme }}';
 
-@import url('https://fonts.googleapis.com/css?family=Noto+Sans:700|Noto+Serif:400,400i,700&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans:400,700|Noto+Serif:400,400i,700&display=swap');
 
 $headerTypeface: 'Noto Sans', sans-serif;
 $bodyTypeface: 'Noto Serif', 'Open Sans', -apple-system, BlinkMacSystemFont,
@@ -63,7 +63,7 @@ a:hover {
 
 #project_tagline {
 	font-family: $headerTypeface;
-	font-weight: normal;
+	font-weight: 400;
 	letter-spacing: 0.0125;
 	text-shadow: unset;
 }
