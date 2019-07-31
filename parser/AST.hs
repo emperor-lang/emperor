@@ -88,11 +88,11 @@ data Expr = Value Value
     deriving Show
 
 -- | Data-structure to represent a pure function-call
-data PureCall = PureCall Ident [Expr]
+data PureCall = PureCall Ident Expr
     deriving Show
 
 -- | Data-structure to represent an impure function-call
-data ImpureCall = ImpureCall Ident [Expr]
+data ImpureCall = ImpureCall Ident Expr
     deriving Show
 
 -- | Data-structure to represent tab-indentation
