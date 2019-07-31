@@ -173,11 +173,26 @@ expr : value                            { Value $1 }
      | pureCall                         { PureCallExpr $1 }
      | impureCall                       { ImpureCallExpr $1 }
 
-pureCall :: {PureCall}
-pureCall : IDENT "(" exprList ")"       { PureCall (Ident (identifierVal $1)) $3 }
+-- TODO: Attempt to make pure and impure calls the same type and take a single (possibly-tuple) argument
 
-impureCall :: {ImpureCall}
-impureCall : "@" IDENT "(" exprList ")"  { ImpureCall (Ident (identifierVal $2)) $4 }
+pureIdent :: {PureIdent}
+pureIdent : IDENT   {PureIdent (Ident (identifierVal $1))}
+
+impureIdent :: {ImpureIdent}
+pureIdent : "@" IDENT   {ImpureIdent (Ident (identifierVal $2))}
+
+-- pureCall :: {PureCall}
+-- pureCall : IDENT "(" exprList ")"       { PureCall (Ident (identifierVal $1)) $3 }
+
+-- impureCall :: {ImpureCall}
+-- impureCall : "@" IDENT "(" exprList ")"  { ImpureCall (Ident (identifierVal $2)) $4 }
+
+application :: {FunctionAppliction}
+application : IDENT exprs   {}
+
+exprs :: {[Expr]}
+exprs : {- empty -}     {[]}
+      | expr exprs      {$1 : $2}
 
 exprList :: {[Expr]}
 exprList : {- empty -}          { [] }
