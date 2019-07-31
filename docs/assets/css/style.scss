@@ -3,13 +3,15 @@
 
 @import '{{ site.theme }}';
 
-@import url('https://fonts.googleapis.com/css?family=Open+Sans|Noto+Serif');
-@import url('https://fonts.googleapis.com/css?family=Playfair+Display&display=swap&text=Empero');
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans:700|Noto+Serif:400,400i|Open+Sans:700&display=swap');
 
 $headerTypeface: 'Open Sans', sans-serif;
 $bodyTypeface: 'Noto Serif', 'Open Sans', -apple-system, BlinkMacSystemFont,
 	'Segoe UI', Roboto, Oxygen, Ubuntu, 'Helvetica Neue', sans-serif;
 $accentColour: rgb(40, 0, 40);
+$backgroundColour: #f7fff7;
+$bodyTextColour: #000000;
+$linkHoverColour: #2f3061;
 
 @for $i from 1 through 6 {
 	h#{$i} {
@@ -23,6 +25,8 @@ $accentColour: rgb(40, 0, 40);
 
 body {
 	font-family: $bodyTypeface;
+	color: $bodyTextColour;
+	background-color: $backgroundColour;
 	font-kerning: auto;
 	font-variant-ligatures: contextual;
 }
@@ -59,4 +63,5 @@ code {
 
 #header_wrap {
 	background: $accentColour;
+	color: $backgroundColour;
 }
