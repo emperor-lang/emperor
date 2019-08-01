@@ -16,15 +16,6 @@ module EmperorParser (parseEmperor) where
 import AST
 import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 
--- TODO:    Figure out why a Monad would be good? 
---          Create a monad which allows the context to be assigned
-
-
--- data EmperorParserResult = EmperorParserResult Alexposn
-
--- instance Monad EmperorParserResult where
---     (>>=) = asdf
---     return = []
 }
 
 
@@ -38,7 +29,7 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 %tokentype { Token }
 
 -- Enforce perfection
-%expect 0
+-- %expect 0
 
 %token
     DOCASSIGNMENTLINE   { TDocAssignmentLine    _ }
@@ -135,7 +126,7 @@ bodyLine : indentation bodyLineContent {BodyLine $1 $2}
 bodyLineContent :: {BodyLineContent}
 bodyLineContent : assignment            { AssignmentC $1 }
                 | queue                 { QueueC $1 }
-                | impureCall            { ImpureCallC $1 }
+                | partialCall           { CallC $1 }
 
 assignment :: {Assignment}
 assignment : IDENT "=" expr { Assignment (Ident (identifierVal $1)) $3 } 
@@ -170,25 +161,6 @@ expr : value                            { Value $1 }
      | "{" exprList "}"                 { Set $2 }
      | "(" exprList ")"                 { Tuple $2 }
      | "[" exprList "]"                 { List $2 }
-     | pureCall                         { PureCallExpr $1 }
-     | impureCall                       { ImpureCallExpr $1 }
-
--- TODO: Attempt to make pure and impure calls the same type and take a single (possibly-tuple) argument
-
-pureIdent :: {PureIdent}
-pureIdent : IDENT   {PureIdent (Ident (identifierVal $1))}
-
-impureIdent :: {ImpureIdent}
-pureIdent : "@" IDENT   {ImpureIdent (Ident (identifierVal $2))}
-
--- pureCall :: {PureCall}
--- pureCall : IDENT "(" exprList ")"       { PureCall (Ident (identifierVal $1)) $3 }
-
--- impureCall :: {ImpureCall}
--- impureCall : "@" IDENT "(" exprList ")"  { ImpureCall (Ident (identifierVal $2)) $4 }
-
-application :: {FunctionAppliction}
-application : IDENT exprs   {}
 
 exprs :: {[Expr]}
 exprs : {- empty -}     {[]}
@@ -207,14 +179,24 @@ indentation : {- empty -} { Tabs 0 }
             | TABS        { Tabs (numTabs $1) }
 
 value :: {Value}
-value : INT     { Integer (intVal $1) }
-      | REAL    { Real (realVal $1)}
-      | IDENT   { IdentV (identifierVal $1) }
-      | CHAR    { Char (charVal $1) }
-      | BOOL    { Bool (isTrue $1) }
+value : INT         { Integer (intVal $1) }
+      | REAL        { Real (realVal $1)}
+      | IDENT       { IdentV (identifierVal $1) }
+      | CHAR        { Char (charVal $1) }
+      | BOOL        { Bool (isTrue $1) }
+      | partialCall { Call $1 }
+
+partialCall :: {PartialCall}
+partialCall : partialCall expr          { PartialApplication $1 $2 }
+            | "@" IDENT                 { CallIdentifier Impure (Ident (identifierVal $1)) }
+            | IDENT                     { CallIdentifier Pure (Ident (identifierVal $1)) }
 
 
 {
+
+getPurity :: PartialCall -> Purity
+getPurity (PartialApplication c _) = getPurity c
+getPurity (CallIdentifier p _)     = p
 
 parseError :: Token -> Alex a
 parseError t = alexError $ "Parser error on token " ++ show t

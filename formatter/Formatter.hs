@@ -61,7 +61,7 @@ instance Format BodyLine where
 instance Format BodyLineContent where
     format ctx (AssignmentC a) = format ctx a
     format ctx (QueueC q) = format ctx q
-    format ctx (ImpureCallC c) = format ctx c
+    format ctx (CallC c) = format ctx c
 
 -- | Assignments may be formatted using their left and right sides
 instance Format Assignment where
@@ -99,20 +99,20 @@ instance Format Expr where
     format ctx (Set l)                                          = "(" ++ format ctx l ++ "}"
     format ctx (Tuple l)                                        = "(" ++ format ctx l ++ ")"
     format ctx (List l)                                         = "[" ++ format ctx l ++ "]"
-    format ctx (PureCallExpr c)                                 = format ctx c
-    format ctx (ImpureCallExpr c)                               = format ctx c
+    -- format ctx (PureCallExpr c)                                 = format ctx c
+    -- format ctx (ImpureCallExpr c)                               = format ctx c
 
 -- | Binary operators are formatted with the operator symbol surrounded by spaces and the formatted left and right expressions
 formatBinOp :: Format a => Format b => FormatContext -> String -> a -> b -> String
 formatBinOp ctx op e1 e2 = format ctx e1 ++ " " ++ op ++ " " ++ format ctx e2
 
--- | Pure calls are formatted as their identifier and arguments
-instance Format PureCall where
-    format ctx (PureCall i e) = format ctx i ++ "(" ++ format (ctx + 1) e ++ ")"
+-- -- | Pure calls are formatted as their identifier and arguments
+-- instance Format PureCall where
+--     format ctx (PureCall i e) = format ctx i ++ "(" ++ format (ctx + 1) e ++ ")"
     
--- | Impure calls are formatted as their identifier and arguments
-instance Format ImpureCall where
-    format ctx (ImpureCall i e) = "@" ++ format ctx (PureCall i e)
+-- -- | Impure calls are formatted as their identifier and arguments
+-- instance Format ImpureCall where
+--     format ctx (ImpureCall i e) = "@" ++ format ctx (PureCall i e)
 
 -- | Values are formatted according to their type
 instance Format Value where
@@ -121,6 +121,17 @@ instance Format Value where
     format _ (Char c)       = show c
     format _ (IdentV s)     = s
     format _ (Bool b)       = if b then "true" else "false"
+    format ctx (Call c)     = format ctx c
+
+-- | Calls are formatted by their contents
+instance Format PartialCall where
+    format ctx (PartialApplication p e) = format ctx p ++ format ctx e
+    format ctx (CallIdentifier p i)     = format ctx p ++ format ctx i
+
+-- | Impure functions have an "\@" in from of them, pure ones have nothing
+instance Format Purity where
+    format _ Pure   = ""
+    format _ Impure = "@"
 
 -- | Identifiers are formatted as their name
 instance Format Ident where
