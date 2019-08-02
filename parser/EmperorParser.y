@@ -181,22 +181,17 @@ indentation : {- empty -} { Tabs 0 }
 value :: {Value}
 value : INT         { Integer (intVal $1) }
       | REAL        { Real (realVal $1)}
-      | IDENT       { IdentV (identifierVal $1) }
+    --   | IDENT       { IdentV (identifierVal $1) }
       | CHAR        { Char (charVal $1) }
       | BOOL        { Bool (isTrue $1) }
       | partialCall { Call $1 }
 
 partialCall :: {PartialCall}
-partialCall : partialCall expr          { PartialApplication $1 $2 }
-            | "@" IDENT                 { CallIdentifier Impure (Ident (identifierVal $1)) }
-            | IDENT                     { CallIdentifier Pure (Ident (identifierVal $1)) }
-
+partialCall : partialCall expr { PartialApplication $1 $2 }
+            | "@" IDENT        { CallIdentifier Impure (Ident (identifierVal $1)) }
+            | IDENT            { CallIdentifier Pure (Ident (identifierVal $1)) }
 
 {
-
-getPurity :: PartialCall -> Purity
-getPurity (PartialApplication c _) = getPurity c
-getPurity (CallIdentifier p _)     = p
 
 parseError :: Token -> Alex a
 parseError t = alexError $ "Parser error on token " ++ show t
