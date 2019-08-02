@@ -42,8 +42,8 @@ a <: b = SubType a b
 -- | Type class to describe objects upon which the subtype relation is valid
 class SubTypable a where
     infixl 0 |-
-    -- | Judge the validity of a type comparison
     (|-) :: TypeEnvironment -> TypeComparison a a -> TypeCheckResult
+    -- ^ Judge the validity of a type comparison
 
 instance SubTypable EmperorType where
     _ |- (SubType a b)

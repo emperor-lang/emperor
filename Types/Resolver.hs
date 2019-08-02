@@ -25,13 +25,14 @@ import Types.Results (EmperorType(..), TypeCheckResult(..), TypeJudgementResult(
 
 -- | Class describing constructs which may be assigned a type.
 class Typable a where
-    -- | Obtain the type of a given construct from a fresh environment.
     judge :: a -> TypeJudgementResult
     judge = (newTypeEnvironment |>)
-    -- | Judge the type of a given construct under a particular typing 
-    -- environment.
+    -- ^ Obtain the type of a given construct from a fresh environment.
+    
     (|>) :: TypeEnvironment -> a -> TypeJudgementResult
     infixl 1 |>
+    -- ^ Judge the type of a given construct under a particular typing 
+    -- environment.
 
 instance Typable Expr where
     g |> (Value v) = g |> v
