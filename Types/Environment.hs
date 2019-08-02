@@ -18,6 +18,7 @@ module Types.Environment
     ) where
 
 import Data.Map (Map, empty, lookup)
+import Data.Maybe (fromMaybe)
 import Prelude hiding (lookup)
 import Types.Results (EmperorType, TypeJudgementResult(..))
 
@@ -35,10 +36,7 @@ get s g =
         Just t -> Valid t
         Nothing -> Invalid $ "Type unknown in current environment" ++ s
 
--- | Get a value from a type environment under the assertion that it already
+        -- | Get a value from a type environment under the assertion that it already
 -- exists. This should only be used for types guaranteed to be in the prelude.
 unsafeGet :: String -> TypeEnvironment -> EmperorType
-unsafeGet s g =
-    case lookup s g of
-        Just t -> t
-        Nothing -> error $ "Could not find type " ++ s
+unsafeGet s g = fromMaybe (error $ "Could not find type " ++ s) (lookup s g)
