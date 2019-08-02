@@ -11,12 +11,50 @@ Language    : Haskell2010
 This module defines the data-types used to form the abstract syntax tree of the
 emperor language.
 -}
-module AST where
+module AST
+    ( Assignment(..)
+    , AST(..)
+    , BodyBlock(..)
+    , BodyLine(..)
+    , BodyLineContent(..)
+    , Expr(..)
+    , getPurity
+    , Ident(..)
+    , Import(..)
+    , ImportLocation(..)
+    , ImportType(..)
+    , ModuleHeader(..)
+    , PartialCall(..)
+    , Purity(..)
+    , Queue(..)
+    , SwitchCase(..)
+    , Tabs(..)
+    , Value(..)
+    ) where
 
--- | Data type to represent the abstract syntax tree
-newtype AST =
-    AST [BodyBlock]
+-- | Data type to represent the abstract syntax tree for a single module. This is specified by its name, its imports and its code.
+data AST =
+    AST ModuleHeader [Import] [BodyBlock]
     deriving (Show)
+
+-- | A single module header
+data ModuleHeader = Module Ident
+    deriving Show
+-- | A single imported file
+data Import =
+    Import ImportLocation (Maybe [Ident])
+    deriving Show
+
+-- | Location of an import and how to treat it
+data ImportLocation =
+    ImportLocation ImportType Ident
+    deriving Show
+
+-- | The type of an import
+data ImportType
+    = Local -- ^ Indicates a file in the current project
+    | Global -- ^ Indicates a file in the global installation
+    deriving Show
 
 -- | Represents a single construction in the body of a function. This may be a
 -- further construct or just a single line
@@ -90,7 +128,7 @@ data Expr
     | Tuple [Expr]
     | List [Expr]
     deriving (Show)
-    
+
 -- | Represents the use of a function
 data PartialCall
     = PartialApplication PartialCall Expr

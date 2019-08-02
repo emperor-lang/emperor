@@ -67,6 +67,8 @@ $alphaNum = [$alpha$num]
 "with"              { mkL LWith }
 "switch"            { mkL LSwitch }
 "for"               { mkL LFor }
+"import"            { mkL LImport }
+"module"            { mkL LModule }
 
 -- Identifiers
 @ident              { mkL LIdent }
@@ -85,22 +87,22 @@ $alphaNum = [$alpha$num]
 "@"                 { mkL LImpure }
 
 -- Operators
-"+"                { mkL LPlus }
-"-"                { mkL LMinus }
-"/"                { mkL LDivide }
-"%"                { mkL LModulo }
-"*"                { mkL LTimes }
-"<<"              { mkL LShiftLeft }
+"+"                 { mkL LPlus }
+"-"                 { mkL LMinus }
+"/"                 { mkL LDivide }
+"%"                 { mkL LModulo }
+"*"                 { mkL LTimes }
+"<<"                { mkL LShiftLeft }
 ">>"                { mkL LShiftRight }
 ">>>"               { mkL LShiftRightSameSign }
 "&"                 { mkL LAndScrict }
 "&&"                { mkL LAndLazy }
-"|"                { mkL LOrStrict }
-"||"              { mkL LOrLazy }
+"|"                 { mkL LOrStrict }
+"||"                { mkL LOrLazy }
 "!"                 { mkL LNot }
-"^"                { mkL LXor }
-"<"                { mkL LLessThan }
-"<="               { mkL LLessThanOrEqual }
+"^"                 { mkL LXor }
+"<"                 { mkL LLessThan }
+"<="                { mkL LLessThanOrEqual }
 ">"                 { mkL LGreaterThan }
 ">="                { mkL LGreaterThanOrEqual }
 "=>"                { mkL LImplies }
@@ -126,6 +128,8 @@ data LexemeClass = LDocAssignmentLine
                  | LWith
                  | LSwitch
                  | LFor
+                 | LImport
+                 | LModule
                  | LIdent
                  | LQueue
                  | LGoesTo
@@ -180,6 +184,8 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LWith               -> return (TWith               p)
                                 LSwitch             -> return (TSwitch             p)
                                 LFor                -> return (TFor                p)
+                                LImport             -> return (TImport             p)
+                                LModule             -> return (TModule             p)
                                 LIdent              -> return (TIdent              t p)
                                 LQueue              -> return (TQueue              p)
                                 LGoesTo             -> return (TGoesTo             p)
@@ -238,6 +244,8 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TWith               {                          position :: AlexPosn } -- ^ Keyword: @with@
            | TSwitch             {                          position :: AlexPosn } -- ^ Keyword: @switch@
            | TFor                {                          position :: AlexPosn } -- ^ Keyword: @for@
+           | TImport             {                          position :: AlexPosn } -- ^ Keyword: @import@
+           | TModule             {                          position :: AlexPosn } -- ^ Keyword: @module@
            | TIdent              { identifierVal :: String, position :: AlexPosn } -- ^ An identifier
            | TQueue              {                          position :: AlexPosn } -- ^ @<-@
            | TGoesTo             {                          position :: AlexPosn } -- ^ @->@

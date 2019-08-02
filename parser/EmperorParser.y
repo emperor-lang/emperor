@@ -45,6 +45,8 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
     "with"              { TWith                 _ }
     "switch"            { TSwitch               _ }
     "for"               { TFor                  _ }
+    "import"            { TImport               _ }
+    "module"            { TModule               _ }
     IDENT               { TIdent                identifierVal _ }
     "<-"                { TQueue                _ }
     "->"                { TGoesTo               _ }
@@ -81,6 +83,7 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
     TABS                { TTabs                 numTabs _ }
     EOL                 { TEoL                  _ }
 
+%left CALL
 %left "||"
 %left "&&"
 %left "|"
@@ -98,7 +101,34 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 %%
 
 ast :: {AST}
-ast : body                  { AST $1 }
+ast : moduleHeader usings body                  { AST $1 $2 $3 }
+
+moduleHeader :: {ModuleHeader}
+moduleHeader : "module" IDENT EOL { Module (Ident (identifierVal $2)) }
+
+-- maybeDocs :: {Maybe [DocLine]}
+-- maybeDocs : {- empty -} { Nothing }
+--           | docs        { Just $1 }
+
+-- docs :: {[DocLine]}
+-- docs : DOCLINE          { [ $1] }
+--      | DOCLINE EOL docs { $1 : $3 }
+
+usings :: {[Import]}
+usings : {- empty -}    { [] }
+       | using usings   { $1 : $2 }
+
+using :: {Import}
+using : "import" usingLabel                      { Import $2 Nothing }
+      | "import" usingLabel "(" identList ")"    { Import $2 (Just $4)}
+
+usingLabel :: {ImportLocation}
+usingLabel : "<" IDENT ">" { ImportLocation Global (Ident (identifierVal $2)) }
+        --    | STRING            { ImportLocation Local (Ident (stringVal $1)) }
+
+identList :: {[Ident]}
+identList : IDENT               { [Ident (identifierVal $1)]}
+          | IDENT "," identList { Ident (identifierVal $1) : $3 }
 
 body :: {[BodyBlock]}
 body : {- empty -}  { [] }
@@ -184,7 +214,7 @@ value : INT         { Integer (intVal $1) }
     --   | IDENT       { IdentV (identifierVal $1) }
       | CHAR        { Char (charVal $1) }
       | BOOL        { Bool (isTrue $1) }
-      | partialCall { Call $1 }
+      | partialCall %prec CALL { Call $1 }
 
 partialCall :: {PartialCall}
 partialCall : partialCall expr { PartialApplication $1 $2 }
