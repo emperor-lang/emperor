@@ -28,11 +28,8 @@ class Typable a where
     judge :: a -> TypeJudgementResult
     judge = (newTypeEnvironment |>)
     -- ^ Obtain the type of a given construct from a fresh environment.
-    
-    (|>) :: TypeEnvironment -> a -> TypeJudgementResult
     infixl 1 |>
-    -- ^ Judge the type of a given construct under a particular typing 
-    -- environment.
+    (|>) :: TypeEnvironment -> a -> TypeJudgementResult -- ^ Judge the type of a given construct under a particular typing environment.
 
 instance Typable Expr where
     g |> (Value v) = g |> v
@@ -163,7 +160,23 @@ instance Typable Value where
     g |> (Call c) = g |> c -- TODO: Judge the type, check that it is a subtype of what is expected
 
 instance Typable PartialCall where
-    _ |> (PartialApplication _ _) = error "Type checking on functions has not yet been implemented yet."
+    g |> (PartialApplication p e) =
+        case g |> e of
+            Valid u ->
+                case g |> p of
+                    Valid (EFunction pty t1 t2) ->
+                        let c = g |- (u <: t1)
+                         in assert (isValid c) ("Type assertion does not hold " ++ show u ++ " <: " ++ show t1) t2
+                    Valid x -> Invalid $ "Could not apply type " ++ show u ++ " to " ++ show x
+                    x -> x
+            x -> x
+        -- in case tjp of
+        --     Valid 
+        --     Valid x -> Invalid $ "Could not apply"
+        --     let tje = g |> e 
+        -- in         case tje of
+        --     Valid U -> 
+        -- error "Type checking on functions has not yet been implemented yet."
     --     let tj = g |> c in case tj of
     --         Valid (EFunction p t1 t2) -> let tj' = g |> e in
     --             case tj' of
@@ -181,8 +194,10 @@ instance Typable PartialCall where
         --                         EFunction p t1 t3
         --                     x -> x
         --         x -> x
-    _ |> (CallIdentifier _ _) = error "Type checking on call identifiers has not been implemented yet." -- 
-    -- EFunction p Unit Any
+    g |> (CallIdentifier pty (Ident i)) =
+        case get i g of
+            Valid (EFunction pty' t1 t2) -> assert (g |- (pty <: pty')) ("Purity mismatch in call to " ++ show i) (EFunction pty' t1 t2)
+            x -> x
 
 assert :: Bool -> String -> TypeJudgementResult -> TypeJudgementResult
 assert False s _ = Invalid s
