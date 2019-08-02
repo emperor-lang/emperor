@@ -17,21 +17,15 @@ module Types.Resolver
     , Typable
     ) where
 
-import AST (Expr(..), Ident(..), Purity(..), Value(..))
+import AST (Expr(..), Ident(..), PartialCall(..), Purity(..), Value(..), getPurity)
 import Types.Checker ((<:), (|-))
 import Types.Environment (TypeEnvironment, get, newTypeEnvironment, unsafeGet)
 import Types.PreludeTypes (PreludeType, eqable)
-import Types.Results
-    ( EmperorType(..)
-    , TypeCheckResult(..)
-    , TypeJudgementResult(..)
-    , isValid
-    )
+import Types.Results (EmperorType(..), TypeCheckResult(..), TypeJudgementResult(..), isValid)
 
 -- | Class describing constructs which may be assigned a type.
-class Typable a
+class Typable a where
     -- | Obtain the type of a given construct from a fresh environment.
-    where
     judge :: a -> TypeJudgementResult
     judge = (newTypeEnvironment |>)
     -- | Judge the type of a given construct under a particular typing 
@@ -44,11 +38,7 @@ instance Typable Expr where
     g |> (Neg e) =
         let t = g |> e
          in case t of
-                Valid t' ->
-                    assert
-                        ((g |- (t' <: RealP)) == Pass)
-                        ("Could not unify Bool and " ++ show t')
-                        t
+                Valid t' -> assert ((g |- (t' <: RealP)) == Pass) ("Could not unify Bool and " ++ show t') t
                 x -> x
     g |> (Add e1 e2) = assertExpr g RealP e1 e2
     g |> (Subtract e1 e2) = assertExpr g RealP e1 e2
@@ -73,6 +63,7 @@ instance Typable Expr where
     g |> (ShiftLeft e1 e2) = assertExpr g IntP e1 e2
     g |> (ShiftRight e1 e2) = assertExpr g IntP e1 e2
     g |> (ShiftRightSameSign e1 e2) = assertExpr g IntP e1 e2
+    _ |> (Set []) = Valid $ ESet Any
     g |> (Set (e:es)) =
         let t = g |> e
          in assert
@@ -81,6 +72,7 @@ instance Typable Expr where
                 (case t of
                      Valid t' -> Valid $ ESet t'
                      x -> x)
+    _ |> (List []) = Valid $ EList Any
     g |> (List (e:es)) =
         let t = g |> e
          in assert
@@ -90,13 +82,12 @@ instance Typable Expr where
                      Valid t' -> Valid $ EList t'
                      x -> x)
     g |> (Tuple es) =
-        if all validType tjs
+        if all isValid tjs
             then Valid (ETuple ts)
-            else head (filter (not . validType) tjs)
+            else head (filter (not . isValid) tjs)
       where
         tjs = (g |>) <$> es
         ts = unbox tjs
-    g |> (Call c) = g |> c -- TODO: Judge the type, check that it is a subtype of what is expected
     -- g |> (PureCallExpr (PureCall (Ident p) es)) = case get p g of
     --                                         Valid (EFunction pty ti to) ->
     --                                             assert 
@@ -137,11 +128,8 @@ assertExpr g t e1 e2 =
                  in case t2 of
                         Valid t2' ->
                             assert
-                                ((g |- (t1' <: t)) == Pass &&
-                                 (g |- (t2' <: t)) == Pass)
-                                ("Could not unify " ++
-                                 show t1' ++
-                                 ", " ++ show t2' ++ " <: " ++ show t)
+                                ((g |- (t1' <: t)) == Pass && (g |- (t2' <: t)) == Pass)
+                                ("Could not unify " ++ show t1' ++ ", " ++ show t2' ++ " <: " ++ show t)
                                 (Valid t)
                         x -> x
             x -> x
@@ -158,13 +146,8 @@ assertEquality g e1 e2 =
                  in case t2 of
                         Valid t2' ->
                             assert
-                                (all (\j -> (g |- j) == Pass)
-                                     [ t1' <: (unsafeGet eqable g)
-                                     , t2' <: t1'
-                                     , t2' <: t1'
-                                     ])
-                                ("Could not unify " ++
-                                 show t1' ++ " = " ++ show t2')
+                                (all (\j -> (g |- j) == Pass) [t1' <: (unsafeGet eqable g), t2' <: t1', t2' <: t1'])
+                                ("Could not unify " ++ show t1' ++ " = " ++ show t2')
                                 (Valid t1')
                         x -> x
             x -> x
@@ -175,7 +158,30 @@ instance Typable Value where
     _ |> (Char _) = Valid CharP
     _ |> (Bool _) = Valid BoolP
     -- _ |> (String _) = Valid $ EList CharP
-    g |> (IdentV i) = get i g
+    -- g |> (IdentV i) = get i g
+    g |> (Call c) = g |> c -- TODO: Judge the type, check that it is a subtype of what is expected
+
+instance Typable PartialCall where
+    _ |> (PartialApplication _ _) = error $ "Type checking on functions has not yet been implemented yet."
+    --     let tj = g |> c in case tj of
+    --         Valid (EFunction p t1 t2) -> let tj' = g |> e in
+    --             case tj' of
+    --                 (Valid te) -> assert (g |- (te <: t1)) ("Violated type constraint " ++ show te ++ " <: " ++ show t1)
+    --                     EFunction p t
+    --                 x -> x
+    --         x -> x 
+        -- let tj1 = g |> e
+        --  in case tj1 of
+        --         Valid t1 ->
+        --             let tj2 = g |> c
+        --              in case tj2 of
+        --                     Valid (EFunction p t2 t3) ->
+        --                         assert (g |- (e <: t2)) ("Violated type constraint " ++ show e ++ " <: " ++ show t2)
+        --                         EFunction p t1 t3
+        --                     x -> x
+        --         x -> x
+    _ |> (CallIdentifier _ _) = error $ "Type checking on call identifiers has not been implemented yet." -- 
+    -- EFunction p Unit Any
 
 assert :: Bool -> String -> TypeJudgementResult -> TypeJudgementResult
 assert False s _ = Invalid s
@@ -183,7 +189,6 @@ assert _ _ j = j
 
 -- | Unbox a list of VALID type judgements. Note that this operation is unsafe.
 unbox :: [TypeJudgementResult] -> [EmperorType]
-unbox (Invalid _:_) =
-    error $
-    "Failed assertion that all of " ++ show tjs ++ " are valid type judgements"
+unbox [] = []
+unbox (Invalid _:_) = error $ "Failed assertion that all of a list of type judgements are valid type judgements"
 unbox (Valid t:tjs') = t : unbox tjs'
