@@ -44,5 +44,5 @@ main = do
             putStr $ ">>>" ++ formatFresh prog ++ "<<<"
             inf "Checking types"
             case resolveTypes prog of
-                Valid _ _ -> scc "Type-checking worked!"
-                Invalid x  -> err $ show x
+                Left x  -> err $ show x
+                Right r -> scc $ "Type-checking worked!\n Got:" ++ show r

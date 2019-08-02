@@ -14,6 +14,7 @@ easily.
 module Types.Types
     ( resolveTypes
     , TypeJudgementResult(..)
+    , Function(..)
     ) where
 
 import AST (AST)
@@ -23,5 +24,13 @@ import Types.Results (EmperorType, TypeJudgementResult(..))
 
 -- | Find any problems with the typing of results and obtain types if no 
 -- problems are found.
-resolveTypes :: AST -> TypeJudgementResult AST
-resolveTypes = judge
+resolveTypes :: AST -> Either String [Function]
+resolveTypes _ = Left "Type checking has not been implemented yet."
+
+-- | Describes the functions and constants to be translated.
+data Function
+    = Const -- Ident Value
+    | Function -- Identifier EmperorType Body
+    deriving (Show)
+
+-- data Body
