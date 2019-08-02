@@ -90,12 +90,17 @@ data Expr
     | Tuple [Expr]
     | List [Expr]
     deriving (Show)
-
+    
 -- | Represents the use of a function
 data PartialCall
     = PartialApplication PartialCall Expr
     | CallIdentifier Purity Ident
     deriving (Show)
+
+-- | Get the purity of a partial application call
+getPurity :: PartialCall -> Purity
+getPurity (PartialApplication c _) = getPurity c
+getPurity (CallIdentifier p _) = p
 
 -- | Marker for whether a function is pure or impure
 data Purity
@@ -114,7 +119,7 @@ data Value
     | Real Double
     | Char Char
         --    | String String
-    | IdentV String
+    -- | IdentV String
     | Bool Bool
     | Call PartialCall
     deriving (Show)
