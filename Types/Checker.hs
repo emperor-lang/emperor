@@ -14,6 +14,7 @@ module Types.Checker
     ( (|-)
     , (<:)
     , SubTypable
+    , TypeComparison
     ) where
 
 import AST (Purity(..))
@@ -29,17 +30,19 @@ data TypeComparison a b =
 instance (Show a, Show b) => Show (TypeComparison a b) where
     show (SubType a b) = show a ++ " <: " ++ show b
 
+infixl 1 <:
+
 -- | Sets up a type-comparison
 (<:) ::
        SubTypable a
     => SubTypable b =>
            a -> b -> TypeComparison a b
-infixl 1 <:
-
 a <: b = SubType a b
 
+-- | Type class to describe objects upon which the subtype relation is valid
 class SubTypable a where
     infixl 0 |-
+    -- | Judge the validity of a type comparison
     (|-) :: TypeEnvironment -> TypeComparison a a -> TypeCheckResult
 
 instance SubTypable EmperorType where
@@ -57,14 +60,10 @@ instance SubTypable EmperorType where
         typeResults = (e |-) <$> comparisons
         comparisons = (<:) <$> as <*> bs
     e |- (SubType (ERecord s as) (ERecord s' bs))
-        | s == s' &&
-              keys bs `subset` keys as &&
-              all (\k -> (e |- ((as ! k) <: (bs ! k))) == Pass) (keys bs) = Pass
+        | s == s' && keys bs `subset` keys as && all (\k -> (e |- ((as ! k) <: (bs ! k))) == Pass) (keys bs) = Pass
         | otherwise = typeCheckFail (SubType (as ! b) (bs ! b))
       where
-        b =
-            head $
-            filter (\k -> (e |- ((as ! k) <: (bs ! k))) /= Pass) $ keys as
+        b = head $ filter (\k -> (e |- ((as ! k) <: (bs ! k))) /= Pass) $ keys as
     e |- (SubType (EFunction p i o) (EFunction p' i' o')) =
         case e |- (p <: p') of
             Pass ->
