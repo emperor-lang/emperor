@@ -20,7 +20,8 @@ module Types.Results
     ) where
 
 import AST (Purity)
-import Data.Map (Map)
+import Data.List (concat, intersperse)
+import Data.Map ((!), keys, Map)
 
 -- | The result of a typing judgement. This is either an error indicating a
 -- problem or a type
@@ -34,8 +35,7 @@ data TypeJudgementResult
 -- Where this is invalid, a message is given.
 data TypeCheckResult
     = Pass -- ^ Indicates a correct type statement
-    | Fail String -- ^ Indicates an invalid type and provides a
-                                   -- reason
+    | Fail String -- ^ Indicates an invalid type and provides a reason
     deriving (Eq)
 
 -- | Data to represent all Emperor types
@@ -51,7 +51,23 @@ data EmperorType
     | EFunction Purity EmperorType EmperorType -- ^ Function composite
     | Any -- ^ Universal super-type
     | Unit -- ^ Universal sub-type
-    deriving (Eq, Show)
+    deriving Eq
+
+instance Show EmperorType where
+    show IntP = "int"
+    show CharP = "char"
+    show BoolP = "bool"
+    show RealP = "real"
+    show (ESet t) = '{' : show t ++ "}" 
+    show (EList t) = '[' : show t ++ "]"
+    show (ETuple ts) = concat (intersperse "*" $ show <$> ts)
+    show (ERecord i m) = show i ++ " :: " ++ showMap m
+        where
+            showMap :: Map String EmperorType -> String
+            showMap m' = '{' : (concat $ intersperse ", " [ k ++ " :: " ++ show (m' ! k) | k <- keys m ]) ++ "}"
+    show (EFunction p t1 t2) = show p ++ show t1 ++ " -> " ++ show t2
+    show Any = "Any"
+    show Unit = "Unit"
 
 -- | Class of types which describe type operation results
 class TypeOp a where
