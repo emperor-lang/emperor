@@ -17,7 +17,9 @@ module Types.Types
     , Function(..)
     ) where
 
-import AST (AST)
+import AST (AST(..), BodyLine(..), Ident(..), Value(..))
+import Formatter (formatFresh)
+import Data.List (unwords)
 import Types.Environment (TypeEnvironment)
 import Types.Resolver ((|>), judge)
 import Types.Results (EmperorType, TypeJudgementResult(..))
@@ -28,9 +30,16 @@ resolveTypes :: AST -> Either String [Function]
 resolveTypes _ = Left "Type checking has not been implemented yet."
 
 -- | Describes the functions and constants to be translated.
-data Function
-    = Const -- Ident Value
-    | Function -- Identifier EmperorType Body
-    deriving (Show)
+data Function = Function Ident EmperorType [(Ident, EmperorType)] [BodyLine] 
+              | Constant Ident EmperorType Value
 
--- data Body
+instance Show Function where
+    -- TODO: Complete the instance of Show for functions
+    show (Function i t ps _) = show i ++ " :: " ++ show t ++ "\n" ++ show i ++ " " ++ showParameters ps ++ " = " ++ "??"
+        where
+            showParameters :: [(Ident,EmperorType)] -> String
+            showParameters ps' = unwords $ showParameter <$> ps'
+
+            showParameter :: (Ident, EmperorType) -> String
+            showParameter (i', _) = formatFresh i'
+    show (Constant i t v) = unwords [formatFresh i, show t, formatFresh v]
