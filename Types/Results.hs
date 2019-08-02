@@ -16,6 +16,7 @@ module Types.Results
     , TypeCheckResult(..)
     , TypeJudgementResult(..)
     , isValid
+    , TypeOp
     ) where
 
 import AST (Purity)
@@ -54,6 +55,7 @@ data EmperorType
 
 -- | Class of types which describe type operation results
 class TypeOp a where
+    -- | Indicates whether a type operation has returned a valid result
     isValid :: a -> Bool
 
 instance TypeOp TypeCheckResult where
