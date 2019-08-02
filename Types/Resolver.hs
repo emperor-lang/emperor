@@ -146,7 +146,7 @@ assertEquality g e1 e2 =
                  in case t2 of
                         Valid t2' ->
                             assert
-                                (all (\j -> (g |- j) == Pass) [t1' <: (unsafeGet eqable g), t2' <: t1', t2' <: t1'])
+                                (all (\j -> (g |- j) == Pass) [t1' <: unsafeGet eqable g, t2' <: t1', t2' <: t1'])
                                 ("Could not unify " ++ show t1' ++ " = " ++ show t2')
                                 (Valid t1')
                         x -> x
@@ -162,7 +162,7 @@ instance Typable Value where
     g |> (Call c) = g |> c -- TODO: Judge the type, check that it is a subtype of what is expected
 
 instance Typable PartialCall where
-    _ |> (PartialApplication _ _) = error $ "Type checking on functions has not yet been implemented yet."
+    _ |> (PartialApplication _ _) = error "Type checking on functions has not yet been implemented yet."
     --     let tj = g |> c in case tj of
     --         Valid (EFunction p t1 t2) -> let tj' = g |> e in
     --             case tj' of
@@ -180,7 +180,7 @@ instance Typable PartialCall where
         --                         EFunction p t1 t3
         --                     x -> x
         --         x -> x
-    _ |> (CallIdentifier _ _) = error $ "Type checking on call identifiers has not been implemented yet." -- 
+    _ |> (CallIdentifier _ _) = error "Type checking on call identifiers has not been implemented yet." -- 
     -- EFunction p Unit Any
 
 assert :: Bool -> String -> TypeJudgementResult -> TypeJudgementResult
@@ -190,5 +190,5 @@ assert _ _ j = j
 -- | Unbox a list of VALID type judgements. Note that this operation is unsafe.
 unbox :: [TypeJudgementResult] -> [EmperorType]
 unbox [] = []
-unbox (Invalid _:_) = error $ "Failed assertion that all of a list of type judgements are valid type judgements"
+unbox (Invalid _:_) = error "Failed assertion that all of a list of type judgements are valid type judgements"
 unbox (Valid t:tjs') = t : unbox tjs'
