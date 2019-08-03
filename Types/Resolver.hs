@@ -21,7 +21,7 @@ import AST (Expr(..), Ident(..), PartialCall(..), Purity(..), Value(..), getPuri
 import Types.Checker ((<:), (|-))
 import Types.Environment (TypeEnvironment, get, newTypeEnvironment, unsafeGet)
 import Types.PreludeTypes (PreludeType, eqable)
-import Types.Results (EmperorType(..), TypeCheckResult(..), TypeJudgementResult(..), isValid)
+import Types.Results (EmperorType(..), TypeCheckResult(..), TypeJudgementResult(..), isValid, isValidAnd)
 
 -- | Class describing constructs which may be assigned a type.
 class Typable a where
@@ -65,12 +65,12 @@ instance Typable Expr where
     _ |> (Set []) = Valid $ ESet Any
     g |> (Set (e:es)) =
         case g |> e of
-            Valid t -> assert (all (== Valid t) ((g |>) <$> es)) "All elements of a set must have the same type" (Valid $ EList t)
+            Valid t -> assert (all (isValidAnd t) ((g |>) <$> es)) "All elements of a set must have the same type" (Valid $ EList t)
             x -> x
     _ |> (List []) = Valid $ EList Any
     g |> (List (e:es)) =
         case g |> e of
-            Valid t -> assert (all (== Valid t) ((g |>) <$> es)) "All elements of a list must have the same type" (Valid $ EList t)
+            Valid t -> assert (all (isValidAnd t) ((g |>) <$> es)) "All elements of a list must have the same type" (Valid $ EList t)
             x -> x
     g |> (Tuple es) =
         if all isValid tjs

@@ -16,6 +16,7 @@ module Types.Results
     , TypeCheckResult(..)
     , TypeJudgementResult(..)
     , isValid
+    , isValidAnd
     , TypeOp
     ) where
 
@@ -80,3 +81,10 @@ instance TypeOp TypeCheckResult where
 instance TypeOp TypeJudgementResult where
     isValid (Valid _) = True
     isValid (Invalid _) = False
+
+-- | Check that a type judgement result is valid and is equal to a given type
+isValidAnd :: EmperorType -> TypeJudgementResult -> Bool
+isValidAnd _ (Invalid _) = False
+isValidAnd t (Valid t')
+    | t == t' = True
+    | otherwise = False
