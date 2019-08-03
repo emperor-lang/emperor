@@ -38,23 +38,25 @@ data AST =
     deriving (Show)
 
 -- | A single module header
-data ModuleHeader = Module Ident
-    deriving Show
+data ModuleHeader =
+    Module Ident
+    deriving (Show)
+
 -- | A single imported file
 data Import =
     Import ImportLocation (Maybe [Ident])
-    deriving Show
+    deriving (Show)
 
 -- | Location of an import and how to treat it
 data ImportLocation =
     ImportLocation ImportType Ident
-    deriving Show
+    deriving (Show)
 
 -- | The type of an import
 data ImportType
     = Local -- ^ Indicates a file in the current project
     | Global -- ^ Indicates a file in the global installation
-    deriving Show
+    deriving (Show)
 
 -- | Represents a single construction in the body of a function. This may be a
 -- further construct or just a single line
@@ -165,4 +167,4 @@ data Value
 -- | Data-structure to represent an identifier
 newtype Ident =
     Ident String
-    deriving (Show)
+    deriving (Eq, Ord, Show)

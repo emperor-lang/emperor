@@ -36,12 +36,11 @@ instance Format a => Format [a] where
 
 -- | The AST may be formatted by intercalating new-line characters
 instance Format AST where
-    format ctx (AST m is a) = format ctx m ++ unlines (format ctx <$> is) ++ unlines (format ctx <$> a)
-        -- unlines (format ctx m : format ctx <$> is ++ format ctx <$> a)
+    format ctx (AST m is a) = format ctx m ++ unlines (sort $ format ctx <$> is) ++ unlines (format ctx <$> a)
 
 instance Format Import where
     format ctx (Import l Nothing) = format ctx l
-    format ctx (Import l (Just is)) = format ctx l ++ "(" ++ (intercalate ", " (format ctx <$> is)) ++ ")"
+    format ctx (Import l (Just is)) = format ctx l ++ "(" ++ (intercalate ", " (format ctx <$> (sort is))) ++ ")"
 
 instance Format ImportLocation where
     format ctx (ImportLocation Global i) = "<" ++ format ctx i ++ ">"
@@ -52,7 +51,7 @@ instance Format ModuleHeader where
     format ctx (Module i) = "module " ++ format ctx i
 
 -- | Body block may be formatted with included code indented one layer further
-instance Format BodyBlock where 
+instance Format BodyBlock where
     format ctx (Line l) = format ctx l
     format ctx (IfElse c b1 b2) =
         unlines $
