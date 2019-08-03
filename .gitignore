@@ -42,3 +42,6 @@ parser/*.info
 
 # Generated bash completions
 *_completions.sh
+
+# Patch conflicts
+*.orig
