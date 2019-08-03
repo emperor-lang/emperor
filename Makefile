@@ -1,5 +1,5 @@
 #!/usr/bin/make
-SHELL := bash
+SHELL := /bin/bash
 
 # CC = gcc-8
 # CFLAGS := $(shell emperor-setup --cflags) # $(CFLAGS) -Wall -Os -I . -I /usr/include/python3.6m -g
@@ -16,6 +16,11 @@ PARSER_GENERATOR := happy
 PARSER_GENERATOR_FLAGS := -ga -m emperorParser
 PATCH := patch
 PATCHFLAGS := -F 0 -s 
+LINTER := hlint
+LINTER_FLAGS := -s
+FORMATTER := hindent
+FORMATTER_FLAGS := --tab-size 4 --line-length 120
+FORMATTER_FLAGS_VALIDATE := $(FORMATTER_FLAGS) --validate
 
 SOFT_LINK_COMMAND := [[ ! -f $@ ]] && ln -s $^ $@
 
@@ -81,6 +86,18 @@ $(COMPLETION_INSTALL_LOCATION): ./emperor_completions.sh;
 ./emperor_completions.sh: ./emperor.json
 	argcompgen < $< > $@
 .DELETE_ON_ERROR: ./emperor_completions.sh
+
+validate-format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs) 
+	$(FORMATTER) $(FORMATTER_FLAGS_VALIDATE) $^
+.PHONY: validate-format
+
+format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs) 
+	$(FORMATTER) $(FORMATTER_FLAGS) $^
+.PHONY: format
+
+lint: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs) 
+	$(LINTER) $(LINTER_FLAGS) $^
+.PHONY: lint
 
 doc: dist/doc/html/emperor/emperor/index.html ./dist/doc/man/emperor.1.gz
 .PHONY: doc
