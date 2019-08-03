@@ -13,7 +13,7 @@ This file defines the standard format for all Emperor programs.
 module Formatter where
 
 import AST
-import Data.List
+import Data.List (intercalate, sort)
 
 -- | The information required to format code in a given context
 type FormatContext = Int
@@ -34,14 +34,14 @@ class Format a where
 instance Format a => Format [a] where
     format ctx l = intercalate ", " $ format ctx <$> l
 
--- | The AST may be formatted by interspercing new-line characters
+-- | The AST may be formatted by intercalating new-line characters
 instance Format AST where
     format ctx (AST m is a) = format ctx m ++ unlines (format ctx <$> is) ++ unlines (format ctx <$> a)
         -- unlines (format ctx m : format ctx <$> is ++ format ctx <$> a)
 
 instance Format Import where
     format ctx (Import l Nothing) = format ctx l
-    format ctx (Import l (Just is)) = format ctx l ++ "(" ++ (concat $ intersperse ", " (format ctx <$> is)) ++ ")"
+    format ctx (Import l (Just is)) = format ctx l ++ "(" ++ (intercalate ", " (format ctx <$> is)) ++ ")"
 
 instance Format ImportLocation where
     format ctx (ImportLocation Global i) = "<" ++ format ctx i ++ ">"
