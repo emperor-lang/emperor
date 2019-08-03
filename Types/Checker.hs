@@ -30,7 +30,7 @@ data TypeComparison a b =
 instance (Show a, Show b) => Show (TypeComparison a b) where
     show (SubType a b) = show a ++ " <: " ++ show b
 
-infixl 1 <:
+infixl 3 <:
 
 -- | Sets up a type-comparison
 (<:) ::
@@ -41,7 +41,7 @@ a <: b = SubType a b
 
 -- | Type class to describe objects upon which the subtype relation is valid
 class SubTypable a where
-    infixl 0 |-
+    infixl 2 |-
     (|-) :: TypeEnvironment -> TypeComparison a a -> TypeCheckResult -- ^ Judge the validity of a type comparison
 
 instance SubTypable EmperorType where

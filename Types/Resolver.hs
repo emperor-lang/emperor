@@ -28,16 +28,15 @@ class Typable a where
     judge :: a -> TypeJudgementResult
     judge = (newTypeEnvironment |>)
     -- ^ Obtain the type of a given construct from a fresh environment.
-    infixl 1 |>
+    infixl 2 |>
     (|>) :: TypeEnvironment -> a -> TypeJudgementResult -- ^ Judge the type of a given construct under a particular typing environment.
 
 instance Typable Expr where
     g |> (Value v) = g |> v
     g |> (Neg e) =
-        let t = g |> e
-         in case t of
-                Valid t' -> assert ((g |- (t' <: RealP)) == Pass) ("Could not unify Bool and " ++ show t') t
-                x -> x
+        case g |> e of
+            Valid t -> assert ((g |- t <: RealP) == Pass) ("Could not unify Bool and " ++ show t) (Valid t)
+            x -> x
     g |> (Add e1 e2) = assertExpr g RealP e1 e2
     g |> (Subtract e1 e2) = assertExpr g RealP e1 e2
     g |> (Multiply e1 e2) = assertExpr g RealP e1 e2
@@ -50,8 +49,10 @@ instance Typable Expr where
     g |> (Equal e1 e2) = assertEquality g e1 e2
     g |> (NotEqual e1 e2) = assertEquality g e1 e2
     g |> (Not e) =
-        let t = g |> e
-         in assert (t == Valid BoolP) ("Could not unify Bool and " ++ show t) t
+        case g |> e of
+            Valid BoolP -> Valid BoolP
+            Valid t -> Invalid $ "Could not unify bool and " ++ show t
+            x -> x
     g |> (AndStrict e1 e2) = assertExpr g RealP e1 e2
     g |> (AndLazy e1 e2) = assertExpr g RealP e1 e2
     g |> (OrStrict e1 e2) = assertExpr g RealP e1 e2
@@ -63,22 +64,14 @@ instance Typable Expr where
     g |> (ShiftRightSameSign e1 e2) = assertExpr g IntP e1 e2
     _ |> (Set []) = Valid $ ESet Any
     g |> (Set (e:es)) =
-        let t = g |> e
-         in assert
-                (all (== t) ((g |>) <$> es))
-                "All elements of a set must have the same type"
-                (case t of
-                     Valid t' -> Valid $ ESet t'
-                     x -> x)
+        case g |> e of
+            Valid t -> assert (all (== Valid t) ((g |>) <$> es)) "All elements of a set must have the same type" (Valid $ EList t)
+            x -> x
     _ |> (List []) = Valid $ EList Any
     g |> (List (e:es)) =
-        let t = g |> e
-         in assert
-                (all (== t) ((g |>) <$> es))
-                "All elements of a set must have the same type"
-                (case t of
-                     Valid t' -> Valid $ EList t'
-                     x -> x)
+        case g |> e of
+            Valid t -> assert (all (== Valid t) ((g |>) <$> es)) "All elements of a list must have the same type" (Valid $ EList t)
+            x -> x
     g |> (Tuple es) =
         if all isValid tjs
             then Valid (ETuple ts)
@@ -86,69 +79,38 @@ instance Typable Expr where
       where
         tjs = (g |>) <$> es
         ts = unbox tjs
-    -- g |> (PureCallExpr (PureCall (Ident p) es)) = case get p g of
-    --                                         Valid (EFunction pty ti to) ->
-    --                                             assert 
-    --                                                 (
-    --                                                     (g |- (pty <: Pure)) == Pass &&
-    --                                                     all validType ((g |>) <$> (\(x,y) -> (x <: y)) <$> zip <$> es ts)
-    --                                                     -- all (\(e,t) -> validType (g |> (e <: t))) (zip es ts)
-    --                                                 )
-    --                                                 (i ++ " cannot be used as a pure function")
-    --                                             to
-    --                                         x -> x
-    -- g |> (ImpureCallExpr (ImpureCall (Ident i) e)) =
-    --     case get i g of
-    --         Valid (EFunction pty ti to) ->
-    --             assert
-    --                 ((g |- (pty <: Impure)) == Pass && (g |- (ti <: e)) == Pass
-    --                                                     -- all validType ((g |>) <$> (\(x,y) -> (x <: y)) <$> zip <$> es ts)
-    --                                                     -- all (\(e,t) -> validType (g |> (e <: t))) (zip es ts)
-    --                  )
-    --                 (i ++ " cannot be used as an impure function")
-    --                 to
-    --         x -> x
-    -- g |> (ImpureCallExpr (ImpureCall (Ident i) _)) = case get i g of
-    --                                                     Valid t -> EFunction Impure t
-    --                                                     x -> x
 
--- instance Typable Call where
---     g |> (PartialApplication)
 assertExpr ::
        Typable a
     => Typable b =>
            TypeEnvironment -> EmperorType -> a -> b -> TypeJudgementResult
 assertExpr g t e1 e2 =
-    let t1 = g |> e1
-     in case t1 of
-            Valid t1' ->
-                let t2 = g |> e2
-                 in case t2 of
-                        Valid t2' ->
-                            assert
-                                ((g |- (t1' <: t)) == Pass && (g |- (t2' <: t)) == Pass)
-                                ("Could not unify " ++ show t1' ++ ", " ++ show t2' ++ " <: " ++ show t)
-                                (Valid t)
-                        x -> x
-            x -> x
+    case g |> e1 of
+        Valid t1 ->
+            case g |> e2 of
+                Valid t2 ->
+                    assert
+                        ((g |- t1 <: t) == Pass && (g |- t2 <: t) == Pass)
+                        ("Could not unify " ++ show t1 ++ ", " ++ show t2 ++ " <: " ++ show t)
+                        (Valid t)
+                x -> x
+        x -> x
 
 assertEquality ::
        Typable a
     => Typable b =>
            TypeEnvironment -> a -> b -> TypeJudgementResult
 assertEquality g e1 e2 =
-    let t1 = g |> e1
-     in case t1 of
-            Valid t1' ->
-                let t2 = g |> e2
-                 in case t2 of
-                        Valid t2' ->
-                            assert
-                                (all (\j -> (g |- j) == Pass) [t1' <: unsafeGet eqable g, t2' <: t1', t2' <: t1'])
-                                ("Could not unify " ++ show t1' ++ " = " ++ show t2')
-                                (Valid t1')
-                        x -> x
-            x -> x
+    case g |> e1 of
+        Valid t1 ->
+            case g |> e2 of
+                Valid t2 ->
+                    assert
+                        (all (\j -> (g |- j) == Pass) [t1 <: unsafeGet eqable g, t2 <: t1, t2 <: t1])
+                        ("Could not unify " ++ show t1 ++ " = " ++ show t2)
+                        (Valid t1)
+                x -> x
+        x -> x
 
 instance Typable Value where
     _ |> (Integer _) = Valid IntP
@@ -164,39 +126,21 @@ instance Typable PartialCall where
         case g |> e of
             Valid u ->
                 case g |> p of
-                    Valid (EFunction pty t1 t2) ->
-                        let c = g |- (u <: t1)
-                         in assert (isValid c) ("Type assertion does not hold " ++ show u ++ " <: " ++ show t1) t2
+                    Valid (EFunction _ t1 t2) ->
+                        assert
+                            (isValid $ g |- u <: t1)
+                            ("Type assertion does not hold " ++ show u ++ " <: " ++ show t1)
+                            (Valid t2)
                     Valid x -> Invalid $ "Could not apply type " ++ show u ++ " to " ++ show x
                     x -> x
             x -> x
-        -- in case tjp of
-        --     Valid 
-        --     Valid x -> Invalid $ "Could not apply"
-        --     let tje = g |> e 
-        -- in         case tje of
-        --     Valid U -> 
-        -- error "Type checking on functions has not yet been implemented yet."
-    --     let tj = g |> c in case tj of
-    --         Valid (EFunction p t1 t2) -> let tj' = g |> e in
-    --             case tj' of
-    --                 (Valid te) -> assert (g |- (te <: t1)) ("Violated type constraint " ++ show te ++ " <: " ++ show t1)
-    --                     EFunction p t
-    --                 x -> x
-    --         x -> x 
-        -- let tj1 = g |> e
-        --  in case tj1 of
-        --         Valid t1 ->
-        --             let tj2 = g |> c
-        --              in case tj2 of
-        --                     Valid (EFunction p t2 t3) ->
-        --                         assert (g |- (e <: t2)) ("Violated type constraint " ++ show e ++ " <: " ++ show t2)
-        --                         EFunction p t1 t3
-        --                     x -> x
-        --         x -> x
     g |> (CallIdentifier pty (Ident i)) =
         case get i g of
-            Valid (EFunction pty' t1 t2) -> assert (g |- (pty <: pty')) ("Purity mismatch in call to " ++ show i) (EFunction pty' t1 t2)
+            Valid (EFunction pty' t1 t2) ->
+                assert
+                    (isValid $ g |- pty <: pty')
+                    ("Purity mismatch in call to " ++ show i)
+                    (Valid $ EFunction pty' t1 t2)
             x -> x
 
 assert :: Bool -> String -> TypeJudgementResult -> TypeJudgementResult
