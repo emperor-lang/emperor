@@ -22,7 +22,7 @@ module Types.Results
 
 import AST (Purity)
 import Data.List (concat, intersperse)
-import Data.Map ((!), keys, Map)
+import Data.Map (Map, (!), keys)
 
 -- | The result of a typing judgement. This is either an error indicating a
 -- problem or a type
@@ -52,20 +52,20 @@ data EmperorType
     | EFunction Purity EmperorType EmperorType -- ^ Function composite
     | Any -- ^ Universal super-type
     | Unit -- ^ Universal sub-type
-    deriving Eq
+    deriving (Eq)
 
 instance Show EmperorType where
     show IntP = "int"
     show CharP = "char"
     show BoolP = "bool"
     show RealP = "real"
-    show (ESet t) = '{' : show t ++ "}" 
+    show (ESet t) = '{' : show t ++ "}"
     show (EList t) = '[' : show t ++ "]"
     show (ETuple ts) = concat (intersperse "*" $ show <$> ts)
     show (ERecord i m) = show i ++ " :: " ++ showMap m
-        where
-            showMap :: Map String EmperorType -> String
-            showMap m' = '{' : (concat $ intersperse ", " [ k ++ " :: " ++ show (m' ! k) | k <- keys m ]) ++ "}"
+      where
+        showMap :: Map String EmperorType -> String
+        showMap m' = '{' : (concat $ intersperse ", " [k ++ " :: " ++ show (m' ! k) | k <- keys m]) ++ "}"
     show (EFunction p t1 t2) = show p ++ show t1 ++ " -> " ++ show t2
     show Any = "Any"
     show Unit = "Unit"

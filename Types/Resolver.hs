@@ -65,12 +65,20 @@ instance Typable Expr where
     _ |> (Set []) = Valid $ ESet Any
     g |> (Set (e:es)) =
         case g |> e of
-            Valid t -> assert (all (isValidAnd t) ((g |>) <$> es)) "All elements of a set must have the same type" (Valid $ EList t)
+            Valid t ->
+                assert
+                    (all (isValidAnd t) ((g |>) <$> es))
+                    "All elements of a set must have the same type"
+                    (Valid $ EList t)
             x -> x
     _ |> (List []) = Valid $ EList Any
     g |> (List (e:es)) =
         case g |> e of
-            Valid t -> assert (all (isValidAnd t) ((g |>) <$> es)) "All elements of a list must have the same type" (Valid $ EList t)
+            Valid t ->
+                assert
+                    (all (isValidAnd t) ((g |>) <$> es))
+                    "All elements of a list must have the same type"
+                    (Valid $ EList t)
             x -> x
     g |> (Tuple es) =
         if all isValid tjs
