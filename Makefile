@@ -39,7 +39,7 @@ build: ./emperor
 .DELETE_ON_ERROR: ./parser/EmperorLexer.hs
 
 ./parser/EmperorParser.hs: ./parser/EmperorParser.y ./parser/EmperorParser.patch
-	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/emperorParser.info $< -o $@
+	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/EmperorParser.info $< -o $@
 	patch -s $@ ./parser/EmperorParser.patch
 .DELETE_ON_ERROR: ./parser/EmperorParser.hs
 
