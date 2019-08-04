@@ -217,7 +217,7 @@ value : INT         { Integer (intVal $1) }
       | partialCall %prec CALL { Call $1 }
 
 partialCall :: {PartialCall}
-partialCall : partialCall expr { PartialApplication $1 $2 }
+partialCall : partialCall expr %prec CALL { PartialApplication $1 $2 }
             | "@" IDENT        { CallIdentifier Impure (Ident (identifierVal $1)) }
             | IDENT            { CallIdentifier Pure (Ident (identifierVal $1)) }
 
