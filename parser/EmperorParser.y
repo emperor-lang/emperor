@@ -29,7 +29,7 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 %tokentype { Token }
 
 -- Enforce perfection
--- %expect 0
+%expect 0
 
 %token
     DOCASSIGNMENTLINE   { TDocAssignmentLine    _ }
@@ -97,6 +97,7 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 %left "*" "/" "%"
 %right NEG "!"
 %right "@"
+%nonassoc "{" "[" "(" INT REAL CHAR BOOL IDENT
 
 %%
 
