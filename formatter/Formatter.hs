@@ -135,6 +135,7 @@ instance Format Value where
         if b
             then "true"
             else "false"
+    format _ IDC = "_"
     format ctx (Call c) = format ctx c
 
 -- | Calls are formatted by their contents
