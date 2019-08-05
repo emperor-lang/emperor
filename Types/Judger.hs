@@ -126,6 +126,7 @@ instance Typable Value where
     _ |> (Real _) = Valid RealP
     _ |> (Char _) = Valid CharP
     _ |> (Bool _) = Valid BoolP
+    _ |> (IDC) = Valid Unit
     -- _ |> (String _) = Valid $ EList CharP
     -- g |> (IdentV i) = get i g
     g |> (Call c) = g |> c -- TODO: Judge the type, check that it is a subtype of what is expected
