@@ -29,7 +29,7 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 %tokentype { Token }
 
 -- Enforce perfection
-%expect 0
+-- %expect 0
 
 %token
     DOCASSIGNMENTLINE   { TDocAssignmentLine    _ }
@@ -80,10 +80,23 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
     "!="                { TNotEqual             _ }
     "@"                 { TImpure               _ }
     ","                 { TComma                _ }
+    "int"               { TIntT                 _ }
+    "bool"              { TBoolT                _ }
+    "real"              { TRealT                _ }
+    "char"              { TCharT                _ }
+    "()"                { TUnit                 _ }
+    "Any"               { TAnyT                 _ }
+    "<:"                { TIsSubType            _ }
+    "<~"                { TIsImplementeBy       _ }
+    "::"                { TIsType               _ }
+    "class"             { TClass                _ }
+    "component"         { TComponent            _ }
     TABS                { TTabs                 numTabs _ }
+    "_"                 { TIDC                  _ }
     EOL                 { TEoL                  _ }
 
 %left CALL
+%right "->"
 %left "||"
 %left "&&"
 %left "|"
@@ -102,7 +115,7 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 %%
 
 ast :: {AST}
-ast : moduleHeader usings body                  { AST $1 $2 $3 }
+ast : moduleHeader usings moduleBody                  { AST $1 $2 $3 }
 
 moduleHeader :: {ModuleHeader}
 moduleHeader : "module" IDENT EOL { Module (Ident (identifierVal $2)) }
@@ -130,6 +143,53 @@ usingLabel : "<" IDENT ">" { ImportLocation Global (Ident (identifierVal $2)) }
 identList :: {[Ident]}
 identList : IDENT               { [Ident (identifierVal $1)]}
           | IDENT "," identList { Ident (identifierVal $1) : $3 }
+
+moduleBody :: {[ModuleItem]}
+moduleBody : moduleItem             { [$1] }
+           | moduleItem moduleBody  { $1 : $2 }
+
+moduleItem :: {ModuleItem}
+moduleItem : component    { $1 }
+           | typeClass    { $1 }
+           | functionDef  { $1 }
+
+component :: {ModuleItem}
+component : "component" IDENT maybeTypeComparison EOL body { Component (Ident (identifierVal $2)) $3 $5 }
+
+typeClass :: {ModuleItem}
+typeClass : "class" IDENT maybeTypeComparison EOL body { TypeClass (Ident (identifierVal $2)) $3 $5 }
+
+functionDef :: {ModuleItem}
+functionDef : IDENT "::" typedef EOL IDENT functionParamDef EOL body { FunctionDef  }
+
+functionParamDef :: {[Ident]}
+functionParamDef : {- empty -}              { [] }
+                 | IDENT functionParamDef   { $1 : $2 }
+
+typedef :: {Either Ident EmperorType}
+typedef : "int"                 { IntP }
+        | "bool"                { CharP }
+        | "real"                { RealP }
+        | "char"                { BoolP }
+        | "()"                  { Unit }
+        | "Any"                 { Any }
+        | typedef "->" typedef  { EFunction Impure $1 $3 } 
+        | tupleTypeDef          { ETuple $1 } 
+        | "[" typedef "]"       { EList $2 }
+        | "{" typedef "}"       { ESet $2 }
+        | IDENT                 { Left Ident }
+
+tupleTypeDef :: {[EmperorType]}
+tupleTypeDef : typedef              { [$1] }
+             | typedef "*" typedef  { $1 : $3 }
+
+maybeTypeComparison :: {Maybe [TypeComparison]}
+maybeTypeComparison : {- empty -}       { Nothing }
+                    | typeComparison    { Just $1 }
+
+typeComparison :: {[TypeComparison]}
+typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2))}
+               | "<:" IDENT "<~" IDENT { IsSubTypeWithImplementor (Ident (identifierVal $2)) (Ident (identifierVal $4)) }
 
 body :: {[BodyBlock]}
 body : {- empty -}  { [] }
@@ -210,7 +270,8 @@ indentation : {- empty -} { Tabs 0 }
             | TABS        { Tabs (numTabs $1) }
 
 value :: {Value}
-value : INT         { Integer (intVal $1) }
+value : "_"         { IDC }
+      | INT         { Integer (intVal $1) }
       | REAL        { Real (realVal $1)}
     --   | IDENT       { IdentV (identifierVal $1) }
       | CHAR        { Char (charVal $1) }
@@ -219,7 +280,7 @@ value : INT         { Integer (intVal $1) }
 
 partialCall :: {PartialCall}
 partialCall : partialCall expr %prec CALL { PartialApplication $1 $2 }
-            | "@" IDENT        { CallIdentifier Impure (Ident (identifierVal $1)) }
+            | "@" IDENT        { CallIdentifier Impure (Ident (identifierVal $2)) }
             | IDENT            { CallIdentifier Pure (Ident (identifierVal $1)) }
 
 {

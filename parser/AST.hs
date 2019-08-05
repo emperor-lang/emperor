@@ -155,11 +155,11 @@ newtype Tabs =
 
 -- | Data-structure to represent a single value
 data Value
-    = Integer Integer
+    = IDC
+    | Integer Integer
     | Real Double
     | Char Char
-        --    | String String
-    -- | IdentV String
+    -- | String String
     | Bool Bool
     | Call PartialCall
     deriving (Show)
