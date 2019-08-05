@@ -36,7 +36,7 @@ instance Format a => Format [a] where
 
 -- | The AST may be formatted by intercalating new-line characters
 instance Format AST where
-    format ctx (AST m is a) = format ctx m ++ unlines (sort $ format ctx <$> is) ++ unlines (format ctx <$> a)
+    format ctx (AST m is a) = unlines (format ctx m : (sort $ format ctx <$> is) ++ (format ctx <$> a))
 
 -- | Imports may be formatted as a sorted list of their elements
 instance Format Import where
@@ -117,8 +117,6 @@ instance Format Expr where
     format ctx (Set l) = "(" ++ format ctx l ++ "}"
     format ctx (Tuple l) = "(" ++ format ctx l ++ ")"
     format ctx (List l) = "[" ++ format ctx l ++ "]"
-    -- format ctx (PureCallExpr c)                                 = format ctx c
-    -- format ctx (ImpureCallExpr c)                               = format ctx c
 
 -- | Binary operators are formatted with the operator symbol surrounded by spaces and the formatted left and right expressions
 formatBinOp ::
@@ -127,12 +125,6 @@ formatBinOp ::
            FormatContext -> String -> a -> b -> String
 formatBinOp ctx op e1 e2 = format ctx e1 ++ " " ++ op ++ " " ++ format ctx e2
 
--- -- | Pure calls are formatted as their identifier and arguments
--- instance Format PureCall where
---     format ctx (PureCall i e) = format ctx i ++ "(" ++ format (ctx + 1) e ++ ")"
--- -- | Impure calls are formatted as their identifier and arguments
--- instance Format ImpureCall where
---     format ctx (ImpureCall i e) = "@" ++ format ctx (PureCall i e)
 -- | Values are formatted according to their type
 instance Format Value where
     format _ (Integer i) = show i
@@ -147,7 +139,7 @@ instance Format Value where
 
 -- | Calls are formatted by their contents
 instance Format PartialCall where
-    format ctx (PartialApplication p e) = format ctx p ++ format ctx e
+    format ctx (PartialApplication p e) = format ctx p ++ (' ' : format ctx e)
     format ctx (CallIdentifier p i) = format ctx p ++ format ctx i
 
 -- | Impure functions have an "\@" in from of them, pure ones have nothing
