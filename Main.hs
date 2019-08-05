@@ -41,7 +41,7 @@ main = do
         Left msg    -> err msg
         Right prog  -> do
             scc $ "Parsing completed successfully, got AST: " ++ show prog
-            putStr $ ">>>" ++ formatFresh prog ++ "<<<"
+            putStrLn $ ">>>" ++ formatFresh prog ++ "<<<"
             inf "Checking types"
             case resolveTypes prog of
                 Left x  -> err $ show x
