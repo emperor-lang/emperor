@@ -40,6 +40,7 @@ import Types.Judger (Typable, (|>))
 import Types.Results (EmperorType(..), TypeCheckResult(..), TypeJudgementResult(..))
 import Types.TypedAST (TypedAST)
 
+-- | Given an AST, resolve all types within it and return the type environment of its interface
 resolve :: AST -> Either String (TypedAST, TypeEnvironment)
 resolve = resolve' newTypeEnvironment
 

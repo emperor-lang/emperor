@@ -38,10 +38,12 @@ instance Format a => Format [a] where
 instance Format AST where
     format ctx (AST m is a) = format ctx m ++ unlines (sort $ format ctx <$> is) ++ unlines (format ctx <$> a)
 
+-- | Imports may be formatted as a sorted list of their elements
 instance Format Import where
     format ctx (Import l Nothing) = format ctx l
     format ctx (Import l (Just is)) = format ctx l ++ "(" ++ (intercalate ", " (format ctx <$> (sort is))) ++ ")"
 
+-- | Import locations may be formatted by their type
 instance Format ImportLocation where
     format ctx (ImportLocation Global i) = "<" ++ format ctx i ++ ">"
     format ctx (ImportLocation Local i) = "\"" ++ format ctx i ++ "\""
@@ -161,6 +163,7 @@ instance Format Ident where
 instance Format Tabs where
     format ctx _ = indent ctx
 
+-- | Maybe formattables may be formatted as an empty string or their contents
 instance Format a => Format (Maybe a) where
     format _ Nothing = ""
     format ctx (Just x) = format ctx x

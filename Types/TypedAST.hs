@@ -14,5 +14,6 @@ module Types.TypedAST (TypedAST(..)) where
 
 import Types.Environment (TypeEnvironment)
 
+-- | Structure to represent a typed abstract syntax tree
 data TypedAST = None
     deriving Show
