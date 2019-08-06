@@ -134,15 +134,15 @@ usings : {- empty -}    { [] }
 
 using :: {Import}
 using : "import" usingLabel                      { Import $2 Nothing }
-      | "import" usingLabel "(" identList ")"    { Import $2 (Just $4)}
+      | "import" usingLabel "(" sepList(",", IDENT) ")"    { Import $2 (Just ([(\x -> (Ident (identifierVal x)))] <*> $4))}
 
 usingLabel :: {ImportLocation}
 usingLabel : "<" IDENT ">" { ImportLocation Global (Ident (identifierVal $2)) }
         --    | STRING            { ImportLocation Local (Ident (stringVal $1)) }
 
-identList :: {[Ident]}
-identList : IDENT               { [Ident (identifierVal $1)]}
-          | IDENT "," identList { Ident (identifierVal $1) : $3 }
+-- identList :: {[Ident]}
+-- identList : IDENT               { [Ident (identifierVal $1)]}
+--           | IDENT "," identList { Ident (identifierVal $1) : $3 }
 
 moduleBody :: {[ModuleItem]}
 moduleBody : moduleItem             { [$1] }
@@ -154,13 +154,13 @@ moduleItem : component    { $1 }
            | functionDef  { $1 }
 
 component :: {ModuleItem}
-component : "component" IDENT maybeTypeComparison EOL body { Component (Ident (identifierVal $2)) $3 $5 }
+component : "component" IDENT maybe(typeComparison) EOL body { Component (Ident (identifierVal $2)) $3 $5 }
 
 typeClass :: {ModuleItem}
-typeClass : "class" IDENT maybeTypeComparison EOL body { TypeClass (Ident (identifierVal $2)) $3 $5 }
+typeClass : "class" IDENT maybe(typeComparison) EOL body { TypeClass (Ident (identifierVal $2)) $3 $5 }
 
 functionDef :: {ModuleItem}
-functionDef : IDENT "::" typedef EOL IDENT functionParamDef EOL body { FunctionDef  }
+functionDef : IDENT "::" typedef EOL IDENT functionParamDef EOL body { FunctionDef (Ident (identifierVal $1)) $3 $6 $8 }
 
 functionParamDef :: {[Ident]}
 functionParamDef : {- empty -}              { [] }
@@ -183,30 +183,30 @@ tupleTypeDef :: {[EmperorType]}
 tupleTypeDef : typedef              { [$1] }
              | typedef "*" typedef  { $1 : $3 }
 
-maybeTypeComparison :: {Maybe [TypeComparison]}
-maybeTypeComparison : {- empty -}       { Nothing }
-                    | typeComparison    { Just $1 }
+-- maybeTypeComparison :: {Maybe [TypeComparison]}
+-- maybeTypeComparison : {- empty -}       { Nothing }
+--                     | typeComparison    { Just $1 }
 
 typeComparison :: {[TypeComparison]}
 typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2))}
                | "<:" IDENT "<~" IDENT { IsSubTypeWithImplementor (Ident (identifierVal $2)) (Ident (identifierVal $4)) }
 
 body :: {[BodyBlock]}
-body : {- empty -}  { [] }
-     | bodyBlock EOL body { $1 : $3 }
+body : sepList(EOL, bodyBlock)  { $1 }
+     -- | bodyBlock EOL body { $1 : $3 }
 
 bodyBlock :: {BodyBlock}
-bodyBlock : bodyLine                        { Line $1 }
-          | "if" expr EOL body "else" body  { IfElse $2 $4 $6 }
-          | "while" expr EOL body           { While $2 $4 }
-          | "for" IDENT "<-" expr EOL body  { For (Ident (identifierVal $2)) $4 $6 }
-          | "repeat" expr EOL body          { Repeat $2 $4 }
-          | "with" assignment EOL body      { With $2 $4 }
-          | "switch" expr EOL switchBody    { Switch $2 $4 }
+bodyBlock : bodyLine                                    { Line $1 }
+          | "if" expr EOL body "else" body              { IfElse $2 $4 $6 }
+          | "while" expr EOL body                       { While $2 $4 }
+          | "for" IDENT "<-" expr EOL body              { For (Ident (identifierVal $2)) $4 $6 }
+          | "repeat" expr EOL body                      { Repeat $2 $4 }
+          | "with" assignment EOL body                  { With $2 $4 }
+          | "switch" expr EOL sepList(EOL, switchCase)  { Switch $2 $4 }
 
-switchBody :: {[SwitchCase]}
-switchBody : {- empty -}    { [] }
-           | switchCase EOL switchBody { $1 : $3 }
+-- switchBody :: {[SwitchCase]}
+-- switchBody : {- empty -}    { [] }
+--            | switchCase EOL switchBody { $1 : $3 }
 
 switchCase :: {SwitchCase}
 switchCase : expr "->" bodyBlock    { SwitchCase $1 $3 }
@@ -249,21 +249,21 @@ expr : value                            { Value $1 }
      | expr "<<" expr                   { ShiftLeft $1 $3 }
      | expr ">>" expr                   { ShiftRight $1 $3 }
      | expr ">>>" expr                  { ShiftRightSameSign $1 $3 }
-     | "{" exprList "}"                 { Set $2 }
-     | "(" exprList ")"                 { Tuple $2 }
-     | "[" exprList "]"                 { List $2 }
+     | "{" sepList(",", expr) "}"                  { Set $2 }
+     | "(" sepList1(",", expr) ")"                 { Tuple $2 }
+     | "[" sepList(",", expr) "]"                  { List $2 }
 
 exprs :: {[Expr]}
 exprs : {- empty -}     {[]}
       | expr exprs      {$1 : $2}
 
-exprList :: {[Expr]}
-exprList : {- empty -}          { [] }
-         | exprListNonZero      { $1 }
+-- exprList :: {[Expr]}
+-- exprList : {- empty -}          { [] }
+--          | exprListNonZero      { $1 }
 
-exprListNonZero :: {[Expr]}
-exprListNonZero : expr                      { [$1] }
-                | expr "," exprListNonZero  { $1 : $3 }
+-- exprListNonZero :: {[Expr]}
+-- exprListNonZero : expr                      { [$1] }
+--                 | expr "," exprListNonZero  { $1 : $3 }
 
 indentation :: {Tabs}
 indentation : {- empty -} { Tabs 0 }
@@ -282,6 +282,23 @@ partialCall :: {PartialCall}
 partialCall : partialCall expr %prec CALL { PartialApplication $1 $2 }
             | "@" IDENT        { CallIdentifier Impure (Ident (identifierVal $2)) }
             | IDENT            { CallIdentifier Pure (Ident (identifierVal $1)) }
+
+-- TODO: Type these
+-- TODO: make whitespace lists the same as sepLists?
+maybe(p) : {- empty -} { Nothing }
+         | p           { Just $1 }
+
+whitespaceList(p) : {- empty -}         { [] }
+                  | p whitespaceList(p) { $1 : $2 }
+
+whitespaceList1(p) : p                      { [$1] }
+                   | p whitespaceList(p)    { $1 : $2 }
+
+sepList(p,q) : {- empty -}          { [] }
+             | p q sepList1(p,q)   { $1 : $2 }
+
+sepList1(p,q) : p                   { [$1] }
+              | p q sepList1(p,q)  { $1 : $2 }
 
 {
 
