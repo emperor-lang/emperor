@@ -162,11 +162,11 @@ typeClass :: {ModuleItem}
 typeClass : "class" IDENT maybeTypeComparison EOL body { TypeClass (Ident (identifierVal $2)) $3 $5 }
 
 functionDef :: {ModuleItem}
-functionDef : IDENT "::" typedef EOL IDENT functionParamDef EOL body { FunctionDef  }
+functionDef : IDENT "::" typedef EOL IDENT functionParamDef EOL body { FunctionDef (Ident (identifierVal $1)) $3 $6 $8 }
 
 functionParamDef :: {[Ident]}
 functionParamDef : {- empty -}              { [] }
-                 | IDENT functionParamDef   { $1 : $2 }
+                 | IDENT functionParamDef   { (Ident (identifierVal $1)) : $2 }
 
 typedef :: {EmperorType}
 typedef : "int"                 { IntP }
@@ -184,14 +184,18 @@ typedef : "int"                 { IntP }
 
 tupleTypeDef :: {[EmperorType]}
 tupleTypeDef : typedef              { [$1] }
-             | typedef "*" typedef  { $1 : $3 }
+             | typedef "*" tupleTypeDef  { $1 : $3 }
 
 maybeTypeComparison :: {Maybe [TypeComparison]}
 maybeTypeComparison : {- empty -}       { Nothing }
-                    | typeComparison    { Just $1 }
+                    | typeComparisons    { Just $1 }
 
-typeComparison :: {[TypeComparison]}
-typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2))}
+typeComparisons :: {[TypeComparison]}
+typeComparisons : typeComparison                    { [$1] }
+                | typeComparison typeComparisons    { $1 : $2 }
+
+typeComparison :: {TypeComparison}
+typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2)) }
                | "<:" IDENT "<~" IDENT { IsSubTypeWithImplementor (Ident (identifierVal $2)) (Ident (identifierVal $4)) }
 
 body :: {[BodyBlock]}

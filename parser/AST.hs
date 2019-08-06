@@ -70,7 +70,7 @@ data ModuleItem
 
 -- | Describes an explicit type assertion
 data TypeComparison
-    = IsSubType Ident Ident
+    = IsSubType Ident
     | IsSubTypeWithImplementor Ident Ident
     deriving (Show)
 
