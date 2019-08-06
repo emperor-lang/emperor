@@ -34,68 +34,68 @@ import Types.Results (EmperorType(..), Purity(..))
 -- %expect 0
 
 %token
-    DOCASSIGNMENTLINE   { TDocAssignmentLine    _ }
-    DOCLINE             { TDocLine              _ }
-    INT                 { TInteger              intVal _ }
-    BOOL                { TBool                 isTrue _ }
-    REAL                { TReal                 realVal _ }
-    CHAR                { TChar                 charVal _ }
-    "if"                { TIf                   _ }
-    "else"              { TElse                 _ }
-    "while"             { TWhile                _ }
-    "repeat"            { TRepeat               _ }
-    "with"              { TWith                 _ }
-    "switch"            { TSwitch               _ }
-    "for"               { TFor                  _ }
-    "import"            { TImport               _ }
-    "module"            { TModule               _ }
-    IDENT               { TIdent                identifierVal _ }
-    "<-"                { TQueue                _ }
-    "->"                { TGoesTo               _ }
-    "="                 { TGets                 _ }
-    "("                 { TLParenth             _ }
-    ")"                 { TRParenth             _ }
-    "["                 { TLBracket             _ }
-    "]"                 { TRBracket             _ }
-    "{"                 { TLBrace               _ }
-    "}"                 { TRBrace               _ }
-    "+"                 { TPlus                 _ }
-    "-"                 { TMinus                _ }
-    "/"                 { TDivide               _ }
-    "%"                 { TModulo               _ }
-    "*"                 { TTimes                _ }
-    "<<"                { TShiftLeft            _ }
-    ">>"                { TShiftRight           _ }
-    ">>>"               { TShiftRightSameSign   _ }
-    "&"                 { TAndScrict            _ }
-    "&&"                { TAndLazy              _ }
-    "|"                 { TOrStrict             _ }
-    "||"                { TOrLazy               _ }
-    "!"                 { TNot                  _ }
-    "^"                 { TXor                  _ }
-    "<"                 { TLessThan             _ }
-    "<="                { TLessThanOrEqual      _ }
-    ">"                 { TGreaterThan          _ }
-    ">="                { TGreaterThanOrEqual   _ }
-    "=>"                { TImplies              _ }
-    "=="                { TEqual                _ }
-    "!="                { TNotEqual             _ }
-    "@"                 { TImpure               _ }
-    ","                 { TComma                _ }
-    "int"               { TIntT                 _ }
-    "bool"              { TBoolT                _ }
-    "real"              { TRealT                _ }
-    "char"              { TCharT                _ }
-    "()"                { TUnit                 _ }
-    "Any"               { TAnyT                 _ }
-    "<:"                { TIsSubType            _ }
-    "<~"                { TIsImplementeBy       _ }
-    "::"                { TIsType               _ }
-    "class"             { TClass                _ }
-    "component"         { TComponent            _ }
-    TABS                { TTabs                 numTabs _ }
-    "_"                 { TIDC                  _ }
-    EOL                 { TEoL                  _ }
+    DOCASSIGNMENTLINE   { TDocAssignmentLine    p }
+    DOCLINE             { TDocLine              p }
+    INT                 { TInteger              intVal p }
+    BOOL                { TBool                 isTrue p }
+    REAL                { TReal                 realVal p }
+    CHAR                { TChar                 charVal p }
+    "if"                { TIf                   p }
+    "else"              { TElse                 p }
+    "while"             { TWhile                p }
+    "repeat"            { TRepeat               p }
+    "with"              { TWith                 p }
+    "switch"            { TSwitch               p }
+    "for"               { TFor                  p }
+    "import"            { TImport               p }
+    "module"            { TModule               p }
+    IDENT               { TIdent                identifierVal p }
+    "<-"                { TQueue                p }
+    "->"                { TGoesTo               p }
+    "="                 { TGets                 p }
+    "("                 { TLParenth             p }
+    ")"                 { TRParenth             p }
+    "["                 { TLBracket             p }
+    "]"                 { TRBracket             p }
+    "{"                 { TLBrace               p }
+    "}"                 { TRBrace               p }
+    "+"                 { TPlus                 p }
+    "-"                 { TMinus                p }
+    "/"                 { TDivide               p }
+    "%"                 { TModulo               p }
+    "*"                 { TTimes                p }
+    "<<"                { TShiftLeft            p }
+    ">>"                { TShiftRight           p }
+    ">>>"               { TShiftRightSameSign   p }
+    "&"                 { TAndScrict            p }
+    "&&"                { TAndLazy              p }
+    "|"                 { TOrStrict             p }
+    "||"                { TOrLazy               p }
+    "!"                 { TNot                  p }
+    "^"                 { TXor                  p }
+    "<"                 { TLessThan             p }
+    "<="                { TLessThanOrEqual      p }
+    ">"                 { TGreaterThan          p }
+    ">="                { TGreaterThanOrEqual   p }
+    "=>"                { TImplies              p }
+    "=="                { TEqual                p }
+    "!="                { TNotEqual             p }
+    "@"                 { TImpure               p }
+    ","                 { TComma                p }
+    "int"               { TIntT                 p }
+    "bool"              { TBoolT                p }
+    "real"              { TRealT                p }
+    "char"              { TCharT                p }
+    "()"                { TUnit                 p }
+    "Any"               { TAnyT                 p }
+    "<:"                { TIsSubType            p }
+    "<~"                { TIsImplementeBy       p }
+    "::"                { TIsType               p }
+    "class"             { TClass                p }
+    "component"         { TComponent            p }
+    TABS                { TTabs                 numTabs p }
+    "_"                 { TIDC                  p }
+    EOL                 { TEoL                  p }
 
 %left CALL
 %right "->"
