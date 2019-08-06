@@ -10,7 +10,7 @@ Language    : Haskell2010
 
 This file defines the standard format for all Emperor programs.
 -}
-module Formatter (format, formatFresh) where
+module Formatter (format, formatFresh, Format, FormatContext) where
 
 import AST
 import Data.List (intercalate, sort)
@@ -28,8 +28,8 @@ defaultFormatContext = 0
 class Format a where
     format :: FormatContext -> a -> String
     -- ^ Create a string which represents the object in the current context
-    -- | Format from a blank context
     formatFresh :: a -> String
+    -- ^ Format from a blank context
     formatFresh = format defaultFormatContext
 
 -- | Lists are formattable by placing commas between elements

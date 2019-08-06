@@ -70,10 +70,12 @@ data ModuleItem
     | FunctionItem FunctionDef
     deriving (Show)
 
+-- | Describes the definition of a function
 data FunctionDef
     = FunctionDef FunctionTypeDef [Ident] [BodyBlock]
     deriving (Show)
 
+-- | Describes the definition of the type of a function
 data FunctionTypeDef = FunctionTypeDef Ident EmperorType
     deriving (Show)
 
