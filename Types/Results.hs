@@ -17,10 +17,10 @@ module Types.Results
     , TypeJudgementResult(..)
     , isValid
     , isValidAnd
+    , Purity(..)
     , TypeOp
     ) where
 
-import AST (Purity)
 import Data.List (concat, intersperse)
 import Data.Map (Map, (!), keys)
 
@@ -69,6 +69,12 @@ instance Show EmperorType where
     show (EFunction p t1 t2) = show p ++ show t1 ++ " -> " ++ show t2
     show Any = "Any"
     show Unit = "Unit"
+
+-- | Marker for whether a function is pure or impure
+data Purity
+    = Pure
+    | Impure
+    deriving (Eq, Show)
 
 -- | Class of types which describe type operation results
 class TypeOp a where

@@ -17,11 +17,10 @@ module Types.Checker
     , TypeComparison
     ) where
 
-import AST (Purity(..))
 import Data.List ((\\))
 import Data.Map (Map, (!), empty, keys)
 import Types.Environment (TypeEnvironment)
-import Types.Results (EmperorType(..), TypeCheckResult(..))
+import Types.Results (EmperorType(..), Purity(..), TypeCheckResult(..))
 
 -- | Represents a comparison between two types
 data TypeComparison a b =

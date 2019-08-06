@@ -28,7 +28,6 @@ import AST
     , ImportType(..)
     , ModuleHeader(..)
     , PartialCall(..)
-    , Purity(..)
     , Queue(..)
     , SwitchCase(..)
     , Tabs(..)
@@ -37,7 +36,7 @@ import AST
     )
 import Types.Environment (TypeEnvironment, newTypeEnvironment)
 import Types.Judger (Typable, (|>))
-import Types.Results (EmperorType(..), TypeCheckResult(..), TypeJudgementResult(..))
+import Types.Results (EmperorType(..), Purity(..) TypeCheckResult(..), TypeJudgementResult(..))
 import Types.TypedAST (TypedAST)
 
 -- | Given an AST, resolve all types within it and return the type environment of its interface

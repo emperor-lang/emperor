@@ -10,10 +10,11 @@ Language    : Haskell2010
 
 This file defines the standard format for all Emperor programs.
 -}
-module Formatter where
+module Formatter (format) where
 
 import AST
 import Data.List (intercalate, sort)
+import Types.Results (Purity(..))
 
 -- | The information required to format code in a given context
 type FormatContext = Int
@@ -51,6 +52,14 @@ instance Format ImportLocation where
 -- | Module headers may be formatted with their docs and name
 instance Format ModuleHeader where
     format ctx (Module i) = "module " ++ format ctx i
+
+-- | Module items may be formatted by their contents
+instance Format ModuleItem where
+    format ctx (Component i c bs) = "component " ++ format ctx i ++ " " ++ format ctx c ++ "\n" ++ (unlines $ format (ctx + 1) <$> bs)
+    format ctx (TypeClass i c bs) = "class " ++ format ctx i ++ " " ++ format ctx c ++ "\n" ++ (unlines $ format (ctx + 1) <$> bs)
+    format ctx (FunctionDef i t is bs) = fi ++ " :: " ++ format ctx t ++ "\n" ++ fi ++ format ctx is ++ (unlines $ format (ctx + 1) <$> bs)
+        where
+            fi = format ctx i
 
 -- | Body block may be formatted with included code indented one layer further
 instance Format BodyBlock where

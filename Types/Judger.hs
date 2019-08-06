@@ -17,11 +17,11 @@ module Types.Judger
     , Typable
     ) where
 
-import AST (Expr(..), Ident(..), PartialCall(..), Purity(..), Value(..), getPurity)
+import AST (Expr(..), Ident(..), PartialCall(..), Value(..), getPurity)
 import Types.Checker ((<:), (|-))
 import Types.Environment (TypeEnvironment, get, newTypeEnvironment, unsafeGet)
 import Types.PreludeTypes (PreludeType, eqable)
-import Types.Results (EmperorType(..), TypeCheckResult(..), TypeJudgementResult(..), isValid, isValidAnd)
+import Types.Results (EmperorType(..), Purity(..), TypeCheckResult(..), TypeJudgementResult(..), isValid, isValidAnd)
 
 -- | Class describing constructs which may be assigned a type.
 class Typable a where
