@@ -58,8 +58,8 @@ instance SubTypable EmperorType where
       where
         typeResults = (e |-) <$> comparisons
         comparisons = (<:) <$> as <*> bs
-    e |- (SubType (ERecord s as) (ERecord s' bs))
-        | s == s' && keys bs `subset` keys as && all (\k -> (e |- (as ! k <: bs ! k)) == Pass) (keys bs) = Pass
+    e |- (SubType (ERecord as) (ERecord bs))
+        | keys bs `subset` keys as && all (\k -> (e |- (as ! k <: bs ! k)) == Pass) (keys bs) = Pass
         | otherwise = typeCheckFail (SubType (as ! b) (bs ! b))
       where
         b = head $ filter (\k -> (e |- (as ! k <: bs ! k)) /= Pass) $ keys as

@@ -48,7 +48,7 @@ data EmperorType
     | ESet EmperorType -- ^ Set composite
     | EList EmperorType -- ^ List composite
     | ETuple [EmperorType] -- ^ Tuple composite
-    | ERecord String (Map String EmperorType) -- ^ Record composite
+    | ERecord (Map String EmperorType) -- ^ Record composite
     | EFunction Purity EmperorType EmperorType -- ^ Function composite
     | Any -- ^ Universal super-type
     | Unit -- ^ Universal sub-type
@@ -62,7 +62,7 @@ instance Show EmperorType where
     show (ESet t) = '{' : show t ++ "}"
     show (EList t) = '[' : show t ++ "]"
     show (ETuple ts) = concat (intersperse "*" $ show <$> ts)
-    show (ERecord i m) = show i ++ " :: " ++ showMap m
+    show (ERecord m) = " :: " ++ showMap m
       where
         showMap :: Map String EmperorType -> String
         showMap m' = '{' : (concat $ intersperse ", " [k ++ " :: " ++ show (m' ! k) | k <- keys m]) ++ "}"

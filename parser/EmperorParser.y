@@ -15,12 +15,14 @@ module EmperorParser (parseEmperor) where
 
 import AST
 import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
+import Types.Results (EmperorType(..), Purity(..))
 
 }
 
 
 %name parseEmperor ast
--- %name parseREPL ...
+-- %name parseHeader body
+-- %name parseREPL 
 -- TODO: Add a repl parser
 
 %error { parseError }
@@ -164,31 +166,36 @@ functionDef : IDENT "::" typedef EOL IDENT functionParamDef EOL body { FunctionD
 
 functionParamDef :: {[Ident]}
 functionParamDef : {- empty -}              { [] }
-                 | IDENT functionParamDef   { $1 : $2 }
+                 | IDENT functionParamDef   { (Ident (identifierVal $1)) : $2 }
 
-typedef :: {Either Ident EmperorType}
+typedef :: {EmperorType}
 typedef : "int"                 { IntP }
         | "bool"                { CharP }
         | "real"                { RealP }
         | "char"                { BoolP }
         | "()"                  { Unit }
         | "Any"                 { Any }
+        | "(" typedef ")"       { $2 }
         | typedef "->" typedef  { EFunction Impure $1 $3 } 
         | tupleTypeDef          { ETuple $1 } 
         | "[" typedef "]"       { EList $2 }
         | "{" typedef "}"       { ESet $2 }
-        | IDENT                 { Left Ident }
+        -- | IDENT                 { Ident }
 
 tupleTypeDef :: {[EmperorType]}
 tupleTypeDef : typedef              { [$1] }
-             | typedef "*" typedef  { $1 : $3 }
+             | typedef "*" tupleTypeDef  { $1 : $3 }
 
 -- maybeTypeComparison :: {Maybe [TypeComparison]}
 -- maybeTypeComparison : {- empty -}       { Nothing }
 --                     | typeComparison    { Just $1 }
 
-typeComparison :: {[TypeComparison]}
-typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2))}
+typeComparisons :: {[TypeComparison]}
+typeComparisons : typeComparison                    { [$1] }
+                | typeComparison typeComparisons    { $1 : $2 }
+
+typeComparison :: {TypeComparison}
+typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2)) }
                | "<:" IDENT "<~" IDENT { IsSubTypeWithImplementor (Ident (identifierVal $2)) (Ident (identifierVal $4)) }
 
 body :: {[BodyBlock]}

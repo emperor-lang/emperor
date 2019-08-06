@@ -24,17 +24,20 @@ module AST
     , ImportLocation(..)
     , ImportType(..)
     , ModuleHeader(..)
+    , ModuleItem(..)
     , PartialCall(..)
-    , Purity(..)
     , Queue(..)
     , SwitchCase(..)
     , Tabs(..)
+    , TypeComparison(..)
     , Value(..)
     ) where
 
+import Types.Results (EmperorType(..), Purity(..))
+
 -- | Data type to represent the abstract syntax tree for a single module. This is specified by its name, its imports and its code.
 data AST =
-    AST ModuleHeader [Import] [BodyBlock]
+    AST ModuleHeader [Import] [ModuleItem]
     deriving (Show)
 
 -- | A single module header
@@ -56,6 +59,19 @@ data ImportLocation =
 data ImportType
     = Local -- ^ Indicates a file in the current project
     | Global -- ^ Indicates a file in the global installation
+    deriving (Show)
+
+-- | Describes a single named item in the module
+data ModuleItem
+    = Component Ident (Maybe [TypeComparison]) [BodyBlock]
+    | TypeClass Ident (Maybe [TypeComparison]) [BodyBlock]
+    | FunctionDef Ident EmperorType [Ident] [BodyBlock]
+    deriving (Show)
+
+-- | Describes an explicit type assertion
+data TypeComparison
+    = IsSubType Ident
+    | IsSubTypeWithImplementor Ident Ident
     deriving (Show)
 
 -- | Represents a single construction in the body of a function. This may be a
@@ -141,12 +157,6 @@ data PartialCall
 getPurity :: PartialCall -> Purity
 getPurity (PartialApplication c _) = getPurity c
 getPurity (CallIdentifier p _) = p
-
--- | Marker for whether a function is pure or impure
-data Purity
-    = Pure
-    | Impure
-    deriving (Eq, Show)
 
 -- | Data-structure to represent tab-indentation
 newtype Tabs =
