@@ -19,9 +19,7 @@ import Types.Results (EmperorType(..), Purity(..))
 
 }
 
-
 %name parseEmperor ast
--- %name parseHeader body
 -- %name parseREPL 
 -- TODO: Add a repl parser
 
@@ -122,10 +120,6 @@ ast : moduleHeader usings moduleBody                  { AST $1 $2 $3 }
 moduleHeader :: {ModuleHeader}
 moduleHeader : "module" IDENT EOL { Module (Ident (identifierVal $2)) }
 
--- maybeDocs :: {Maybe [DocLine]}
--- maybeDocs : {- empty -} { Nothing }
---           | docs        { Just $1 }
-
 -- docs :: {[DocLine]}
 -- docs : DOCLINE          { [ $1] }
 --      | DOCLINE EOL docs { $1 : $3 }
@@ -159,10 +153,17 @@ component :: {ModuleItem}
 component : "component" IDENT maybe(typeComparisons) EOL body { Component (Ident (identifierVal $2)) $3 $5 }
 
 typeClass :: {ModuleItem}
-typeClass : "class" IDENT maybe(typeComparisons) EOL body { TypeClass (Ident (identifierVal $2)) $3 $5 }
+typeClass : "class" IDENT maybe(typeComparisons) EOL memberTypes { TypeClass (Ident (identifierVal $2)) $3 $5 }
+
+memberTypes :: {[ModuleItem]}
+memberTypes : {- empty -}               { [] }
+            | functionTypeDef memberTypes    { $1 : $2 }
 
 functionDef :: {ModuleItem}
-functionDef : IDENT "::" typedef EOL IDENT functionParamDef EOL body { FunctionDef (Ident (identifierVal $1)) $3 $6 $8 }
+functionDef : functionTypeDef EOL IDENT functionParamDef EOL body { FunctionDef $1 (Ident (identifierVal $3)) $4 $6 }
+
+functionTypeDef :: {(Ident,EmperorType)}
+functionTypeDef : IDENT "::" typedef { ((Ident (identifierVal $1)),$3) }
 
 functionParamDef :: {[Ident]}
 functionParamDef : {- empty -}              { [] }
