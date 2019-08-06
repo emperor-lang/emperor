@@ -290,8 +290,6 @@ partialCall : partialCall expr %prec CALL { PartialApplication $1 $2 }
             | "@" IDENT        { CallIdentifier Impure (Ident (identifierVal $2)) }
             | IDENT            { CallIdentifier Pure (Ident (identifierVal $1)) }
 
--- TODO: Type these
--- TODO: make whitespace lists the same as sepLists?
 maybe(p) : {- empty -} { Nothing }
          | p           { Just $1 }
 
