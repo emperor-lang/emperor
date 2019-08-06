@@ -37,11 +37,10 @@ import AST
 import Types.Environment (TypeEnvironment, newTypeEnvironment)
 import Types.Judger (Typable, (|>))
 import Types.Results (EmperorType(..), Purity(..), TypeCheckResult(..), TypeJudgementResult(..))
-import Types.TypedAST (TypedAST)
 
 -- | Given an AST, resolve all types within it and return the type environment of its interface
-resolve :: AST -> Either String (TypedAST, TypeEnvironment)
+resolve :: AST -> Either String TypeEnvironment
 resolve = resolve' newTypeEnvironment
 
-resolve' :: TypeEnvironment -> AST -> Either String (TypedAST, TypeEnvironment)
+resolve' :: TypeEnvironment -> AST -> Either String TypeEnvironment
 resolve' _ _ = Left "Type resolution has not been implemented yet"

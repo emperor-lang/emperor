@@ -11,14 +11,23 @@ Language    : Haskell2010
 This module enables the type checking and judgement modules to be called more 
 easily.
 -}
-module Types.Types (resolveTypes) where
+module Types.Types (resolveTypes, TypeCheckResult(..)) where
 
-import AST (AST(..))
-import Types.Resolver (resolve)
+import AST (AST(..), Import)
+import Logger (Loggers)
+import Types.Imports.Imports (getEnvironment)
 import Types.Environment (TypeEnvironment)
-import Types.TypedAST (TypedAST)
+import Types.Results (TypeCheckResult(..))
 
 -- | Find any problems with the typing of results and obtain types if no 
 -- problems are found.
-resolveTypes :: AST -> Either String (TypedAST, TypeEnvironment)
-resolveTypes _ = Left "Type checking has not been implemented yet."
+resolveTypes :: Loggers -> AST -> IO TypeCheckResult
+resolveTypes (err, inf, scc, wrn) a = do
+    let imports = getImports a
+    inf "Getting imports..."
+    g <- getEnvironment (err, inf, scc, wrn) imports
+    inf $ "Got environment " ++ show g
+    return $ Fail "Not yet implemented!" 
+
+getImports :: AST -> [Import]
+getImports (AST _ is _) = is
