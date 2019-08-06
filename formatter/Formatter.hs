@@ -10,11 +10,12 @@ Language    : Haskell2010
 
 This file defines the standard format for all Emperor programs.
 -}
-module Formatter (format) where
+module Formatter (format, formatFresh) where
 
 import AST
 import Data.List (intercalate, sort)
-import Types.Results (Purity(..))
+import Data.Map ((!), keys)
+import Types.Results (EmperorType(..), Purity(..))
 
 -- | The information required to format code in a given context
 type FormatContext = Int
@@ -60,6 +61,29 @@ instance Format ModuleItem where
     format ctx (FunctionDef i t is bs) = fi ++ " :: " ++ format ctx t ++ "\n" ++ fi ++ format ctx is ++ (unlines $ format (ctx + 1) <$> bs)
         where
             fi = format ctx i
+
+-- | Type comparisons are formatted with whitespace
+instance Format TypeComparison where
+    format ctx (IsSubType i) = " <: " ++ format ctx i
+    format ctx (IsSubTypeWithImplementor i i') = " <:" ++ format ctx i ++ " <~ " ++ format ctx i'
+
+-- | Types can be formatted as they would appear
+instance Format EmperorType where
+    format _ IntP = "int"
+    format _ CharP = "char"
+    format _ BoolP = "bool"
+    format _ RealP = "real"
+    format ctx (ESet t) = "{" ++ format ctx t ++ "}"
+    format ctx (EList t) = "[" ++ format ctx t ++ "]"
+    format ctx (ETuple ts) = intercalate "*" (format ctx <$> ts)
+    format ctx (ERecord m) = " { " ++ formattedMap ++ " }"
+        where
+            formattedMap :: String
+            formattedMap = intercalate ", " $ [k ++ " : " ++ format ctx (m ! k) | k <- keys m]
+    format ctx (EFunction p (EFunction p' t1 t1') t2) = format ctx p ++ "(" ++ format ctx (EFunction p' t1 t1') ++ ") -> " ++ format ctx t2
+    format ctx (EFunction p t1 t2) = format ctx p ++ format ctx t1 ++ " -> " ++ format ctx t2
+    format _ Any = "Any"
+    format _ Unit = "Unit"
 
 -- | Body block may be formatted with included code indented one layer further
 instance Format BodyBlock where
