@@ -116,11 +116,11 @@ instance Format BodyLineContent where
 
 -- | Assignments may be formatted using their left and right sides
 instance Format Assignment where
-    format ctx (Assignment i e) = format ctx i ++ " = " ++ format (ctx + 1) e
+    format ctx (Assignment t i e) = unwords [format ctx t, format ctx i, "=", format (ctx + 1) e]
 
 -- | Queue statements may be formatted using their left and right sides
 instance Format Queue where
-    format ctx (Queue i e) = format ctx i ++ " <- " ++ format (ctx + 1) e
+    format ctx (Queue t i e) = unwords [format ctx t, format ctx i, "=", format (ctx + 1) e]
 
 -- | Expressions may be formatted according to their context
 instance Format Expr where

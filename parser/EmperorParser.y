@@ -168,28 +168,6 @@ functionParamDef :: {[Ident]}
 functionParamDef : {- empty -}              { [] }
                  | IDENT functionParamDef   { (Ident (identifierVal $1)) : $2 }
 
-typedef :: {EmperorType}
-typedef : "int"                 { IntP }
-        | "bool"                { CharP }
-        | "real"                { RealP }
-        | "char"                { BoolP }
-        | "()"                  { Unit }
-        | "Any"                 { Any }
-        | "(" typedef ")"       { $2 }
-        | typedef "->" typedef  { EFunction Impure $1 $3 } 
-        | tupleTypeDef          { ETuple $1 } 
-        | "[" typedef "]"       { EList $2 }
-        | "{" typedef "}"       { ESet $2 }
-        -- | IDENT                 { Ident }
-
-tupleTypeDef :: {[EmperorType]}
-tupleTypeDef : typedef              { [$1] }
-             | typedef "*" tupleTypeDef  { $1 : $3 }
-
--- maybeTypeComparison :: {Maybe [TypeComparison]}
--- maybeTypeComparison : {- empty -}       { Nothing }
---                     | typeComparison    { Just $1 }
-
 typeComparisons :: {[TypeComparison]}
 typeComparisons : typeComparison                    { [$1] }
                 | typeComparison typeComparisons    { $1 : $2 }
@@ -227,10 +205,29 @@ bodyLineContent : assignment            { AssignmentC $1 }
                 | partialCall           { CallC $1 }
 
 assignment :: {Assignment}
-assignment : IDENT "=" expr { Assignment (Ident (identifierVal $1)) $3 } 
+assignment : typedef IDENT "=" expr { Assignment $1 (Ident (identifierVal $2)) $4 } 
 
 queue :: {Queue}
-queue : IDENT "<-" expr { Queue (Ident (identifierVal $1)) $3 }
+queue : typedef IDENT "<-" expr { Queue $1 (Ident (identifierVal $2)) $4 }
+
+
+typedef :: {EmperorType}
+typedef : "int"                 { IntP }
+        | "bool"                { CharP }
+        | "real"                { RealP }
+        | "char"                { BoolP }
+        | "()"                  { Unit }
+        | "Any"                 { Any }
+        | "(" typedef ")"       { $2 }
+        | typedef "->" typedef  { EFunction Impure $1 $3 } 
+        | tupleTypeDef          { ETuple $1 } 
+        | "[" typedef "]"       { EList $2 }
+        | "{" typedef "}"       { ESet $2 }
+        -- | IDENT                 { Ident }
+
+tupleTypeDef :: {[EmperorType]}
+tupleTypeDef : typedef              { [$1] }
+             | typedef "*" tupleTypeDef  { $1 : $3 }
 
 expr :: {Expr}
 expr : value                            { Value $1 }

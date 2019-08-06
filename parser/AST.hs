@@ -109,12 +109,12 @@ data BodyLineContent
 
 -- | Data-structure to represent an assignment statement
 data Assignment =
-    Assignment Ident Expr
+    Assignment EmperorType Ident Expr
     deriving (Show)
 
 -- | Data-structure to represent an queue statement
 data Queue =
-    Queue Ident Expr
+    Queue EmperorType Ident Expr
     deriving (Show)
 
 -- | Data-structure to represent an expression
