@@ -58,9 +58,13 @@ instance Format ModuleHeader where
 instance Format ModuleItem where
     format ctx (Component i c bs) = "component " ++ format ctx i ++ " " ++ format ctx c ++ "\n" ++ (unlines $ format (ctx + 1) <$> bs)
     format ctx (TypeClass i c bs) = "class " ++ format ctx i ++ " " ++ format ctx c ++ "\n" ++ (unlines $ format (ctx + 1) <$> bs)
-    format ctx (FunctionDef i t is bs) = fi ++ " :: " ++ format ctx t ++ "\n" ++ fi ++ format ctx is ++ (unlines $ format (ctx + 1) <$> bs)
-        where
-            fi = format ctx i
+    format ctx (FunctionItem f) = format ctx f
+
+instance Format FunctionDef where
+    format ctx (FunctionDef (FunctionTypeDef i t) is bs) = format ctx (FunctionTypeDef i t) ++ "\n" ++ format ctx i ++ format ctx is ++ (unlines $ format (ctx + 1) <$> bs)
+
+instance Format FunctionTypeDef where
+    format ctx (FunctionTypeDef i t) = format ctx i ++ " :: " ++ format ctx t
 
 -- | Type comparisons are formatted with whitespace
 instance Format TypeComparison where

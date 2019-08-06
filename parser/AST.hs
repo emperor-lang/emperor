@@ -18,6 +18,8 @@ module AST
     , BodyLine(..)
     , BodyLineContent(..)
     , Expr(..)
+    , FunctionDef(..)
+    , FunctionTypeDef(..)
     , getPurity
     , Ident(..)
     , Import(..)
@@ -63,9 +65,16 @@ data ImportType
 
 -- | Describes a single named item in the module
 data ModuleItem
-    = Component Ident (Maybe [TypeComparison]) [BodyBlock]
-    | TypeClass Ident (Maybe [TypeComparison]) [BodyBlock]
-    | FunctionDef Ident EmperorType [Ident] [BodyBlock]
+    = Component Ident (Maybe [TypeComparison]) [FunctionDef]
+    | TypeClass Ident (Maybe [TypeComparison]) [FunctionTypeDef]
+    | FunctionItem FunctionDef
+    deriving (Show)
+
+data FunctionDef
+    = FunctionDef FunctionTypeDef [Ident] [BodyBlock]
+    deriving (Show)
+
+data FunctionTypeDef = FunctionTypeDef Ident EmperorType
     deriving (Show)
 
 -- | Describes an explicit type assertion

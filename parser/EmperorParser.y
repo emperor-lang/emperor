@@ -147,23 +147,27 @@ moduleBody : moduleItem             { [$1] }
 moduleItem :: {ModuleItem}
 moduleItem : component    { $1 }
            | typeClass    { $1 }
-           | functionDef  { $1 }
+           | functionDef  { FunctionItem $1 }
 
 component :: {ModuleItem}
-component : "component" IDENT maybe(typeComparisons) EOL body { Component (Ident (identifierVal $2)) $3 $5 }
+component : "component" IDENT maybe(typeComparisons) EOL functionDefs { Component (Ident (identifierVal $2)) $3 $5 }
+
+functionDefs :: {[FunctionDef]}
+functionDefs : {- empty -}              { [] }
+             | functionDef functionDefs { $1 : $2 }
 
 typeClass :: {ModuleItem}
 typeClass : "class" IDENT maybe(typeComparisons) EOL memberTypes { TypeClass (Ident (identifierVal $2)) $3 $5 }
 
-memberTypes :: {[ModuleItem]}
+memberTypes :: {[FunctionTypeDef]}
 memberTypes : {- empty -}               { [] }
             | functionTypeDef memberTypes    { $1 : $2 }
 
-functionDef :: {ModuleItem}
-functionDef : functionTypeDef EOL IDENT functionParamDef EOL body { FunctionDef $1 (Ident (identifierVal $3)) $4 $6 }
+functionDef :: {FunctionDef}
+functionDef : functionTypeDef EOL IDENT functionParamDef EOL body { FunctionDef $1 $4 $6 }
 
-functionTypeDef :: {(Ident,EmperorType)}
-functionTypeDef : IDENT "::" typedef { ((Ident (identifierVal $1)),$3) }
+functionTypeDef :: {FunctionTypeDef}
+functionTypeDef : IDENT "::" typedef { FunctionTypeDef (Ident (identifierVal $1)) $3 }
 
 functionParamDef :: {[Ident]}
 functionParamDef : {- empty -}              { [] }
