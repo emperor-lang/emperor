@@ -15,10 +15,17 @@ $linkHoverColour: #2f3061;
 @for $i from 1 through 6 {
 	h#{$i} {
 		font-family: $headerTypeface;
+		font-size: 30 - ($i - 1) * 6px;
 		color: $accentColour;
 		font-weight: bold;
 		font-kerning: auto;
 		font-variant-ligatures: contextual;
+	}
+}
+
+@media screen and (max-width: 480px) {
+	body {
+		font-size: 13pt;
 	}
 }
 
@@ -29,6 +36,7 @@ body {
 	font-kerning: auto;
 	font-variant-ligatures: contextual;
 	line-height: 1.55;
+	font-size: 12pt;
 }
 
 code {
