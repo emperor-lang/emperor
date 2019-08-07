@@ -8,14 +8,15 @@
 $headerTypeface: 'Noto Sans', sans-serif;
 $bodyTypeface: 'Noto Serif', Georgia, 'Times New Roman', Times, serif;
 $accentColour: #4b0082;
-$backgroundColour: #f7fff7;
+$backgroundColour: #ffffff; // #f7fff7;
 $bodyTextColour: #000000;
 $linkHoverColour: #2f3061;
+$bodyFontSize: 12pt;
 
 @for $i from 1 through 6 {
 	h#{$i} {
 		font-family: $headerTypeface;
-		font-size: 30 - ($i - 1) * 6px;
+		font-size: 30 - ($i - 1) * 6pt;
 		color: $accentColour;
 		font-weight: bold;
 		font-kerning: auto;
@@ -24,8 +25,14 @@ $linkHoverColour: #2f3061;
 }
 
 @media screen and (max-width: 480px) {
+	$mobileBodySize: 13pt;
+
 	body {
-		font-size: 13pt;
+		font-size: $mobileBodySize;
+	}
+
+	code {
+		font-size: $mobileBodySize;
 	}
 }
 
@@ -34,13 +41,14 @@ body {
 	color: $bodyTextColour;
 	background-color: $backgroundColour;
 	font-kerning: auto;
-	font-variant-ligatures: contextual;
+	font-variant-ligatures: common-ligatures;
 	line-height: 1.55;
-	font-size: 12pt;
+	font-size: $bodyFontSize;
 }
 
 code {
 	box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+	font-size: $bodyFontSize;
 }
 
 a {
