@@ -23,7 +23,7 @@ import Prelude hiding (lookup)
 import Types.Results (EmperorType, TypeJudgementResult(..))
 
 -- | An environment which maps names to types
-data TypeEnvironment = TypeEnvironment (Map String EmperorType)
+newtype TypeEnvironment = TypeEnvironment (Map String EmperorType)
     deriving (Show)
 
 -- | Creates a fresh type-environment
