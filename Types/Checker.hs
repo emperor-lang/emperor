@@ -19,7 +19,7 @@ module Types.Checker
 
 import Data.List ((\\))
 import Data.Map (Map, (!), empty, keys)
-import Types.Environment (TypeEnvironment)
+import Types.Environment (TypeEnvironment(..))
 import Types.Results (EmperorType(..), Purity(..), TypeCheckResult(..))
 
 -- | Represents a comparison between two types

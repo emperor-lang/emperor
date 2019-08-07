@@ -19,7 +19,7 @@ module Types.Judger
 
 import AST (Expr(..), Ident(..), PartialCall(..), Value(..), getPurity)
 import Types.Checker ((<:), (|-))
-import Types.Environment (TypeEnvironment, get, newTypeEnvironment, unsafeGet)
+import Types.Environment (TypeEnvironment(..), get, newTypeEnvironment, unsafeGet)
 import Types.PreludeTypes (PreludeType, eqable)
 import Types.Results (EmperorType(..), Purity(..), TypeCheckResult(..), TypeJudgementResult(..), isValid, isValidAnd)
 
