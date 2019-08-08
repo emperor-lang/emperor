@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-|
 Module      : Imports
 Description : Import handler
@@ -15,12 +15,13 @@ module Types.Imports.Imports (getEnvironment) where
 
 import AST (Ident(..), Import(..), ImportLocation(..), ImportType(..))
 import GHC.IO.Exception (ExitCode(..))
--- import Data.Aeson
 import Data.ByteString.Lazy (readFile)
 import Logger (Logger, Loggers)
 import Data.Map (filterWithKey, union)
 import System.Process (readProcessWithExitCode)
 import Types.Environment (newTypeEnvironment, TypeEnvironment)
+import Types.Imports.JsonIO (readHeader)
+import System.Exit (exitFailure)
 
 getEnvironment :: Loggers -> [Import] -> IO TypeEnvironment
 getEnvironment _ [] = return newTypeEnvironment
@@ -48,8 +49,12 @@ getEnvironmentFromFile (err, inf, scc, _) Global p = do
     putStrLn libraryInstallationDirectory
     putStrLn $ show c
     putStrLn stderrContent
-    -- TODO: Get the actual JSON things here
-    return newTypeEnvironment
+    headerJson <- readHeader p
+    case headerJson of
+        Left x -> do
+            err x
+            exitFailure
+        Right g -> return g
 
 filterEnvironment :: Maybe [Ident] -> TypeEnvironment -> TypeEnvironment
 filterEnvironment Nothing = id
