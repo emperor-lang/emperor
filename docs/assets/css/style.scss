@@ -49,17 +49,24 @@ body {
 }
 
 code {
-	box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+	box-shadow: unset; // 0 0 0 rgba(255, 255, 255, 0);
+	background: $backgroundColour;
 	font-size: $bodyFontSize;
 	font-family: $monospaceTypeface;
+}
+
+pre code {
+	border-left: 3px solid $accentColour;
 }
 
 a {
 	color: $accentColour;
 }
+
 a:visited {
 	color: #343434;
 }
+
 a:hover {
 	color: $linkHoverColour;
 }
@@ -92,6 +99,6 @@ a:hover {
 	color: $backgroundColour;
 }
 
-.k {
+.highlight .k {
 	font-weight: normal;
 }
