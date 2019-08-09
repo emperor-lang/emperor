@@ -53,9 +53,10 @@ code {
 	background: $backgroundColour;
 	font-size: $bodyFontSize;
 	font-family: $monospaceTypeface;
+	font-variant-ligatures: common-ligatures
 }
 
-pre {
+pre code {
 	margin: 0px;
 	border-left: 3px solid $accentColour;
 	padding: 3px;
@@ -104,4 +105,8 @@ a:hover {
 
 .highlight .k {
 	font-weight: normal;
+}
+
+.highlight .nt {
+	color: $accentColour;
 }
