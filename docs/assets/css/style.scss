@@ -55,8 +55,11 @@ code {
 	font-family: $monospaceTypeface;
 }
 
-pre code {
+pre {
+	margin: 0px;
 	border-left: 3px solid $accentColour;
+	padding: 3px;
+	padding-left: 6px;
 }
 
 a {
