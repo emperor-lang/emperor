@@ -4,17 +4,22 @@
 @import '{{ site.theme }}';
 
 @import url('https://fonts.googleapis.com/css?family=Noto+Sans:400,700|Noto+Serif:400,400i,700&display=swap');
-// @import https://noto-website-2.storage.googleapis.com/pkgs/NotoMono-hinted.zip
 
+// Typefaces and fonts
 $headerTypeface: 'Noto Sans', sans-serif;
 $bodyTypeface: 'Noto Serif', Georgia, 'Times New Roman', Times, serif;
 $monospaceTypeface: 'Noto Mono', 'Fira Code', monospace;
-$accentColour: #4b0082;
-$backgroundColour: #ffffff; // #f7fff7;
-$bodyTextColour: #000000;
-$linkHoverColour: #2f3061;
 $bodyFontSize: 12pt;
 
+// Colour scheme
+$monospaceBackgroundColour: #f2f2f2;
+$accentColour: #4b0082;
+$backgroundColour: #ffffff;
+$codeBackground: #f2f2f2;
+$bodyTextColour: #000000;
+$linkHoverColour: #2f3061;
+
+// Set headers
 @for $i from 1 through 6 {
 	h#{$i} {
 		font-family: $headerTypeface;
@@ -26,6 +31,7 @@ $bodyFontSize: 12pt;
 	}
 }
 
+// Modifications for mobile
 @media screen and (max-width: 480px) {
 	$mobileBodySize: 13pt;
 
@@ -54,6 +60,7 @@ code {
 	font-size: $bodyFontSize;
 	font-family: $monospaceTypeface;
 	font-variant-ligatures: common-ligatures;
+	background: $codeBackground;
 }
 
 pre {
@@ -66,6 +73,17 @@ pre code {
 	padding: 3px;
 	padding-left: 6px;
 	border-left: 3px solid $accentColour;
+}
+
+@media screen and (min-width: 480px) {
+	pre {
+		overflow: visible;
+	}
+}
+
+code.highligher-rouge {
+	background: $monospaceBackgroundColour;
+	margin: 0px;
 }
 
 a {
@@ -114,4 +132,8 @@ a:hover {
 
 .highlight .nt {
 	color: $accentColour;
+}
+
+#main_content_wrap {
+	background: $backgroundColour;
 }
