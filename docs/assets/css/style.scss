@@ -57,12 +57,37 @@ code {
 a {
 	color: $accentColour;
 }
+
+
 a:visited {
 	color: #343434;
 }
 a:hover {
 	color: $linkHoverColour;
 }
+
+
+
+@each $event in "" "hover" "active" "focus" "visited" {
+    footer a:#{$event} {
+        color : #f2f2f2;
+    }
+}
+
+@each $event in "" "visited" {
+    footer a:#{$event} {
+        text-decoration : none;
+    }
+}
+
+@each $event in "focus" "hover" {
+    footer a:#{$event} {
+        text-decoration : underline;
+    }
+}
+
+
+
 
 #forkme_banner {
 	box-shadow: 0 0 0 rgba(255, 255, 255, 0);
