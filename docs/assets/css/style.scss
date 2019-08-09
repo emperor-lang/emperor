@@ -56,6 +56,11 @@ code {
 	font-variant-ligatures: common-ligatures;
 }
 
+pre {
+	padding: 0;
+	box-shadow: unset;
+}
+
 pre code {
 	margin: 0px;
 	padding: 3px;
