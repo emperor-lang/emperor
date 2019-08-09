@@ -25,7 +25,7 @@ Single programs may be translated in to C and compiled separately along with oth
 
 ```bash
 emperor -c -O3 -i ./program.e -o ./program.e.c
-gcc $(emperor-setup --cflags) … ./program.e.c … $(emperor-setup --libs)
+gcc $(emperor-setup --cflags) ... ./program.e.c ... $(emperor-setup --libs)
 ```
 
 ### Installation &amp; Dependencies
