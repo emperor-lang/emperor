@@ -56,13 +56,10 @@ code {
 	font-variant-ligatures: common-ligatures;
 }
 
-pre {
-	padding: 3px;
-	padding-left: 6px;
-}
-
 pre code {
 	margin: 0px;
+	padding: 3px;
+	padding-left: 6px;
 	border-left: 3px solid $accentColour;
 }
 
