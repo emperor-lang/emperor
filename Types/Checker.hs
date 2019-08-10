@@ -17,11 +17,10 @@ module Types.Checker
     , TypeComparison
     ) where
 
-import AST (Purity(..))
 import Data.List ((\\))
 import Data.Map (Map, (!), empty, keys)
-import Types.Environment (TypeEnvironment)
-import Types.Results (EmperorType(..), TypeCheckResult(..))
+import Types.Environment (TypeEnvironment(..))
+import Types.Results (EmperorType(..), Purity(..), TypeCheckResult(..))
 
 -- | Represents a comparison between two types
 data TypeComparison a b =
@@ -30,7 +29,7 @@ data TypeComparison a b =
 instance (Show a, Show b) => Show (TypeComparison a b) where
     show (SubType a b) = show a ++ " <: " ++ show b
 
-infixl 1 <:
+infixl 3 <:
 
 -- | Sets up a type-comparison
 (<:) ::
@@ -41,7 +40,7 @@ a <: b = SubType a b
 
 -- | Type class to describe objects upon which the subtype relation is valid
 class SubTypable a where
-    infixl 0 |-
+    infixl 2 |-
     -- | Judge the validity of a type comparison
     (|-) :: TypeEnvironment -> TypeComparison a a -> TypeCheckResult
 
@@ -51,7 +50,7 @@ instance SubTypable EmperorType where
     _ |- (SubType _ Any) = Pass
     _ |- (SubType Unit _) = Pass
     _ |- (SubType IntP RealP) = Pass
-    e |- (SubType (EList a) (EList b)) = e |- (a <: b)
+    e |- (SubType (EList a) (EList b)) = e |- a <: b
     e |- (SubType (ETuple as) (ETuple bs)) =
         if all (== Pass) typeResults
             then Pass
@@ -59,16 +58,16 @@ instance SubTypable EmperorType where
       where
         typeResults = (e |-) <$> comparisons
         comparisons = (<:) <$> as <*> bs
-    e |- (SubType (ERecord s as) (ERecord s' bs))
-        | s == s' && keys bs `subset` keys as && all (\k -> (e |- ((as ! k) <: (bs ! k))) == Pass) (keys bs) = Pass
+    e |- (SubType (ERecord as) (ERecord bs))
+        | keys bs `subset` keys as && all (\k -> (e |- (as ! k <: bs ! k)) == Pass) (keys bs) = Pass
         | otherwise = typeCheckFail (SubType (as ! b) (bs ! b))
       where
-        b = head $ filter (\k -> (e |- ((as ! k) <: (bs ! k))) /= Pass) $ keys as
+        b = head $ filter (\k -> (e |- (as ! k <: bs ! k)) /= Pass) $ keys as
     e |- (SubType (EFunction p i o) (EFunction p' i' o')) =
-        case e |- (p <: p') of
+        case e |- p <: p' of
             Pass ->
-                case e |- (i' <: i) of
-                    Pass -> e |- (o <: o')
+                case e |- i' <: i of
+                    Pass -> e |- o <: o'
                     x -> x
             x -> x
     _ |- c = typeCheckFail c

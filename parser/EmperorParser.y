@@ -15,12 +15,12 @@ module EmperorParser (parseEmperor) where
 
 import AST
 import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
+import Types.Results (EmperorType(..), Purity(..))
 
 }
 
-
 %name parseEmperor ast
--- %name parseREPL ...
+-- %name parseREPL 
 -- TODO: Add a repl parser
 
 %error { parseError }
@@ -32,55 +32,71 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 -- %expect 0
 
 %token
-    DOCASSIGNMENTLINE   { TDocAssignmentLine    _ }
-    DOCLINE             { TDocLine              _ }
-    INT                 { TInteger              intVal _ }
-    BOOL                { TBool                 isTrue _ }
-    REAL                { TReal                 realVal _ }
-    CHAR                { TChar                 charVal _ }
-    "if"                { TIf                   _ }
-    "else"              { TElse                 _ }
-    "while"             { TWhile                _ }
-    "repeat"            { TRepeat               _ }
-    "with"              { TWith                 _ }
-    "switch"            { TSwitch               _ }
-    "for"               { TFor                  _ }
-    IDENT               { TIdent                identifierVal _ }
-    "<-"                { TQueue                _ }
-    "->"                { TGoesTo               _ }
-    "="                 { TGets                 _ }
-    "("                 { TLParenth             _ }
-    ")"                 { TRParenth             _ }
-    "["                 { TLBracket             _ }
-    "]"                 { TRBracket             _ }
-    "{"                 { TLBrace               _ }
-    "}"                 { TRBrace               _ }
-    "+"                 { TPlus                 _ }
-    "-"                 { TMinus                _ }
-    "/"                 { TDivide               _ }
-    "%"                 { TModulo               _ }
-    "*"                 { TTimes                _ }
-    "<<"                { TShiftLeft            _ }
-    ">>"                { TShiftRight           _ }
-    ">>>"               { TShiftRightSameSign   _ }
-    "&"                 { TAndScrict            _ }
-    "&&"                { TAndLazy              _ }
-    "|"                 { TOrStrict             _ }
-    "||"                { TOrLazy               _ }
-    "!"                 { TNot                  _ }
-    "^"                 { TXor                  _ }
-    "<"                 { TLessThan             _ }
-    "<="                { TLessThanOrEqual      _ }
-    ">"                 { TGreaterThan          _ }
-    ">="                { TGreaterThanOrEqual   _ }
-    "=>"                { TImplies              _ }
-    "=="                { TEqual                _ }
-    "!="                { TNotEqual             _ }
-    "@"                 { TImpure               _ }
-    ","                 { TComma                _ }
-    TABS                { TTabs                 numTabs _ }
-    EOL                 { TEoL                  _ }
+    DOCASSIGNMENTLINE   { TDocAssignmentLine    p }
+    DOCLINE             { TDocLine              p }
+    INT                 { TInteger              intVal p }
+    BOOL                { TBool                 isTrue p }
+    REAL                { TReal                 realVal p }
+    CHAR                { TChar                 charVal p }
+    "if"                { TIf                   p }
+    "else"              { TElse                 p }
+    "while"             { TWhile                p }
+    "repeat"            { TRepeat               p }
+    "with"              { TWith                 p }
+    "switch"            { TSwitch               p }
+    "for"               { TFor                  p }
+    "import"            { TImport               p }
+    "module"            { TModule               p }
+    IDENT               { TIdent                identifierVal p }
+    "<-"                { TQueue                p }
+    "->"                { TGoesTo               p }
+    "="                 { TGets                 p }
+    "("                 { TLParenth             p }
+    ")"                 { TRParenth             p }
+    "["                 { TLBracket             p }
+    "]"                 { TRBracket             p }
+    "{"                 { TLBrace               p }
+    "}"                 { TRBrace               p }
+    "+"                 { TPlus                 p }
+    "-"                 { TMinus                p }
+    "/"                 { TDivide               p }
+    "%"                 { TModulo               p }
+    "*"                 { TTimes                p }
+    "<<"                { TShiftLeft            p }
+    ">>"                { TShiftRight           p }
+    ">>>"               { TShiftRightSameSign   p }
+    "&"                 { TAndScrict            p }
+    "&&"                { TAndLazy              p }
+    "|"                 { TOrStrict             p }
+    "||"                { TOrLazy               p }
+    "!"                 { TNot                  p }
+    "^"                 { TXor                  p }
+    "<"                 { TLessThan             p }
+    "<="                { TLessThanOrEqual      p }
+    ">"                 { TGreaterThan          p }
+    ">="                { TGreaterThanOrEqual   p }
+    "=>"                { TImplies              p }
+    "=="                { TEqual                p }
+    "!="                { TNotEqual             p }
+    "@"                 { TImpure               p }
+    ","                 { TComma                p }
+    "int"               { TIntT                 p }
+    "bool"              { TBoolT                p }
+    "real"              { TRealT                p }
+    "char"              { TCharT                p }
+    "()"                { TUnit                 p }
+    "Any"               { TAnyT                 p }
+    "<:"                { TIsSubType            p }
+    "<~"                { TIsImplementeBy       p }
+    "::"                { TIsType               p }
+    "class"             { TClass                p }
+    "component"         { TComponent            p }
+    TABS                { TTabs                 numTabs p }
+    "_"                 { TIDC                  p }
+    EOL                 { TEoL                  p }
 
+%left CALL
+%right "->"
 %left "||"
 %left "&&"
 %left "|"
@@ -94,24 +110,89 @@ import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
 %left "*" "/" "%"
 %right NEG "!"
 %right "@"
+%nonassoc "{" "[" "(" INT REAL CHAR BOOL IDENT
 
 %%
 
 ast :: {AST}
-ast : body                  { AST $1 }
+ast : moduleHeader usings moduleBody                  { AST $1 $2 $3 }
+
+moduleHeader :: {ModuleHeader}
+moduleHeader : "module" IDENT EOL { Module (Ident (identifierVal $2)) }
+
+-- docs :: {[DocLine]}
+-- docs : DOCLINE          { [ $1] }
+--      | DOCLINE EOL docs { $1 : $3 }
+
+usings :: {[Import]}
+usings : {- empty -}    { [] }
+       | using usings   { $1 : $2 }
+
+using :: {Import}
+using : "import" usingLabel                      { Import $2 Nothing }
+      | "import" usingLabel "(" identList ")"    { Import $2 (Just $4) }
+
+usingLabel :: {ImportLocation}
+usingLabel : "<" IDENT ">" { ImportLocation Global (Ident (identifierVal $2)) }
+        --    | STRING            { ImportLocation Local (Ident (stringVal $1)) }
+
+identList :: {[Ident]}
+identList : IDENT               { [Ident (identifierVal $1)]}
+          | IDENT "," identList { Ident (identifierVal $1) : $3 }
+
+moduleBody :: {[ModuleItem]}
+moduleBody : moduleItem             { [$1] }
+           | moduleItem moduleBody  { $1 : $2 }
+
+moduleItem :: {ModuleItem}
+moduleItem : component    { $1 }
+           | typeClass    { $1 }
+           | functionDef  { FunctionItem $1 }
+
+component :: {ModuleItem}
+component : "component" IDENT maybe(typeComparisons) EOL functionDefs { Component (Ident (identifierVal $2)) $3 $5 }
+
+functionDefs :: {[FunctionDef]}
+functionDefs : {- empty -}              { [] }
+             | functionDef functionDefs { $1 : $2 }
+
+typeClass :: {ModuleItem}
+typeClass : "class" IDENT maybe(typeComparisons) EOL memberTypes { TypeClass (Ident (identifierVal $2)) $3 $5 }
+
+memberTypes :: {[FunctionTypeDef]}
+memberTypes : {- empty -}               { [] }
+            | functionTypeDef memberTypes    { $1 : $2 }
+
+functionDef :: {FunctionDef}
+functionDef : functionTypeDef EOL IDENT functionParamDef EOL body { FunctionDef $1 $4 $6 }
+
+functionTypeDef :: {FunctionTypeDef}
+functionTypeDef : IDENT "::" typedef { FunctionTypeDef (Ident (identifierVal $1)) $3 }
+
+functionParamDef :: {[Ident]}
+functionParamDef : {- empty -}              { [] }
+                 | IDENT functionParamDef   { (Ident (identifierVal $1)) : $2 }
+
+typeComparisons :: {[TypeComparison]}
+typeComparisons : typeComparison                    { [$1] }
+                | typeComparison typeComparisons    { $1 : $2 }
+
+typeComparison :: {TypeComparison}
+typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2)) }
+               | "<:" IDENT "<~" IDENT { IsSubTypeWithImplementor (Ident (identifierVal $2)) (Ident (identifierVal $4)) }
 
 body :: {[BodyBlock]}
-body : {- empty -}  { [] }
-     | bodyBlock EOL body { $1 : $3 }
+body : bodyBlock            { [$1] }
+     | bodyBlock EOL body   { $1 : $3 }
 
 bodyBlock :: {BodyBlock}
-bodyBlock : bodyLine                        { Line $1 }
-          | "if" expr EOL body "else" body  { IfElse $2 $4 $6 }
-          | "while" expr EOL body           { While $2 $4 }
-          | "for" IDENT "<-" expr EOL body  { For (Ident (identifierVal $2)) $4 $6 }
-          | "repeat" expr EOL body          { Repeat $2 $4 }
-          | "with" assignment EOL body      { With $2 $4 }
-          | "switch" expr EOL switchBody    { Switch $2 $4 }
+bodyBlock : bodyLine                                    { Line $1 }
+          | "if" expr EOL body "else" body              { IfElse $2 $4 $6 }
+          | "while" expr EOL body                       { While $2 $4 }
+          | "for" IDENT "<-" expr EOL body              { For (Ident (identifierVal $2)) $4 $6 }
+          | "repeat" expr EOL body                      { Repeat $2 $4 }
+          | "with" assignment EOL body                  { With $2 $4 }
+          | "switch" expr EOL switchBody  { Switch $2 $4 }
 
 switchBody :: {[SwitchCase]}
 switchBody : {- empty -}    { [] }
@@ -129,10 +210,29 @@ bodyLineContent : assignment            { AssignmentC $1 }
                 | partialCall           { CallC $1 }
 
 assignment :: {Assignment}
-assignment : IDENT "=" expr { Assignment (Ident (identifierVal $1)) $3 } 
+assignment : typedef IDENT "=" expr { Assignment $1 (Ident (identifierVal $2)) $4 } 
 
 queue :: {Queue}
-queue : IDENT "<-" expr { Queue (Ident (identifierVal $1)) $3 }
+queue : typedef IDENT "<-" expr { Queue $1 (Ident (identifierVal $2)) $4 }
+
+
+typedef :: {EmperorType}
+typedef : "int"                 { IntP }
+        | "bool"                { CharP }
+        | "real"                { RealP }
+        | "char"                { BoolP }
+        | "()"                  { Unit }
+        | "Any"                 { Any }
+        | "(" typedef ")"       { $2 }
+        | typedef "->" typedef  { EFunction Impure $1 $3 } 
+        | tupleTypeDef          { ETuple $1 } 
+        | "[" typedef "]"       { EList $2 }
+        | "{" typedef "}"       { ESet $2 }
+        -- | IDENT                 { Ident }
+
+tupleTypeDef :: {[EmperorType]}
+tupleTypeDef : typedef              { [$1] }
+             | typedef "*" tupleTypeDef  { $1 : $3 }
 
 expr :: {Expr}
 expr : value                            { Value $1 }
@@ -179,17 +279,21 @@ indentation : {- empty -} { Tabs 0 }
             | TABS        { Tabs (numTabs $1) }
 
 value :: {Value}
-value : INT         { Integer (intVal $1) }
+value : "_"         { IDC }
+      | INT         { Integer (intVal $1) }
       | REAL        { Real (realVal $1)}
     --   | IDENT       { IdentV (identifierVal $1) }
       | CHAR        { Char (charVal $1) }
       | BOOL        { Bool (isTrue $1) }
-      | partialCall { Call $1 }
+      | partialCall %prec CALL { Call $1 }
 
 partialCall :: {PartialCall}
-partialCall : partialCall expr { PartialApplication $1 $2 }
-            | "@" IDENT        { CallIdentifier Impure (Ident (identifierVal $1)) }
+partialCall : partialCall expr %prec CALL { PartialApplication $1 $2 }
+            | "@" IDENT        { CallIdentifier Impure (Ident (identifierVal $2)) }
             | IDENT            { CallIdentifier Pure (Ident (identifierVal $1)) }
+
+maybe(p) : {- empty -} { Nothing }
+         | p           { Just $1 }
 
 {
 

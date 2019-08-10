@@ -11,11 +11,78 @@ Language    : Haskell2010
 This module defines the data-types used to form the abstract syntax tree of the
 emperor language.
 -}
-module AST where
+module AST
+    ( Assignment(..)
+    , AST(..)
+    , BodyBlock(..)
+    , BodyLine(..)
+    , BodyLineContent(..)
+    , Expr(..)
+    , FunctionDef(..)
+    , FunctionTypeDef(..)
+    , getPurity
+    , Ident(..)
+    , Import(..)
+    , ImportLocation(..)
+    , ImportType(..)
+    , ModuleHeader(..)
+    , ModuleItem(..)
+    , PartialCall(..)
+    , Queue(..)
+    , SwitchCase(..)
+    , Tabs(..)
+    , TypeComparison(..)
+    , Value(..)
+    ) where
 
--- | Data type to represent the abstract syntax tree
-newtype AST =
-    AST [BodyBlock]
+import Types.Results (EmperorType(..), Purity(..))
+
+-- | Data type to represent the abstract syntax tree for a single module. This is specified by its name, its imports and its code.
+data AST =
+    AST ModuleHeader [Import] [ModuleItem]
+    deriving (Show)
+
+-- | A single module header
+data ModuleHeader =
+    Module Ident
+    deriving (Show)
+
+-- | A single imported file
+data Import =
+    Import ImportLocation (Maybe [Ident])
+    deriving (Show)
+
+-- | Location of an import and how to treat it
+data ImportLocation =
+    ImportLocation ImportType Ident
+    deriving (Show)
+
+-- | The type of an import
+data ImportType
+    = Local -- ^ Indicates a file in the current project
+    | Global -- ^ Indicates a file in the global installation
+    deriving (Show)
+
+-- | Describes a single named item in the module
+data ModuleItem
+    = Component Ident (Maybe [TypeComparison]) [FunctionDef]
+    | TypeClass Ident (Maybe [TypeComparison]) [FunctionTypeDef]
+    | FunctionItem FunctionDef
+    deriving (Show)
+
+-- | Describes the definition of a function
+data FunctionDef
+    = FunctionDef FunctionTypeDef [Ident] [BodyBlock]
+    deriving (Show)
+
+-- | Describes the definition of the type of a function
+data FunctionTypeDef = FunctionTypeDef Ident EmperorType
+    deriving (Show)
+
+-- | Describes an explicit type assertion
+data TypeComparison
+    = IsSubType Ident
+    | IsSubTypeWithImplementor Ident Ident
     deriving (Show)
 
 -- | Represents a single construction in the body of a function. This may be a
@@ -53,12 +120,12 @@ data BodyLineContent
 
 -- | Data-structure to represent an assignment statement
 data Assignment =
-    Assignment Ident Expr
+    Assignment EmperorType Ident Expr
     deriving (Show)
 
 -- | Data-structure to represent an queue statement
 data Queue =
-    Queue Ident Expr
+    Queue EmperorType Ident Expr
     deriving (Show)
 
 -- | Data-structure to represent an expression
@@ -90,7 +157,7 @@ data Expr
     | Tuple [Expr]
     | List [Expr]
     deriving (Show)
-    
+
 -- | Represents the use of a function
 data PartialCall
     = PartialApplication PartialCall Expr
@@ -102,12 +169,6 @@ getPurity :: PartialCall -> Purity
 getPurity (PartialApplication c _) = getPurity c
 getPurity (CallIdentifier p _) = p
 
--- | Marker for whether a function is pure or impure
-data Purity
-    = Pure
-    | Impure
-    deriving (Eq, Show)
-
 -- | Data-structure to represent tab-indentation
 newtype Tabs =
     Tabs Int
@@ -115,11 +176,11 @@ newtype Tabs =
 
 -- | Data-structure to represent a single value
 data Value
-    = Integer Integer
+    = IDC
+    | Integer Integer
     | Real Double
     | Char Char
-        --    | String String
-    -- | IdentV String
+    -- | String String
     | Bool Bool
     | Call PartialCall
     deriving (Show)
@@ -127,4 +188,4 @@ data Value
 -- | Data-structure to represent an identifier
 newtype Ident =
     Ident String
-    deriving (Show)
+    deriving (Eq, Ord, Show)

@@ -59,7 +59,17 @@ $alphaNum = [$alpha$num]
 @char               { mkL LChar }
 -- @string         { mkL LString }
 
+-- Types
+"int"               { mkL LIntT }
+"bool"              { mkL LBoolT }
+"real"              { mkL LRealT }
+"char"              { mkL LCharT }
+"()"                { mkL LUnit }
+"Any"               { mkL LAnyT }
+-- "string"            { mkL LStringT}
+
 -- Keywords
+"_"                 { mkL LIDC }
 "if"                { mkL LIf }
 "else"              { mkL LElse }
 "while"             { mkL LWhile }
@@ -67,6 +77,13 @@ $alphaNum = [$alpha$num]
 "with"              { mkL LWith }
 "switch"            { mkL LSwitch }
 "for"               { mkL LFor }
+"import"            { mkL LImport }
+"module"            { mkL LModule }
+"<:"                { mkL LIsSubType }
+"<~"                { mkL LIsImplementeBy }
+"::"                { mkL LIsType }
+"class"             { mkL LClass }
+"component"         { mkL LComponent }
 
 -- Identifiers
 @ident              { mkL LIdent }
@@ -85,22 +102,22 @@ $alphaNum = [$alpha$num]
 "@"                 { mkL LImpure }
 
 -- Operators
-"+"                { mkL LPlus }
-"-"                { mkL LMinus }
-"/"                { mkL LDivide }
-"%"                { mkL LModulo }
-"*"                { mkL LTimes }
-"<<"              { mkL LShiftLeft }
+"+"                 { mkL LPlus }
+"-"                 { mkL LMinus }
+"/"                 { mkL LDivide }
+"%"                 { mkL LModulo }
+"*"                 { mkL LTimes }
+"<<"                { mkL LShiftLeft }
 ">>"                { mkL LShiftRight }
 ">>>"               { mkL LShiftRightSameSign }
 "&"                 { mkL LAndScrict }
 "&&"                { mkL LAndLazy }
-"|"                { mkL LOrStrict }
-"||"              { mkL LOrLazy }
+"|"                 { mkL LOrStrict }
+"||"                { mkL LOrLazy }
 "!"                 { mkL LNot }
-"^"                { mkL LXor }
-"<"                { mkL LLessThan }
-"<="               { mkL LLessThanOrEqual }
+"^"                 { mkL LXor }
+"<"                 { mkL LLessThan }
+"<="                { mkL LLessThanOrEqual }
 ">"                 { mkL LGreaterThan }
 ">="                { mkL LGreaterThanOrEqual }
 "=>"                { mkL LImplies }
@@ -126,6 +143,8 @@ data LexemeClass = LDocAssignmentLine
                  | LWith
                  | LSwitch
                  | LFor
+                 | LImport
+                 | LModule
                  | LIdent
                  | LQueue
                  | LGoesTo
@@ -159,7 +178,19 @@ data LexemeClass = LDocAssignmentLine
                  | LEqual
                  | LNotEqual
                  | LComma
+                 | LIntT
+                 | LBoolT
+                 | LRealT
+                 | LCharT
+                 | LUnit
+                 | LAnyT
                  | LTabs
+                 | LIsSubType
+                 | LIsImplementeBy
+                 | LIsType
+                 | LClass
+                 | LComponent
+                 | LIDC
                  | LEoL
     deriving (Eq, Show)
 
@@ -180,6 +211,8 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LWith               -> return (TWith               p)
                                 LSwitch             -> return (TSwitch             p)
                                 LFor                -> return (TFor                p)
+                                LImport             -> return (TImport             p)
+                                LModule             -> return (TModule             p)
                                 LIdent              -> return (TIdent              t p)
                                 LQueue              -> return (TQueue              p)
                                 LGoesTo             -> return (TGoesTo             p)
@@ -213,7 +246,19 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LEqual              -> return (TEqual              p)
                                 LNotEqual           -> return (TNotEqual           p)
                                 LComma              -> return (TComma              p)
+                                LIntT               -> return (TIntT               p)
+                                LBoolT              -> return (TBoolT              p)
+                                LRealT              -> return (TRealT              p)
+                                LCharT              -> return (TCharT              p)
+                                LUnit               -> return (TUnit               p)
+                                LAnyT               -> return (TAnyT               p)
                                 LTabs               -> return (TTabs               len p)
+                                LIsSubType          -> return (TIsSubType          p)
+                                LIsImplementeBy     -> return (TIsImplementeBy     p)
+                                LIsType             -> return (TIsType             p)
+                                LClass              -> return (TClass              p)
+                                LComponent          -> return (TComponent          p )
+                                LIDC                -> return (TIDC                p )
                                 LEoL                -> return (TEoL                p)
 
 alexEOF :: Alex Token
@@ -238,6 +283,8 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TWith               {                          position :: AlexPosn } -- ^ Keyword: @with@
            | TSwitch             {                          position :: AlexPosn } -- ^ Keyword: @switch@
            | TFor                {                          position :: AlexPosn } -- ^ Keyword: @for@
+           | TImport             {                          position :: AlexPosn } -- ^ Keyword: @import@
+           | TModule             {                          position :: AlexPosn } -- ^ Keyword: @module@
            | TIdent              { identifierVal :: String, position :: AlexPosn } -- ^ An identifier
            | TQueue              {                          position :: AlexPosn } -- ^ @<-@
            | TGoesTo             {                          position :: AlexPosn } -- ^ @->@
@@ -272,6 +319,18 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TNotEqual           {                          position :: AlexPosn } -- ^ @!=@
            | TComma              {                          position :: AlexPosn } -- ^ @,@
            | TTabs               { numTabs :: Int,          position :: AlexPosn } -- ^ @\t@
+           | TIntT               {                          position :: AlexPosn } -- ^ @int@
+           | TBoolT              {                          position :: AlexPosn } -- ^ @bool@
+           | TRealT              {                          position :: AlexPosn } -- ^ @real@
+           | TCharT              {                          position :: AlexPosn } -- ^ @char@
+           | TUnit               {                          position :: AlexPosn } -- ^ @()@
+           | TAnyT               {                          position :: AlexPosn } -- ^ @AnyT@
+           | TIsSubType          {                          position :: AlexPosn } -- ^ @<:@
+           | TIsImplementeBy     {                          position :: AlexPosn } -- ^ @<~@
+           | TIsType             {                          position :: AlexPosn } -- ^ @::@
+           | TClass              {                          position :: AlexPosn } -- ^ @class@
+           | TComponent          {                          position :: AlexPosn } -- ^ @component@
+           | TIDC                {                          position :: AlexPosn } -- ^ @_@
            | TEoL                {                          position :: AlexPosn } -- ^ @\\n@
            | TEoF                                                                  -- ^ @\\0@
     deriving (Eq, Ord, Show)

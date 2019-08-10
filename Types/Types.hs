@@ -11,35 +11,22 @@ Language    : Haskell2010
 This module enables the type checking and judgement modules to be called more 
 easily.
 -}
-module Types.Types
-    ( resolveTypes
-    , TypeJudgementResult(..)
-    , Function(..)
-    ) where
+module Types.Types (resolveTypes, TypeCheckResult(..)) where
 
-import AST (AST(..), BodyLine(..), Ident(..), Value(..))
-import Formatter (formatFresh)
-import Data.List (unwords)
-import Types.Environment (TypeEnvironment)
-import Types.Resolver ((|>), judge)
-import Types.Results (EmperorType, TypeJudgementResult(..))
+import AST (AST(..), Import)
+import Logger (Loggers)
+import Types.Imports.Imports (getEnvironment)
+import Types.Results (TypeCheckResult(..))
 
 -- | Find any problems with the typing of results and obtain types if no 
 -- problems are found.
-resolveTypes :: AST -> Either String [Function]
-resolveTypes _ = Left "Type checking has not been implemented yet."
+resolveTypes :: Loggers -> AST -> IO TypeCheckResult
+resolveTypes (err, inf, scc, wrn) a = do
+    let imports = getImports a
+    inf "Getting imports..."
+    g <- getEnvironment (err, inf, scc, wrn) imports
+    inf $ "Got environment " ++ show g
+    return $ Fail "Not yet implemented!" 
 
--- | Describes the functions and constants to be translated.
-data Function = Function Ident EmperorType [(Ident, EmperorType)] [BodyLine] 
-              | Constant Ident EmperorType Value
-
-instance Show Function where
-    -- TODO: Complete the instance of Show for functions
-    show (Function i t ps _) = show i ++ " :: " ++ show t ++ "\n" ++ show i ++ " " ++ showParameters ps ++ " = " ++ "??"
-        where
-            showParameters :: [(Ident,EmperorType)] -> String
-            showParameters ps' = unwords $ showParameter <$> ps'
-
-            showParameter :: (Ident, EmperorType) -> String
-            showParameter (i', _) = formatFresh i'
-    show (Constant i t v) = unwords [formatFresh i, show t, formatFresh v]
+getImports :: AST -> [Import]
+getImports (AST _ is _) = is
