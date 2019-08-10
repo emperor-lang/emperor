@@ -16,7 +16,6 @@ module Types.Types (resolveTypes, TypeCheckResult(..)) where
 import AST (AST(..), Import)
 import Logger (Loggers)
 import Types.Imports.Imports (getEnvironment)
-import Types.Environment (TypeEnvironment)
 import Types.Results (TypeCheckResult(..))
 
 -- | Find any problems with the typing of results and obtain types if no 
