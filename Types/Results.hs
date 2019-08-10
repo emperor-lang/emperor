@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-|
 Module      : Results
 Description : Typing results for emperor
@@ -23,6 +24,17 @@ module Types.Results
 
 import Data.List (concat, intersperse)
 import Data.Map (Map, (!), keys)
+import Data.Aeson
+    ( FromJSON
+    , ToJSON
+    , Value(..)
+    , (.:)
+    , (.=)
+    , object
+    , parseJSON
+    , toJSON
+    )
+import Data.Text (Text, toLower, pack, unpack)
 
 -- | The result of a typing judgement. This is either an error indicating a
 -- problem or a type
@@ -95,3 +107,49 @@ isValidAnd _ (Invalid _) = False
 isValidAnd t (Valid t')
     | t == t' = True
     | otherwise = False
+
+instance ToJSON EmperorType where
+    toJSON IntP = primitiveToJSON "int"
+    toJSON CharP = primitiveToJSON "char"
+    toJSON BoolP = primitiveToJSON "bool"
+    toJSON RealP = primitiveToJSON "real"
+    toJSON (ESet t) = object ["typeConstructor" .= ("ESet" :: Text), "type" .= t]
+    toJSON (EList t) = object ["typeConstructor" .= ("EList" :: Text), "type" .= t]
+    toJSON (ETuple ts) = object ["typeConstructor" .= ("ETuple" :: Text), "types" .= ts]
+    toJSON (ERecord g) = object ["typeConstructor" .= ("ERecord" :: Text), "environment" .= g]
+    toJSON (EFunction p t1 t2) =
+        object ["typeConstructor" .= ("EFunction" :: Text), "purity" .= p, "inType" .= t1, "outType" .= t2]
+    toJSON Any = primitiveToJSON "Any"
+    toJSON Unit = primitiveToJSON "Unit"
+
+primitiveToJSON :: String -> Value
+primitiveToJSON s = object ["typeConstructor" .= s]
+
+instance FromJSON EmperorType where
+    parseJSON (Object o) = do
+        c <- o .: "typeConstructor"
+        case c :: Text of
+            "int" -> return IntP
+            "char" -> return CharP
+            "bool" -> return BoolP
+            "real" -> return RealP
+            "Any" -> return Any
+            "Unit" -> return Unit
+            "ESet" -> ESet <$> o .: "type"
+            "EList" -> EList <$> o .: "type"
+            "ETuple" -> ETuple <$> o .: "types"
+            "ERecord" -> ERecord <$> o .: "environment"
+            "EFunction" -> EFunction <$> o .: "purity" <*> o .: "inType" <*> o .: "outType"
+            x -> fail $ "Unknown argument type " ++ unpack x 
+    parseJSON _ = fail $ "Expecting object value when parsing EmperorType from JSON"
+
+instance ToJSON Purity where
+    toJSON p = String $ toLower (pack (show p))
+
+instance FromJSON Purity where
+    parseJSON (String s) =
+        case s of
+            "pure" -> return Pure
+            "impure" -> return Impure
+            x -> fail $ "Unrecognised purity " ++ unpack x
+    parseJSON _ = fail $ "Expected string value when parsing purity"
