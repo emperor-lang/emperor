@@ -15,11 +15,11 @@ module Types.Imports.Imports (getEnvironment) where
 
 import AST (Ident(..), Import(..), ImportLocation(..), ImportType(..))
 import GHC.IO.Exception (ExitCode(..))
-import Data.ByteString.Lazy (readFile)
-import Logger (Logger, Loggers)
-import Data.Map (filterWithKey, union)
+import Logger (Loggers)
+import Data.Map (filterWithKey)
+import Data.Monoid ((<>))
 import System.Process (readProcessWithExitCode)
-import Types.Environment (newTypeEnvironment, TypeEnvironment)
+import Types.Environment (newTypeEnvironment, TypeEnvironment(..))
 import Types.Imports.JsonIO (readHeader)
 import System.Exit (exitFailure)
 
@@ -29,7 +29,7 @@ getEnvironment (err, inf, scc, wrn) (i:is) = do
     inf $ "Importing " ++ show i
     ti <- getEnvironment' (err, inf, scc, wrn) i
     tis <- (getEnvironment (err, inf, scc, wrn) is)
-    return $ union ti tis
+    return $ ti <> tis
 
 getEnvironment' :: Loggers -> Import -> IO TypeEnvironment
 getEnvironment' (err, inf, scc, wrn) (Import (ImportLocation t (Ident i)) mis) = do
@@ -57,5 +57,5 @@ getEnvironmentFromFile (err, inf, scc, _) Global p = do
         Right g -> return g
 
 filterEnvironment :: Maybe [Ident] -> TypeEnvironment -> TypeEnvironment
-filterEnvironment Nothing = id
-filterEnvironment (Just is) = filterWithKey (\k _ -> Ident k `elem` is)
+filterEnvironment Nothing x = x
+filterEnvironment (Just is) (TypeEnvironment e) = TypeEnvironment $ filterWithKey (\k _ -> Ident k `elem` is) e
