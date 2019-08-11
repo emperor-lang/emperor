@@ -20,7 +20,7 @@ import Data.Map (filterWithKey)
 import Data.Monoid ((<>))
 import System.Process (readProcessWithExitCode)
 import Types.Environment (newTypeEnvironment, TypeEnvironment(..))
-import Types.Imports.JsonIO (readHeader)
+import Types.Imports.JsonIO (Header(..), readHeader)
 import System.Exit (exitFailure)
 
 getEnvironment :: Loggers -> [Import] -> IO TypeEnvironment
@@ -54,7 +54,7 @@ getEnvironmentFromFile (err, inf, scc, _) Global p = do
         Left x -> do
             err x
             exitFailure
-        Right g -> return g
+        Right (Header _ _ g) -> return g
 
 filterEnvironment :: Maybe [Ident] -> TypeEnvironment -> TypeEnvironment
 filterEnvironment Nothing x = x

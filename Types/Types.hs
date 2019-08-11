@@ -21,12 +21,8 @@ import Types.Results (TypeCheckResult(..))
 -- | Find any problems with the typing of results and obtain types if no 
 -- problems are found.
 resolveTypes :: Loggers -> AST -> IO TypeCheckResult
-resolveTypes (err, inf, scc, wrn) a = do
-    let imports = getImports a
+resolveTypes (err, inf, scc, wrn) (AST _ is bs) = do
     inf "Getting imports..."
-    g <- getEnvironment (err, inf, scc, wrn) imports
+    g <- getEnvironment (err, inf, scc, wrn) is
     inf $ "Got environment " ++ show g
-    return $ Fail "Not yet implemented!" 
-
-getImports :: AST -> [Import]
-getImports (AST _ is _) = is
+    return $ Fail $ "Type checking not yet implemented!" ++ show bs

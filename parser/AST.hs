@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-|
 Module      : AST
 Description : Data-structures for the abstract syntax tree
@@ -34,6 +35,8 @@ module AST
     , Value(..)
     ) where
 
+import qualified Data.Aeson as A (FromJSON, Value(Object, String), ToJSON, (.:), (.=), parseJSON, object, toJSON)
+import Data.Text (pack, unpack)
 import Types.Results (EmperorType(..), Purity(..))
 
 -- | Data type to represent the abstract syntax tree for a single module. This is specified by its name, its imports and its code.
@@ -56,11 +59,30 @@ data ImportLocation =
     ImportLocation ImportType Ident
     deriving (Show)
 
+instance A.ToJSON ImportLocation where
+    toJSON (ImportLocation t (Ident i)) = A.object [ "importType" A..= t, "import" A..= pack i ]
+
+instance A.FromJSON ImportLocation where
+    parseJSON (A.Object v) = ImportLocation <$> v A..: "importType"
+                                          <*> (Ident <$> v A..: "import")
+    parseJSON _ = fail "Expected object when parsing import datum"
+
 -- | The type of an import
 data ImportType
     = Local -- ^ Indicates a file in the current project
     | Global -- ^ Indicates a file in the global installation
     deriving (Show)
+
+instance A.ToJSON ImportType where
+    toJSON Local = A.String $ "local"
+    toJSON Global = A.String $ "global"
+
+instance A.FromJSON ImportType where
+    parseJSON (A.String s) = case s of
+            "local" -> return Local
+            "global" -> return Global
+            _ -> fail $ "Got " ++ unpack s ++ " when parsing import type (expected \"local\"/\"global\""
+    parseJSON _ = fail "Expected string when parsing import type"
 
 -- | Describes a single named item in the module
 data ModuleItem
