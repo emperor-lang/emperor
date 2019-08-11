@@ -173,12 +173,11 @@ instance Format Value where
             then "true"
             else "false"
     format _ IDC = "_"
-    format ctx (Call c) = format ctx c
+    format ctx (CallV c) = format ctx c
 
 -- | Calls are formatted by their contents
-instance Format PartialCall where
-    format ctx (PartialApplication p e) = format ctx p ++ (' ' : format ctx e)
-    format ctx (CallIdentifier p i) = format ctx p ++ format ctx i
+instance Format Call where
+    format ctx (Call p i es) = format ctx p ++ format ctx i ++ '(' : format ctx es ++ ")"
 
 -- | Impure functions have an "\@" in from of them, pure ones have nothing
 instance Format Purity where
