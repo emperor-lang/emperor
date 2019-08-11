@@ -14,7 +14,7 @@ For details on how this is done, see @man emperor@ or @emperor.json@ in the GitH
 -}
 module Main where
 
-import Args (parseArgv, input, verbose)
+import Args (parseArgv, input, entryPoint, verbose)
 import EmperorParserWrapper (parse)
 import Logger (makeLoggers)
 import Formatter (formatFresh)
@@ -37,6 +37,8 @@ main = do
 
     parseResult <- parse (input sanitisedArguments)
 
+    print parseResult
+
     case parseResult of
         Left msg    -> err msg
         Right prog  -> do
@@ -46,4 +48,6 @@ main = do
             typeResult <- resolveTypes (err, inf, scc, wrn) prog
             case typeResult of
                 Fail x -> err x
-                Pass -> scc $ "Type-checking passed"
+                Pass -> do 
+                    scc $ "Type-checking passed"
+                    putStrLn $ "Outputting header? " ++ show (not (entryPoint args))

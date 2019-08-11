@@ -116,6 +116,14 @@
 			"type": "flag",
 			"help": "Disable ANSI-coloured output",
 			"default": "false"
+		},
+		{
+			"short": "-e",
+			"long": "--entry-point",
+			"dest": "entryPoint",
+			"type": "flag",
+			"help": "Compile as the entry-point of a program",
+			"default": "false"
 		}
 	]
 }
