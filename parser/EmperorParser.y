@@ -32,8 +32,8 @@ import Types.Results (EmperorType(..), Purity(..))
 -- %expect 0
 
 %token
-    DOCASSIGNMENTLINE   { TDocAssignmentLine    p }
-    DOCLINE             { TDocLine              p }
+    -- DOCASSIGNMENTLINE   { TDocAssignmentLine    p }
+    -- DOCLINE             { TDocLine              p }
     INT                 { TInteger              intVal p }
     BOOL                { TBool                 isTrue p }
     REAL                { TReal                 realVal p }
@@ -126,7 +126,7 @@ moduleHeader : "module" IDENT EOL { Module (Ident (identifierVal $2)) }
 
 usings :: {[Import]}
 usings : {- empty -}    { [] }
-       | using usings   { $1 : $2 }
+       | using EOL usings   { $1 : $3 }
 
 using :: {Import}
 using : "import" usingLabel                      { Import $2 Nothing }
@@ -145,9 +145,10 @@ moduleBody : moduleItem             { [$1] }
            | moduleItem moduleBody  { $1 : $2 }
 
 moduleItem :: {ModuleItem}
-moduleItem : component    { $1 }
-           | typeClass    { $1 }
-           | functionDef  { FunctionItem $1 }
+moduleItem : -- component    { $1 }
+           -- | typeClass    { $1 }
+        --    | 
+           functionDef  { FunctionItem $1 }
 
 component :: {ModuleItem}
 component : "component" IDENT maybe(typeComparisons) EOL functionDefs { Component (Ident (identifierVal $2)) $3 $5 }
@@ -207,7 +208,7 @@ bodyLine : indentation bodyLineContent {BodyLine $1 $2}
 bodyLineContent :: {BodyLineContent}
 bodyLineContent : assignment            { AssignmentC $1 }
                 | queue                 { QueueC $1 }
-                | partialCall           { CallC $1 }
+                | impureCall            { CallC $1 }
 
 assignment :: {Assignment}
 assignment : typedef IDENT "=" expr { Assignment $1 (Ident (identifierVal $2)) $4 } 
@@ -262,18 +263,6 @@ expr : value                            { Value $1 }
      | "(" exprList ")"                 { Tuple $2 }
      | "[" exprList "]"                 { List $2 }
 
-exprs :: {[Expr]}
-exprs : {- empty -}     {[]}
-      | expr exprs      {$1 : $2}
-
-exprList :: {[Expr]}
-exprList : {- empty -}          { [] }
-         | exprListNonZero      { $1 }
-
-exprListNonZero :: {[Expr]}
-exprListNonZero : expr                      { [$1] }
-                | expr "," exprListNonZero  { $1 : $3 }
-
 indentation :: {Tabs}
 indentation : {- empty -} { Tabs 0 }
             | TABS        { Tabs (numTabs $1) }
@@ -285,12 +274,30 @@ value : "_"         { IDC }
     --   | IDENT       { IdentV (identifierVal $1) }
       | CHAR        { Char (charVal $1) }
       | BOOL        { Bool (isTrue $1) }
-      | partialCall %prec CALL { Call $1 }
+      | call %prec CALL { CallV $1 }
 
-partialCall :: {PartialCall}
-partialCall : partialCall expr %prec CALL { PartialApplication $1 $2 }
-            | "@" IDENT        { CallIdentifier Impure (Ident (identifierVal $2)) }
-            | IDENT            { CallIdentifier Pure (Ident (identifierVal $1)) }
+call :: {Call}
+call : impureCall   { $1 }
+     | pureCall     { $1 }
+
+impureCall :: {Call}
+impureCall : "@" IDENT "(" exprList ")" { Call Impure (Ident (identifierVal $2)) $4 }
+
+pureCall :: {Call}
+pureCall : IDENT "(" exprList ")" { Call Pure (Ident (identifierVal $1)) $3}
+
+
+exprList :: {[Expr]}
+exprList : {- empty -}          { [] }
+         | exprListNonZero      { $1 }
+
+exprListNonZero :: {[Expr]}
+exprListNonZero : expr                      { [$1] }
+                | expr "," exprListNonZero  { $1 : $3 }
+-- partialCall :: {PartialCall}
+-- partialCall : partialCall expr %prec CALL { PartialApplication $1 $2 }
+--             | "@" IDENT        { CallIdentifier Impure (Ident (identifierVal $2)) }
+--             | IDENT            { CallIdentifier Pure (Ident (identifierVal $1)) }
 
 maybe(p) : {- empty -} { Nothing }
          | p           { Just $1 }

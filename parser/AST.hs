@@ -17,17 +17,16 @@ module AST
     , BodyBlock(..)
     , BodyLine(..)
     , BodyLineContent(..)
+    , Call(..)
     , Expr(..)
     , FunctionDef(..)
     , FunctionTypeDef(..)
-    , getPurity
     , Ident(..)
     , Import(..)
     , ImportLocation(..)
     , ImportType(..)
     , ModuleHeader(..)
     , ModuleItem(..)
-    , PartialCall(..)
     , Queue(..)
     , SwitchCase(..)
     , Tabs(..)
@@ -115,7 +114,7 @@ data BodyLine =
 data BodyLineContent
     = AssignmentC Assignment
     | QueueC Queue
-    | CallC PartialCall
+    | CallC Call
     deriving (Show)
 
 -- | Data-structure to represent an assignment statement
@@ -158,17 +157,6 @@ data Expr
     | List [Expr]
     deriving (Show)
 
--- | Represents the use of a function
-data PartialCall
-    = PartialApplication PartialCall Expr
-    | CallIdentifier Purity Ident
-    deriving (Show)
-
--- | Get the purity of a partial application call
-getPurity :: PartialCall -> Purity
-getPurity (PartialApplication c _) = getPurity c
-getPurity (CallIdentifier p _) = p
-
 -- | Data-structure to represent tab-indentation
 newtype Tabs =
     Tabs Int
@@ -182,7 +170,12 @@ data Value
     | Char Char
     -- | String String
     | Bool Bool
-    | Call PartialCall
+    | CallV Call
+    deriving (Show)
+
+-- | Represents the use of a function
+data Call
+    = Call Purity Ident [Expr]
     deriving (Show)
 
 -- | Data-structure to represent an identifier
