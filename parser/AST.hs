@@ -191,6 +191,7 @@ data Value
     | Real Double
     | Char Char
     -- | String String
+    | IdentV Ident
     | Bool Bool
     | CallV Call
     deriving (Show)
