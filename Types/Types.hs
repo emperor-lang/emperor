@@ -11,7 +11,10 @@ Language    : Haskell2010
 This module enables the type checking and judgement modules to be called more 
 easily.
 -}
-module Types.Types (resolveTypes, TypeCheckResult(..)) where
+module Types.Types
+    ( resolveTypes
+    , TypeCheckResult(..)
+    ) where
 
 import AST (AST(..), Import)
 import Logger (Loggers)

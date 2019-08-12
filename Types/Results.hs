@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 {-|
 Module      : Results
 Description : Typing results for emperor
@@ -22,19 +23,10 @@ module Types.Results
     , TypeOp
     ) where
 
+import Data.Aeson (FromJSON, ToJSON, Value(..), (.:), (.=), object, parseJSON, toJSON)
 import Data.List (concat, intersperse)
 import Data.Map (Map, (!), keys)
-import Data.Aeson
-    ( FromJSON
-    , ToJSON
-    , Value(..)
-    , (.:)
-    , (.=)
-    , object
-    , parseJSON
-    , toJSON
-    )
-import Data.Text (Text, toLower, pack, unpack)
+import Data.Text (Text, pack, toLower, unpack)
 
 -- | The result of a typing judgement. This is either an error indicating a
 -- problem or a type
@@ -90,8 +82,7 @@ data Purity
 
 -- | Class of types which describe type operation results
 class TypeOp a where
-    isValid :: a -> Bool
-    -- ^ Indicates whether a type operation has returned a valid result
+    isValid :: a -> Bool-- ^ Indicates whether a type operation has returned a valid result
 
 instance TypeOp TypeCheckResult where
     isValid Pass = True
@@ -140,7 +131,7 @@ instance FromJSON EmperorType where
             "ETuple" -> ETuple <$> o .: "types"
             "ERecord" -> ERecord <$> o .: "environment"
             "EFunction" -> EFunction <$> o .: "purity" <*> o .: "inType" <*> o .: "outType"
-            x -> fail $ "Unknown argument type " ++ unpack x 
+            x -> fail $ "Unknown argument type " ++ unpack x
     parseJSON _ = fail $ "Expecting object value when parsing EmperorType from JSON"
 
 instance ToJSON Purity where

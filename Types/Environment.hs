@@ -17,25 +17,20 @@ module Types.Environment
     , unsafeGet
     ) where
 
-import Data.Aeson
-    ( FromJSON
-    , ToJSON
-    , Value(..)
-    , parseJSON
-    , toJSON
-    )
+import Data.Aeson (FromJSON, ToJSON, Value(..), parseJSON, toJSON)
 import Data.Map (Map, empty, lookup, union)
 import Data.Maybe (fromMaybe)
 import Prelude hiding (lookup)
 import Types.Results (EmperorType, TypeJudgementResult(..))
 
 -- | An environment which maps names to types
-newtype TypeEnvironment = TypeEnvironment (Map String EmperorType)
+newtype TypeEnvironment =
+    TypeEnvironment (Map String EmperorType)
     deriving (Show)
 
 instance Monoid TypeEnvironment where
     mempty = newTypeEnvironment
-    mappend (TypeEnvironment g) (TypeEnvironment g') = TypeEnvironment $ union g g' 
+    mappend (TypeEnvironment g) (TypeEnvironment g') = TypeEnvironment $ union g g'
 
 -- | Creates a fresh type-environment
 newTypeEnvironment :: TypeEnvironment
