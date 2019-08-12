@@ -8,14 +8,18 @@ SHELL := bash
 # HC := ghc
 # HC_FLAGS := -Wall -Wextra -Werror -O2
 
-LEXER_GENERATOR := alex
-LEXER_GENERATOR_FLAGS := -g
-PARSER_GENERATOR := happy
-PARSER_GENERATOR_FLAGS := -ga -m emperorParser
+ifdef DEBUG
+PARSER_DEBUG_FLAGS = -d
+endif
 
-SOFT_LINK_COMMAND := [[ ! -f $@ ]] && ln -s $^ $@
+LEXER_GENERATOR = alex
+LEXER_GENERATOR_FLAGS = -g
+PARSER_GENERATOR = happy
+PARSER_GENERATOR_FLAGS = -ga $(PARSER_DEBUG_FLAGS) -m emperorParser
 
-COMPLETION_INSTALL_LOCATION := /usr/share/bash-completion/completions/emperor
+SOFT_LINK_COMMAND = [[ ! -f $@ ]] && ln -s $^ $@
+
+COMPLETION_INSTALL_LOCATION = /usr/share/bash-completion/completions/emperor
 
 .DEFAULT_GOAL := all
 
