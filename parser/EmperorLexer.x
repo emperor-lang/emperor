@@ -13,7 +13,6 @@ This module defines the machinery to lexically analyse the Emperor language give
 -}
 module EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex, AlexPosn) where
 
-import AST
 }
 
 %wrapper "monad"
@@ -21,6 +20,7 @@ import AST
 $alpha = [A-Za-z]
 $num = [0-9]
 $alphaNum = [$alpha$num]
+@newline = \r\n | \r | \n
 
 @tabs = \t+
 @spaces = \ +
@@ -31,6 +31,10 @@ $alphaNum = [$alpha$num]
 @bool = (true) | (false)
 @char = \'$alphaNum\'
 @string = "$alphaNum*"
+
+@partSeparator = (";" @newline?) | (@newline)
+@blockStarter = ":" @newline?
+@blockSeparator = "#" @newline?
 
 @docLineStart = @tabs? "///"
 @docAssignmentLine = @docLineStart @spaces? "~" @ident ("(" @ident ")")? ":" .*
@@ -100,6 +104,9 @@ $alphaNum = [$alpha$num]
 "{"                 { mkL LLBrace }
 "}"                 { mkL LRBrace }
 "@"                 { mkL LImpure }
+@partSeparator      { mkL LPartSeparator }
+@blockSeparator     { mkL LBlockSeparator }
+@blockStarter       { mkL LColon }
 
 -- Operators
 "+"                 { mkL LPlus }
@@ -124,9 +131,9 @@ $alphaNum = [$alpha$num]
 "=="                { mkL LEqual }
 "!="                { mkL LNotEqual }
 
--- Significant whitespace
+-- Whitespace
 @tabs               { mkL LTabs }
-\n                  { mkL LEoL }
+\n                  ; -- { mkL LEoL }
 
 {
 
@@ -146,6 +153,8 @@ data LexemeClass = LDocAssignmentLine
                  | LImport
                  | LModule
                  | LIdent
+                 | LBlockSeparator
+                 | LPartSeparator
                  | LQueue
                  | LGoesTo
                  | LGets
@@ -184,6 +193,7 @@ data LexemeClass = LDocAssignmentLine
                  | LCharT
                  | LUnit
                  | LAnyT
+                 | LColon
                  | LTabs
                  | LIsSubType
                  | LIsImplementeBy
@@ -191,7 +201,7 @@ data LexemeClass = LDocAssignmentLine
                  | LClass
                  | LComponent
                  | LIDC
-                 | LEoL
+                --  | LEoL
     deriving (Eq, Show)
 
 
@@ -214,6 +224,8 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LImport             -> return (TImport             p)
                                 LModule             -> return (TModule             p)
                                 LIdent              -> return (TIdent              t p)
+                                LPartSeparator      -> return (TPartSeparator      p)
+                                LBlockSeparator     -> return (TBlockSeparator     p)
                                 LQueue              -> return (TQueue              p)
                                 LGoesTo             -> return (TGoesTo             p)
                                 LGets               -> return (TGets               p)
@@ -252,6 +264,7 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LCharT              -> return (TCharT              p)
                                 LUnit               -> return (TUnit               p)
                                 LAnyT               -> return (TAnyT               p)
+                                LColon              -> return (TColon              p)
                                 LTabs               -> return (TTabs               len p)
                                 LIsSubType          -> return (TIsSubType          p)
                                 LIsImplementeBy     -> return (TIsImplementeBy     p)
@@ -259,7 +272,7 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LClass              -> return (TClass              p)
                                 LComponent          -> return (TComponent          p )
                                 LIDC                -> return (TIDC                p )
-                                LEoL                -> return (TEoL                p)
+                                -- LEoL                -> return (TEoL                p)
 
 alexEOF :: Alex Token
 alexEOF = return TEoF
@@ -286,6 +299,8 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TImport             {                          position :: AlexPosn } -- ^ Keyword: @import@
            | TModule             {                          position :: AlexPosn } -- ^ Keyword: @module@
            | TIdent              { identifierVal :: String, position :: AlexPosn } -- ^ An identifier
+           | TPartSeparator      {                          position :: AlexPosn } -- ^ @;@
+           | TBlockSeparator     {                          position :: AlexPosn } -- ^ @#@
            | TQueue              {                          position :: AlexPosn } -- ^ @<-@
            | TGoesTo             {                          position :: AlexPosn } -- ^ @->@
            | TGets               {                          position :: AlexPosn } -- ^ @=@
@@ -325,13 +340,14 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TCharT              {                          position :: AlexPosn } -- ^ @char@
            | TUnit               {                          position :: AlexPosn } -- ^ @()@
            | TAnyT               {                          position :: AlexPosn } -- ^ @AnyT@
+           | TColon              {                          position :: AlexPosn } -- ^ @AnyT@
            | TIsSubType          {                          position :: AlexPosn } -- ^ @<:@
            | TIsImplementeBy     {                          position :: AlexPosn } -- ^ @<~@
            | TIsType             {                          position :: AlexPosn } -- ^ @::@
            | TClass              {                          position :: AlexPosn } -- ^ @class@
            | TComponent          {                          position :: AlexPosn } -- ^ @component@
            | TIDC                {                          position :: AlexPosn } -- ^ @_@
-           | TEoL                {                          position :: AlexPosn } -- ^ @\\n@
+        --    | TEoL                {                          position :: AlexPosn } -- ^ @\\n@
            | TEoF                                                                  -- ^ @\\0@
     deriving (Eq, Ord, Show)
 

@@ -80,6 +80,8 @@ import Types.Results (EmperorType(..), Purity(..))
     "!="                { TNotEqual             p }
     "@"                 { TImpure               p }
     ","                 { TComma                p }
+    ":"                 { TColon                p }
+    ";"                 { TPartSeparator        p }
     "int"               { TIntT                 p }
     "bool"              { TBoolT                p }
     "real"              { TRealT                p }
@@ -91,9 +93,10 @@ import Types.Results (EmperorType(..), Purity(..))
     "::"                { TIsType               p }
     "class"             { TClass                p }
     "component"         { TComponent            p }
+    "#"                 { TBlockSeparator       p }
     TABS                { TTabs                 numTabs p }
     "_"                 { TIDC                  p }
-    EOL                 { TEoL                  p }
+--     EOL                 { TEoL                  p }
 
 %left CALL
 %right "->"
@@ -115,18 +118,18 @@ import Types.Results (EmperorType(..), Purity(..))
 %%
 
 ast :: {AST}
-ast : moduleHeader usings moduleBody                  { AST $1 $2 $3 }
+ast : moduleHeader usings moduleBody                 { AST $1 $2 $3 }
 
 moduleHeader :: {ModuleHeader}
-moduleHeader : "module" IDENT EOL { Module (Ident (identifierVal $2)) }
+moduleHeader : "module" IDENT ":" { Module (Ident (identifierVal $2)) }
 
 -- docs :: {[DocLine]}
 -- docs : DOCLINE          { [ $1] }
 --      | DOCLINE EOL docs { $1 : $3 }
 
 usings :: {[Import]}
-usings : {- empty -}    { [] }
-       | using EOL usings   { $1 : $3 }
+usings : {- empty -}        { [] }
+       | using ";" usings   { $1 : $3 }
 
 using :: {Import}
 using : "import" usingLabel                      { Import $2 Nothing }
@@ -151,21 +154,21 @@ moduleItem : -- component    { $1 }
            functionDef  { FunctionItem $1 }
 
 component :: {ModuleItem}
-component : "component" IDENT maybe(typeComparisons) EOL functionDefs { Component (Ident (identifierVal $2)) $3 $5 }
+component : "component" IDENT maybe(typeComparisons) ":" functionDefs "#" { Component (Ident (identifierVal $2)) $3 $5 }
 
 functionDefs :: {[FunctionDef]}
 functionDefs : {- empty -}              { [] }
              | functionDef functionDefs { $1 : $2 }
 
 typeClass :: {ModuleItem}
-typeClass : "class" IDENT maybe(typeComparisons) EOL memberTypes { TypeClass (Ident (identifierVal $2)) $3 $5 }
+typeClass : "class" IDENT maybe(typeComparisons) ":" memberTypes "#" { TypeClass (Ident (identifierVal $2)) $3 $5 }
 
 memberTypes :: {[FunctionTypeDef]}
 memberTypes : {- empty -}               { [] }
             | functionTypeDef memberTypes    { $1 : $2 }
 
 functionDef :: {FunctionDef}
-functionDef : functionTypeDef EOL IDENT functionParamDef EOL body { FunctionDef $1 $4 $6 }
+functionDef : functionTypeDef ";" IDENT functionParamDef ":" body "#" { FunctionDef $1 $4 $6 }
 
 functionTypeDef :: {FunctionTypeDef}
 functionTypeDef : IDENT "::" typedef { FunctionTypeDef (Ident (identifierVal $1)) $3 }
@@ -184,20 +187,20 @@ typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2)) }
 
 body :: {[BodyBlock]}
 body : bodyBlock            { [$1] }
-     | bodyBlock EOL body   { $1 : $3 }
+     | bodyBlock ";" body   { $1 : $3 }
 
 bodyBlock :: {BodyBlock}
-bodyBlock : bodyLine                                    { Line $1 }
-          | "if" expr EOL body "else" body              { IfElse $2 $4 $6 }
-          | "while" expr EOL body                       { While $2 $4 }
-          | "for" IDENT "<-" expr EOL body              { For (Ident (identifierVal $2)) $4 $6 }
-          | "repeat" expr EOL body                      { Repeat $2 $4 }
-          | "with" assignment EOL body                  { With $2 $4 }
-          | "switch" expr EOL switchBody  { Switch $2 $4 }
+bodyBlock : bodyLine                                        { Line $1 }
+          | "if" expr ":" body "else" ":" body "#"          { IfElse $2 $4 $7 }
+          | "while" expr ":" body "#"                       { While $2 $4 }
+          | "for" IDENT "<-" expr ":" body "#"              { For (Ident (identifierVal $2)) $4 $6 }
+          | "repeat" expr ":" body "#"                      { Repeat $2 $4 }
+          | "with" assignment ":" body "#"                  { With $2 $4 }
+          | "switch" expr ":" switchBody "#"                { Switch $2 $4 }
 
 switchBody :: {[SwitchCase]}
 switchBody : {- empty -}    { [] }
-           | switchCase EOL switchBody { $1 : $3 }
+           | switchCase "#" switchBody { $1 : $3 }
 
 switchCase :: {SwitchCase}
 switchCase : expr "->" bodyBlock    { SwitchCase $1 $3 }
@@ -224,7 +227,7 @@ typedef : "int"                 { IntP }
         | "char"                { BoolP }
         | "()"                  { Unit }
         | "Any"                 { Any }
-        | "(" typedef ")"       { $2 }
+        | "(" tupleTypeDef ")"  { $2 }
         | typedef "->" typedef  { EFunction Impure $1 $3 } 
         | tupleTypeDef          { ETuple $1 } 
         | "[" typedef "]"       { EList $2 }
@@ -232,8 +235,8 @@ typedef : "int"                 { IntP }
         -- | IDENT                 { Ident }
 
 tupleTypeDef :: {[EmperorType]}
-tupleTypeDef : typedef              { [$1] }
-             | typedef "*" tupleTypeDef  { $1 : $3 }
+tupleTypeDef : typedef                  { [$1] }
+             | typedef "*" tupleTypeDef { $1 : $3 }
 
 expr :: {Expr}
 expr : value                            { Value $1 }
