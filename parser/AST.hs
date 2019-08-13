@@ -17,7 +17,6 @@ module AST
     , AST(..)
     , BodyBlock(..)
     , BodyLine(..)
-    , BodyLineContent(..)
     , Call(..)
     , Expr(..)
     , FunctionDef(..)
@@ -30,7 +29,6 @@ module AST
     , ModuleItem(..)
     , Queue(..)
     , SwitchCase(..)
-    , Tabs(..)
     , TypeComparison(..)
     , Value(..)
     ) where
@@ -125,18 +123,12 @@ data SwitchCase =
     SwitchCase Expr BodyBlock
     deriving (Show)
 
--- append :: SwitchCase -> SwitchCases -> SwitchCases
--- append a (SwitchCases as) = SwitchCases (a:as)
 -- | Data-structure for a single body-line
-data BodyLine =
-    BodyLine Tabs BodyLineContent
-    deriving (Show)
-
--- | Data-structure for the contents of a single line
-data BodyLineContent
+data BodyLine
     = AssignmentC Assignment
     | QueueC Queue
     | CallC Call
+    | Return Expr
     deriving (Show)
 
 -- | Data-structure to represent an assignment statement
@@ -177,11 +169,6 @@ data Expr
     | Set [Expr]
     | Tuple [Expr]
     | List [Expr]
-    deriving (Show)
-
--- | Data-structure to represent tab-indentation
-newtype Tabs =
-    Tabs Int
     deriving (Show)
 
 -- | Data-structure to represent a single value
