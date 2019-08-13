@@ -54,8 +54,7 @@ executable emperor
   main-is:             Main.hs
   
   -- Compiler flags
-  ghc-options:         -Wall -Wextra -Werror -O2 -Wno-unused-imports
-                       --  TODO: Fix the unused imports warning
+  ghc-options:         -Wall -Wextra -Werror -O2 
 
   -- Source directories
   hs-source-dirs:      ., ./parser/, ./logging/, ./formatter/
