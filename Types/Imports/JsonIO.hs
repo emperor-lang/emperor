@@ -26,6 +26,7 @@ import Data.ByteString.Lazy (readFile, writeFile)
 import Prelude hiding (readFile, writeFile)
 import Types.Environment (TypeEnvironment(..))
 
+-- | Defines module header file contents
 data Header =
     Header Ident [ImportLocation] TypeEnvironment
     deriving (Show)

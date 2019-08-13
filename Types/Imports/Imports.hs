@@ -26,6 +26,7 @@ import System.Process (readProcessWithExitCode)
 import Types.Environment (TypeEnvironment(..), newTypeEnvironment)
 import Types.Imports.JsonIO (Header(..), readHeader)
 
+-- | Given a set of imports, obtain the type environment they form.
 getEnvironment :: Loggers -> [Import] -> IO TypeEnvironment
 getEnvironment _ [] = return newTypeEnvironment
 getEnvironment (err, inf, scc, wrn) (i:is) = do

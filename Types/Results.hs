@@ -82,7 +82,8 @@ data Purity
 
 -- | Class of types which describe type operation results
 class TypeOp a where
-    isValid :: a -> Bool-- ^ Indicates whether a type operation has returned a valid result
+    isValid :: a -> Bool
+    -- ^ Indicates whether a type operation has returned a valid result
 
 instance TypeOp TypeCheckResult where
     isValid Pass = True
