@@ -1,6 +1,6 @@
---- ./EmperorLexer.hs.orig	2019-08-13 12:16:33.203874791 +0200
-+++ ./EmperorLexer.hs	2019-08-13 12:16:33.207872792 +0200
-@@ -366,6 +366,9 @@
+--- ./EmperorLexer.hs.orig	2019-08-13 14:21:44.906604056 +0200
++++ ./EmperorLexer.hs	2019-08-13 14:21:44.910602055 +0200
+@@ -367,6 +367,9 @@
  -- assuming the usual eight character tab stops.
  
  
@@ -10,7 +10,7 @@
  data AlexPosn = AlexPn !Int !Int !Int
          deriving (Eq,Show)
  
-@@ -394,7 +397,7 @@
+@@ -395,7 +398,7 @@
      }
  
  -- Compile with -funbox-strict-fields for best results!
@@ -19,7 +19,7 @@
  runAlex :: String -> Alex a -> Either String a
  runAlex input__ (Alex f)
     = case f (AlexState {alex_pos = alexStartPos,
-@@ -407,6 +410,7 @@
+@@ -408,6 +411,7 @@
                          alex_scd = 0}) of Left msg -> Left msg
                                            Right ( _, a ) -> Right a
  
@@ -27,7 +27,7 @@
  newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
  
  instance Functor Alex where
-@@ -438,6 +442,7 @@
+@@ -439,6 +443,7 @@
   = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} of
                    state__@(AlexState{}) -> Right (state__, ())
  
