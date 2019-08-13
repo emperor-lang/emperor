@@ -1,10 +1,14 @@
---- ./EmperorParser.hs.orig	2019-08-04 20:07:35.338583807 +0200
-+++ ./EmperorParser.hs	2019-08-04 20:07:48.762367678 +0200
-@@ -878,6 +878,7 @@
+--- ./EmperorParser.hs.orig	2019-08-13 12:52:13.093597780 +0200
++++ ./EmperorParser.hs	2019-08-13 12:52:27.958162488 +0200
+@@ -1467,9 +1467,11 @@
  emperorparserReturn1 = emperorparserReturn
  emperorparserError' :: () => ((Token), [String]) -> Alex a
  emperorparserError' tk = (\(tokens, _) -> parseError tokens) tk
 +-- | Run the emperor parser
  parseEmperor = emperorparserSomeParser where
-  emperorparserSomeParser = emperorparserThen (emperorparserParse 0#) (\x -> case x of {EmperorparserAbsSyn4 z -> emperorparserReturn z; _other -> notEmperorparserAtAll })
+  emperorparserSomeParser = emperorparserThen (emperorparserParse 0#) (\x -> case x of {EmperorparserAbsSyn5 z -> emperorparserReturn z; _other -> notEmperorparserAtAll })
+ 
++-- | Run the parser for REPL lines
+ parseREPL = emperorparserSomeParser where
+  emperorparserSomeParser = emperorparserThen (emperorparserParse 1#) (\x -> case x of {EmperorparserAbsSyn12 z -> emperorparserReturn z; _other -> notEmperorparserAtAll })
  
