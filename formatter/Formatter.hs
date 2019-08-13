@@ -42,8 +42,8 @@ instance Format AST where
 
 -- | Imports may be formatted as a sorted list of their elements
 instance Format Import where
-    format ctx (Import l Nothing) = format ctx l
-    format ctx (Import l (Just is)) = format ctx l ++ "(" ++ (intercalate ", " (format ctx <$> (sort is))) ++ ")"
+    format ctx (Import l Nothing) = "import " ++ format ctx l
+    format ctx (Import l (Just is)) = "import " ++ format ctx l ++ "(" ++ (intercalate ", " (format ctx <$> (sort is))) ++ ")"
 
 -- | Import locations may be formatted by their type
 instance Format ImportLocation where
@@ -61,7 +61,7 @@ instance Format ModuleItem where
     format ctx (FunctionItem f) = format ctx f
 
 instance Format FunctionDef where
-    format ctx (FunctionDef (FunctionTypeDef i t) is bs) = format ctx (FunctionTypeDef i t) ++ "\n" ++ format ctx i ++ format ctx is ++ (unlines $ format (ctx + 1) <$> bs)
+    format ctx (FunctionDef (FunctionTypeDef i t) is bs) = format ctx (FunctionTypeDef i t) ++ "\n" ++ format ctx i ++ format ctx is ++ ":\n" ++ (unlines $ format (ctx + 1) <$> bs) ++ "\n" ++ indent ctx ++ "#"
 
 instance Format FunctionTypeDef where
     format ctx (FunctionTypeDef i t) = format ctx i ++ " :: " ++ format ctx t
@@ -95,28 +95,25 @@ instance Format BodyBlock where
     format ctx (IfElse c b1 b2) =
         unlines $
         [indent ctx ++ "if " ++ format (ctx + 1) c] ++
-        (format (ctx + 1) <$> b1) ++ [indent ctx ++ "else"] ++ (format (ctx + 1) <$> b2)
-    format ctx (While c b) = unlines $ [indent ctx ++ "while " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b)
+        (format (ctx + 1) <$> b1) ++ [indent ctx ++ "else"] ++ (format (ctx + 1) <$> b2) ++ [indent ctx ++ "#"]
+    format ctx (While c b) = unlines $ [indent ctx ++ "while " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
     format ctx (For i e b) =
         unlines $
-        [indent ctx ++ "for " ++ format (ctx + 1) i ++ " <- " ++ format (ctx + 1) e] ++ (format (ctx + 1) <$> b)
-    format ctx (Repeat c b) = unlines $ [indent ctx ++ "repeat " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b)
-    format ctx (With a b) = unlines $ [indent ctx ++ "with " ++ format (ctx + 1) a] ++ (format (ctx + 1) <$> b)
-    format ctx (Switch c s) = unlines $ [indent ctx ++ "switch " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> s)
+        [indent ctx ++ "for " ++ format (ctx + 1) i ++ " <- " ++ format (ctx + 1) e] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (Repeat c b) = unlines $ [indent ctx ++ "repeat " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (With a b) = unlines $ [indent ctx ++ "with " ++ format (ctx + 1) a] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (Switch c s) = unlines $ [indent ctx ++ "switch " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> s) ++ [indent ctx ++ "#"]
 
 -- | Switch-cases may be formatted with their case contents
 instance Format SwitchCase where
     format ctx (SwitchCase e b) = indent ctx ++ format (ctx + 1) e ++ " -> " ++ format (ctx + 1) b
 
--- | Body-lines may be formatted by indenting and formatting their contents
+-- | Body-lines may be formatted by their structure
 instance Format BodyLine where
-    format ctx (BodyLine _ b) = indent ctx ++ format ctx b
-
--- | Body-line contents may beformatted
-instance Format BodyLineContent where
-    format ctx (AssignmentC a) = format ctx a
-    format ctx (QueueC q) = format ctx q
-    format ctx (CallC c) = format ctx c
+    format ctx (AssignmentC a) = indent ctx ++ format ctx a
+    format ctx (QueueC q) = indent ctx ++ format ctx q
+    format ctx (CallC c) = indent ctx ++ format ctx c
+    format ctx (Return e) = indent ctx ++ "return " ++ format ctx e
 
 -- | Assignments may be formatted using their left and right sides
 instance Format Assignment where
@@ -187,10 +184,6 @@ instance Format Purity where
 -- | Identifiers are formatted as their name
 instance Format Ident where
     format _ (Ident i) = i
-
--- | Tabs are formatted as tabs
-instance Format Tabs where
-    format ctx _ = indent ctx
 
 -- | Maybe formattables may be formatted as an empty string or their contents
 instance Format a => Format (Maybe a) where
