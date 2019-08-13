@@ -20,8 +20,7 @@ import Types.Results (EmperorType(..), Purity(..))
 }
 
 %name parseEmperor ast
--- %name parseREPL 
--- TODO: Add a repl parser
+%name parseREPL moduleItem
 
 %error { parseError }
 %lexer { lexWrap } { TEoF }
@@ -29,7 +28,7 @@ import Types.Results (EmperorType(..), Purity(..))
 %tokentype { Token }
 
 -- Enforce perfection
--- %expect 0
+%expect 0
 
 %token
     -- DOCASSIGNMENTLINE   { TDocAssignmentLine    p }
@@ -98,6 +97,9 @@ import Types.Results (EmperorType(..), Purity(..))
     "_"                 { TIDC                  p }
 --     EOL                 { TEoL                  p }
 
+%nonassoc TYPEDEF
+%nonassoc NONTUPLE
+%nonassoc TUPLE
 %left CALL
 %right "->"
 %left "||"
@@ -148,10 +150,9 @@ moduleBody : moduleItem             { [$1] }
            | moduleItem moduleBody  { $1 : $2 }
 
 moduleItem :: {ModuleItem}
-moduleItem : -- component    { $1 }
-           -- | typeClass    { $1 }
-        --    | 
-           functionDef  { FunctionItem $1 }
+moduleItem : component    { $1 }
+           | typeClass    { $1 }
+           | functionDef  { FunctionItem $1 }
 
 component :: {ModuleItem}
 component : "component" IDENT maybe(typeComparisons) ":" functionDefs "#" { Component (Ident (identifierVal $2)) $3 $5 }
@@ -206,7 +207,7 @@ switchCase :: {SwitchCase}
 switchCase : expr "->" bodyBlock    { SwitchCase $1 $3 }
 
 bodyLine :: {BodyLine}
-bodyLine : indentation bodyLineContent {BodyLine $1 $2}
+bodyLine : indentation bodyLineContent { BodyLine $1 $2 }
 
 bodyLineContent :: {BodyLineContent}
 bodyLineContent : assignment            { AssignmentC $1 }
@@ -219,24 +220,25 @@ assignment : typedef IDENT "=" expr { Assignment $1 (Ident (identifierVal $2)) $
 queue :: {Queue}
 queue : typedef IDENT "<-" expr { Queue $1 (Ident (identifierVal $2)) $4 }
 
-
 typedef :: {EmperorType}
-typedef : "int"                 { IntP }
-        | "bool"                { CharP }
-        | "real"                { RealP }
-        | "char"                { BoolP }
-        | "()"                  { Unit }
-        | "Any"                 { Any }
-        | "(" tupleTypeDef ")"  { $2 }
-        | typedef "->" typedef  { EFunction Impure $1 $3 } 
-        | tupleTypeDef          { ETuple $1 } 
-        | "[" typedef "]"       { EList $2 }
-        | "{" typedef "}"       { ESet $2 }
-        -- | IDENT                 { Ident }
+typedef : tupleTypeDef  %prec TYPEDEF   { resolveTuple $1 }
 
 tupleTypeDef :: {[EmperorType]}
-tupleTypeDef : typedef                  { [$1] }
-             | typedef "*" tupleTypeDef { $1 : $3 }
+tupleTypeDef : nonTupleTypeDef                  %prec NONTUPLE  { [$1] }
+             | nonTupleTypeDef "*" tupleTypeDef %prec TUPLE     { $1 : $3}
+
+nonTupleTypeDef :: {EmperorType}
+nonTupleTypeDef : "int"                 { IntP }
+                | "bool"                { CharP }
+                | "real"                { RealP }
+                | "char"                { BoolP }
+                | "()"                  { Unit }
+                | "Any"                 { Any }
+                | "(" typedef ")"       { $2 }
+                | typedef "->" typedef  { EFunction Impure $1 $3 } 
+                | "[" typedef "]"       { EList $2 }
+                | "{" typedef "}"       { ESet $2 }
+                -- | IDENT                 { Ident }
 
 expr :: {Expr}
 expr : value                            { Value $1 }
@@ -274,7 +276,7 @@ value :: {Value}
 value : "_"         { IDC }
       | INT         { Integer (intVal $1) }
       | REAL        { Real (realVal $1)}
-    --   | IDENT       { IdentV (identifierVal $1) }
+      | IDENT       { IdentV (Ident (identifierVal $1)) }
       | CHAR        { Char (charVal $1) }
       | BOOL        { Bool (isTrue $1) }
       | call %prec CALL { CallV $1 }
@@ -297,10 +299,6 @@ exprList : {- empty -}          { [] }
 exprListNonZero :: {[Expr]}
 exprListNonZero : expr                      { [$1] }
                 | expr "," exprListNonZero  { $1 : $3 }
--- partialCall :: {PartialCall}
--- partialCall : partialCall expr %prec CALL { PartialApplication $1 $2 }
---             | "@" IDENT        { CallIdentifier Impure (Ident (identifierVal $2)) }
---             | IDENT            { CallIdentifier Pure (Ident (identifierVal $1)) }
 
 maybe(p) : {- empty -} { Nothing }
          | p           { Just $1 }
@@ -309,5 +307,10 @@ maybe(p) : {- empty -} { Nothing }
 
 parseError :: Token -> Alex a
 parseError t = alexError $ "Parser error on token " ++ show t
+
+resolveTuple :: [EmperorType] -> EmperorType
+resolveTuple [] = error "The impossible has happened, you seem to have an expression with no type, not even the unit?"
+resolveTuple [t] = t
+resolveTuple ts = ETuple ts
 
 }
