@@ -1,6 +1,6 @@
---- ./EmperorParser.hs.orig	2019-08-13 12:52:13.093597780 +0200
-+++ ./EmperorParser.hs	2019-08-13 12:52:27.958162488 +0200
-@@ -1467,9 +1467,11 @@
+--- ./EmperorParser.hs.orig	2019-08-13 14:12:56.139094829 +0200
++++ ./EmperorParser.hs	2019-08-13 14:12:56.139094829 +0200
+@@ -1445,9 +1445,11 @@
  emperorparserReturn1 = emperorparserReturn
  emperorparserError' :: () => ((Token), [String]) -> Alex a
  emperorparserError' tk = (\(tokens, _) -> parseError tokens) tk

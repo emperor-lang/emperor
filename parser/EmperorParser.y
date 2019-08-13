@@ -93,8 +93,8 @@ import Types.Results (EmperorType(..), Purity(..))
     "class"             { TClass                p }
     "component"         { TComponent            p }
     "#"                 { TBlockSeparator       p }
-    TABS                { TTabs                 numTabs p }
     "_"                 { TIDC                  p }
+    "return"                 { TReturn               p }
 --     EOL                 { TEoL                  p }
 
 %nonassoc TYPEDEF
@@ -187,11 +187,11 @@ typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2)) }
                | "<:" IDENT "<~" IDENT { IsSubTypeWithImplementor (Ident (identifierVal $2)) (Ident (identifierVal $4)) }
 
 body :: {[BodyBlock]}
-body : bodyBlock            { [$1] }
-     | bodyBlock ";" body   { $1 : $3 }
+body : bodyBlock        { [$1] }
+     | bodyBlock body   { $1 : $2 }
 
 bodyBlock :: {BodyBlock}
-bodyBlock : bodyLine                                        { Line $1 }
+bodyBlock : bodyLine ";"                                    { Line $1 }
           | "if" expr ":" body "else" ":" body "#"          { IfElse $2 $4 $7 }
           | "while" expr ":" body "#"                       { While $2 $4 }
           | "for" IDENT "<-" expr ":" body "#"              { For (Ident (identifierVal $2)) $4 $6 }
@@ -207,12 +207,10 @@ switchCase :: {SwitchCase}
 switchCase : expr "->" bodyBlock    { SwitchCase $1 $3 }
 
 bodyLine :: {BodyLine}
-bodyLine : indentation bodyLineContent { BodyLine $1 $2 }
-
-bodyLineContent :: {BodyLineContent}
-bodyLineContent : assignment            { AssignmentC $1 }
-                | queue                 { QueueC $1 }
-                | impureCall            { CallC $1 }
+bodyLine : assignment            { AssignmentC $1 }
+         | queue                 { QueueC $1 }
+         | impureCall            { CallC $1 }
+         | "return" expr         { Return $2 }
 
 assignment :: {Assignment}
 assignment : typedef IDENT "=" expr { Assignment $1 (Ident (identifierVal $2)) $4 } 
@@ -267,10 +265,6 @@ expr : value                            { Value $1 }
      | "{" exprList "}"                 { Set $2 }
      | "(" exprList ")"                 { Tuple $2 }
      | "[" exprList "]"                 { List $2 }
-
-indentation :: {Tabs}
-indentation : {- empty -} { Tabs 0 }
-            | TABS        { Tabs (numTabs $1) }
 
 value :: {Value}
 value : "_"         { IDC }
