@@ -12,7 +12,7 @@ This file defines the standard format for all Emperor programs.
 -}
 module Formatter (format, formatFresh, Format, FormatContext) where
 
-import AST
+import AST (AST(..), ModuleHeader(..), Import(..), ImportLocation(..), ImportType(..), Ident(..), ModuleItem(..), FunctionDef(..), FunctionTypeDef(..), TypeComparison(..), BodyBlock(..), SwitchCase(..), BodyLine(..), Assignment(..), Queue(..), Expr(..), Value(..), Call(..))
 import Data.List (intercalate, sort)
 import Data.Map ((!), keys)
 import Types.Results (EmperorType(..), Purity(..))
