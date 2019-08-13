@@ -1,4 +1,5 @@
 {
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 {-|
 Module      : EmperorLexer
 Description : Lexer for the emperor language
@@ -25,6 +26,8 @@ $alphaNum = [$alpha$num]
 @tabs = \t+
 @spaces = \ +
 
+@whitespace = @tabs | @spaces
+
 @ident = $alpha $alphaNum*
 @int = $num+
 @real = $num+ \. $num+
@@ -32,7 +35,7 @@ $alphaNum = [$alpha$num]
 @char = \'$alphaNum\'
 @string = "$alphaNum*"
 
-@partSeparator = (";" @newline?) | (@newline)
+@partSeparator = (";" @newline?) | (@newline+)
 @blockStarter = ":" @newline?
 @blockSeparator = "#" @newline?
 
@@ -49,6 +52,7 @@ $alphaNum = [$alpha$num]
 
 -- Things to ignore
 @spaces             ;
+@tabs+              ;
 @lineComment        ;
 @ignoredWhitespace  ;
 
@@ -74,6 +78,7 @@ $alphaNum = [$alpha$num]
 
 -- Keywords
 "_"                 { mkL LIDC }
+"return"            { mkL LReturn }
 "if"                { mkL LIf }
 "else"              { mkL LElse }
 "while"             { mkL LWhile }
@@ -132,7 +137,6 @@ $alphaNum = [$alpha$num]
 "!="                { mkL LNotEqual }
 
 -- Whitespace
-@tabs               { mkL LTabs }
 \n                  ; -- { mkL LEoL }
 
 {
@@ -194,13 +198,13 @@ data LexemeClass = LDocAssignmentLine
                  | LUnit
                  | LAnyT
                  | LColon
-                 | LTabs
                  | LIsSubType
                  | LIsImplementeBy
                  | LIsType
                  | LClass
                  | LComponent
                  | LIDC
+                 | LReturn
                 --  | LEoL
     deriving (Eq, Show)
 
@@ -265,13 +269,13 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LUnit               -> return (TUnit               p)
                                 LAnyT               -> return (TAnyT               p)
                                 LColon              -> return (TColon              p)
-                                LTabs               -> return (TTabs               len p)
                                 LIsSubType          -> return (TIsSubType          p)
                                 LIsImplementeBy     -> return (TIsImplementeBy     p)
                                 LIsType             -> return (TIsType             p)
                                 LClass              -> return (TClass              p)
                                 LComponent          -> return (TComponent          p )
                                 LIDC                -> return (TIDC                p )
+                                LReturn             -> return (TReturn             p )
                                 -- LEoL                -> return (TEoL                p)
 
 alexEOF :: Alex Token
@@ -333,7 +337,6 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TEqual              {                          position :: AlexPosn } -- ^ @==@
            | TNotEqual           {                          position :: AlexPosn } -- ^ @!=@
            | TComma              {                          position :: AlexPosn } -- ^ @,@
-           | TTabs               { numTabs :: Int,          position :: AlexPosn } -- ^ @\t@
            | TIntT               {                          position :: AlexPosn } -- ^ @int@
            | TBoolT              {                          position :: AlexPosn } -- ^ @bool@
            | TRealT              {                          position :: AlexPosn } -- ^ @real@
@@ -347,6 +350,7 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TClass              {                          position :: AlexPosn } -- ^ @class@
            | TComponent          {                          position :: AlexPosn } -- ^ @component@
            | TIDC                {                          position :: AlexPosn } -- ^ @_@
+           | TReturn             {                          position :: AlexPosn } -- ^ @_@
         --    | TEoL                {                          position :: AlexPosn } -- ^ @\\n@
            | TEoF                                                                  -- ^ @\\0@
     deriving (Eq, Ord, Show)
