@@ -129,7 +129,7 @@ instance Typable Value where
     _ |> (IDC) = Valid Unit
     -- _ |> (String _) = Valid $ EList CharP
     -- g |> (IdentV i) = get i g
-    g |> (Call c) = g |> c -- TODO: Judge the type, check that it is a subtype of what is expected
+    g |> (Call c) = g |> c 
 
 instance Typable PartialCall where
     g |> (PartialApplication p e) =

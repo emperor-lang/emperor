@@ -16,7 +16,7 @@ module Types.Types
     , TypeCheckResult(..)
     ) where
 
-import AST (AST(..), Import)
+import AST (AST(..))
 import Logger (Loggers)
 import Types.Imports.Imports (getEnvironment)
 import Types.Results (TypeCheckResult(..))

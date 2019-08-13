@@ -19,7 +19,7 @@ module Types.Imports.JsonIO
     , writeHeader
     ) where
 
-import AST (Ident(..), ImportLocation(..), ImportType)
+import AST (Ident(..), ImportLocation(..))
 import Codec.Compression.GZip
 import Data.Aeson (FromJSON, ToJSON, Value(Object), (.:), (.=), eitherDecode', encode, object, parseJSON, toJSON)
 import Data.ByteString.Lazy (readFile, writeFile)
