@@ -15,6 +15,7 @@ by modules in JSON. Common I/O operations are also provided
 -}
 module Types.Imports.JsonIO
     ( Header(..)
+    , isHeaderFile
     , readHeader
     , writeHeader
     ) where
@@ -23,7 +24,9 @@ import AST (Ident(..), ImportLocation(..))
 import Codec.Compression.GZip
 import Data.Aeson (FromJSON, ToJSON, Value(Object), (.:), (.=), eitherDecode', encode, object, parseJSON, toJSON)
 import Data.ByteString.Lazy (readFile, writeFile)
+import Logger (Loggers)
 import Prelude hiding (readFile, writeFile)
+import System.Directory (doesFileExist)
 import Types.Environment (TypeEnvironment(..))
 
 -- | Defines module header file contents
@@ -38,9 +41,15 @@ instance FromJSON Header where
     parseJSON (Object v) = Header <$> (Ident <$> v .: "name") <*> v .: "depends" <*> v .: "environment"
     parseJSON _ = fail "Expected object when parsing header"
 
+isHeaderFile :: Loggers -> FilePath -> IO Bool
+isHeaderFile (_, inf, _, _) p = do
+    inf $ "Checking for header file " ++ p
+    doesFileExist p
+
 -- | Read a header from a file, obtain its type environment
-readHeader :: FilePath -> IO (Either String Header)
-readHeader p = do
+readHeader :: Loggers -> FilePath -> IO (Either String Header)
+readHeader (_, inf, _, _) p = do
+    inf $ "Reading from header file " ++ show p
     c <- readFile p
     let r = eitherDecode' . decompress $ c :: Either String Header
     return r

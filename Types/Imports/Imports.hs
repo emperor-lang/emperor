@@ -23,8 +23,8 @@ import GHC.IO.Exception (ExitCode(..))
 import Logger (Loggers)
 import System.Exit (exitFailure)
 import System.Process (readProcessWithExitCode)
-import Types.Environment (TypeEnvironment(..), newTypeEnvironment)
-import Types.Imports.JsonIO (Header(..), readHeader)
+import Types.Environment (TypeEnvironment(..))
+import Types.Imports.JsonIO (Header(..), isHeaderFile, readHeader)
 
 -- | Given a set of imports, obtain the type environment they form.
 getEnvironment :: Loggers -> [Import] -> IO TypeEnvironment
@@ -44,21 +44,29 @@ getEnvironmentFromFile :: Loggers -> ImportType -> FilePath -> IO TypeEnvironmen
 getEnvironmentFromFile _ Local _ = error "Cannot import local files!"
 getEnvironmentFromFile (err, inf, scc, _) Global p = do
     inf "Getting install location"
-    (c, libraryInstallationDirectory, stderrContent) <- readProcessWithExitCode "emperor-setup" ["-L"] ""
+    (c, stdoutContent, stderrContent) <- readProcessWithExitCode "emperor-setup" ["-L"] ""
+    let libraryInstallationDirectory = init stdoutContent
     if c == ExitSuccess
-        then scc $ "Imported " ++ p
+        then scc $ "Got import location: " ++ libraryInstallationDirectory
         else do
-            err ("Could not import <" ++ p ++ ">!")
+            err ("Could not obtain library information from emperor-setup! Is this installed?")
             err stderrContent
-    putStrLn libraryInstallationDirectory
-    print c
-    putStrLn stderrContent
-    headerJson <- readHeader p
-    case headerJson of
-        Left x -> do
-            err x
-            exitFailure
-        Right (Header _ _ g) -> return g
+
+    let headerLocation = libraryInstallationDirectory ++ p ++ ".json.gz"
+    inf $ "Operating on header " ++ headerLocation
+
+    e <- isHeaderFile (err, inf, scc, wrn) headerLocation
+    if not e
+        then do
+            err $ "Could not find header file from request for " ++ headerLocation
+            return Nothing
+        else do
+            headerJson <- readHeader (err, inf, scc, wrn) $ headerLocation
+            case headerJson of
+                Left x -> do
+                    err x
+                    exitFailure
+                Right (Header _ _ g) -> return $ Just g
 
 filterEnvironment :: Maybe [Ident] -> TypeEnvironment -> TypeEnvironment
 filterEnvironment Nothing x = x
