@@ -37,7 +37,7 @@ $alphaNum = [$alpha$num]
 
 @partSeparator = (";" @newline?) | (@newline+)
 @blockStarter = ":" @newline?
-@blockSeparator = "#" @newline?
+@blockSeparator = "#" @newline*
 
 @docLineStart = @tabs? "///"
 @docAssignmentLine = @docLineStart @spaces? "~" @ident ("(" @ident ")")? ":" .*
