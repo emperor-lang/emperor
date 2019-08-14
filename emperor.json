@@ -116,6 +116,15 @@
 			"type": "flag",
 			"help": "Disable ANSI-coloured output",
 			"default": "false"
+		},
+		{
+			"short": "-w",
+			"long": "--wrap-log",
+			"dest": "wrapLineLength",
+			"type": "int",
+			"help": "Wrap logging output to this many characters",
+			"default": "-1",
+			"metaDest": "n"
 		}
 	]
 }
