@@ -71,9 +71,9 @@ executable emperor
   
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.9 && <4.10,
-                       array >= 0.5.1.1,
-                       ansi-terminal >= 0.9.1,
-                       containers >= 0.5.7
+                       array >=0.5.1.1,
+                       ansi-terminal >=0.9.1,
+                       containers >=0.5.7
     
   -- Base language which the package is written in.
   default-language:    Haskell2010
