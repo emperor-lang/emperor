@@ -43,7 +43,7 @@ instance Format AST where
 -- | Imports may be formatted as a sorted list of their elements
 instance Format Import where
     format ctx (Import l Nothing) = "import " ++ format ctx l
-    format ctx (Import l (Just is)) = "import " ++ format ctx l ++ "(" ++ (intercalate ", " (format ctx <$> (sort is))) ++ ")"
+    format ctx (Import l (Just is)) = "import " ++ format ctx l ++ " (" ++ (intercalate ", " (format ctx <$> (sort is))) ++ ")"
 
 -- | Import locations may be formatted by their type
 instance Format ImportLocation where
@@ -61,7 +61,7 @@ instance Format ModuleItem where
     format ctx (FunctionItem f) = format ctx f
 
 instance Format FunctionDef where
-    format ctx (FunctionDef (FunctionTypeDef i t) is bs) = format ctx (FunctionTypeDef i t) ++ "\n" ++ format ctx i ++ format ctx is ++ ":\n" ++ (unlines $ format (ctx + 1) <$> bs) ++ "\n" ++ indent ctx ++ "#"
+    format ctx (FunctionDef (FunctionTypeDef i t) is bs) = format ctx (FunctionTypeDef i t) ++ "\n" ++ format ctx i ++ format ctx is ++ ":\n" ++ (unlines $ format (ctx + 1) <$> bs) ++ indent ctx ++ "#"
 
 instance Format FunctionTypeDef where
     format ctx (FunctionTypeDef i t) = format ctx i ++ " :: " ++ format ctx t
