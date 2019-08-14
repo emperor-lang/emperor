@@ -14,9 +14,9 @@ For details on how this is done, see @man emperor@ or @emperor.json@ in the GitH
 -}
 module Main where
 
-import Args (parseArgv, input, entryPoint)
-import EmperorParserWrapper (parse)
-import Logger (makeLoggers)
+import Args (Args, parseArgv, input, entryPoint, doFormat)
+import EmperorParserWrapper (AST, parse)
+import Logger (Loggers, makeLoggers)
 import Formatter (formatFresh)
 import Types.Types (resolveTypes, TypeCheckResult(..))
 
@@ -34,19 +34,21 @@ main = do
         then args { input = "-" }
         else args
 
-    parseResult <- parse (input sanitisedArguments)
-
-    print parseResult
-
+    parseResult <-  parse (input sanitisedArguments)        
     case parseResult of
         Left msg    -> err msg
         Right prog  -> do
             scc $ "Parsing completed successfully, got AST: " ++ show prog
-            putStrLn $ ">>>" ++ formatFresh prog ++ "<<<"
-            inf "Checking types"
-            typeResult <- resolveTypes (err, inf, scc, wrn) prog
-            case typeResult of
-                Fail x -> err x
-                Pass -> do 
-                    scc $ "Type-checking passed"
-                    putStrLn $ "Outputting header? " ++ show (not (entryPoint args))
+            if doFormat args
+                then putStrLn $ formatFresh prog
+                else typeCheck args (err, inf, scc, wrn) prog
+                
+typeCheck :: Args -> Loggers -> AST -> IO ()
+typeCheck args (err, inf, scc, wrn) prog = do
+    inf "Checking types"
+    typeResult <- resolveTypes (err, inf, scc, wrn) prog
+    case typeResult of
+        Fail x -> err x
+        Pass -> do 
+            scc $ "Type-checking passed"
+            putStrLn $ "Outputting header? " ++ show (not (entryPoint args))
