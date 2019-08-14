@@ -120,7 +120,7 @@
 		{
 			"short": "-w",
 			"long": "--wrap-log",
-			"dest": "wrapVal",
+			"dest": "wrapLineLength",
 			"type": "int",
 			"help": "Wrap logging output to this many characters",
 			"default": "-1",
