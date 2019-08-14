@@ -101,7 +101,7 @@ colouriseLog c args t m = (init . unlines) $ applyHeaders messageStart messageCo
 
 splitToLines :: Int -> Int -> String -> [String]
 splitToLines f r s
-    | f <= 0 || r <= 0 = [show f, show r, s]
+    | f <= 0 || r <= 0 = [s]
     | otherwise = firstF : otherLines
         where
             (firstF, rest) = splitAt f s
