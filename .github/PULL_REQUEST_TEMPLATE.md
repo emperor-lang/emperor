@@ -6,7 +6,7 @@ Please describe the problem you have noticed or encountered.
 
 Please describe the contents of your PR here.
 
-### Check lists (check `x` in `[ ]` of list items)
+### Check lists
 
 - [ ] Test passed
 - [ ] Coding style (indentation, etc)
