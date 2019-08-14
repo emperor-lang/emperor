@@ -27,22 +27,24 @@ import Types.Environment (TypeEnvironment(..))
 import Types.Imports.JsonIO (Header(..), isHeaderFile, readHeader)
 
 -- | Given a set of imports, obtain the type environment they form.
-getEnvironment :: Loggers -> [Import] -> IO TypeEnvironment
-getEnvironment _ [] = return newTypeEnvironment
+getEnvironment :: Loggers -> [Import] -> IO (Maybe TypeEnvironment)
+getEnvironment _ [] = return Nothing
 getEnvironment (err, inf, scc, wrn) (i:is) = do
     inf $ "Importing " ++ show i
     ti <- getEnvironment' (err, inf, scc, wrn) i
     tis <- getEnvironment (err, inf, scc, wrn) is
     return $ ti <> tis
 
-getEnvironment' :: Loggers -> Import -> IO TypeEnvironment
+getEnvironment' :: Loggers -> Import -> IO (Maybe TypeEnvironment)
 getEnvironment' (err, inf, scc, wrn) (Import (ImportLocation t (Ident i)) mis) = do
     e <- getEnvironmentFromFile (err, inf, scc, wrn) t i
-    return $ filterEnvironment mis e
+    case e of
+        Just g -> return . Just $ filterEnvironment mis g
+        Nothing -> return Nothing
 
-getEnvironmentFromFile :: Loggers -> ImportType -> FilePath -> IO TypeEnvironment
+getEnvironmentFromFile :: Loggers -> ImportType -> FilePath -> IO (Maybe TypeEnvironment)
 getEnvironmentFromFile _ Local _ = error "Cannot import local files!"
-getEnvironmentFromFile (err, inf, scc, _) Global p = do
+getEnvironmentFromFile (err, inf, scc, wrn) Global p = do
     inf "Getting install location"
     (c, stdoutContent, stderrContent) <- readProcessWithExitCode "emperor-setup" ["-L"] ""
     let libraryInstallationDirectory = init stdoutContent

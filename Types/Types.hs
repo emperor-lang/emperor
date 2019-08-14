@@ -16,8 +16,9 @@ module Types.Types
     , TypeCheckResult(..)
     ) where
 
-import AST (AST(..))
+import AST (AST(..), ModuleItem(..))
 import Logger (Loggers)
+import Types.Environment (TypeEnvironment)
 import Types.Imports.Imports (getEnvironment)
 import Types.Results (TypeCheckResult(..))
 
@@ -26,6 +27,12 @@ import Types.Results (TypeCheckResult(..))
 resolveTypes :: Loggers -> AST -> IO TypeCheckResult
 resolveTypes (err, inf, scc, wrn) (AST _ is bs) = do
     inf "Getting imports..."
-    g <- getEnvironment (err, inf, scc, wrn) is
-    inf $ "Got environment " ++ show g
-    return $ Fail $ "Type checking not yet implemented!" ++ show bs
+    r <- getEnvironment (err, inf, scc, wrn) is
+    case r of
+        Just g -> do
+            inf $ "Got environment " ++ show g
+            return $ resolveTypes' g bs
+        Nothing -> return $ Fail "Could not get type environment"
+
+resolveTypes' :: TypeEnvironment -> [ModuleItem] -> TypeCheckResult
+resolveTypes' _ bs = Fail $ "Type checking not yet implemented!" ++ show bs
