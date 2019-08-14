@@ -123,7 +123,7 @@ ast :: {AST}
 ast : moduleHeader usings moduleBody                 { AST $1 $2 $3 }
 
 moduleHeader :: {ModuleHeader}
-moduleHeader : "module" IDENT ":" { Module (Ident (identifierVal $2)) }
+moduleHeader : "module" IDENT ";" { Module (Ident (identifierVal $2)) }
 
 -- docs :: {[DocLine]}
 -- docs : DOCLINE          { [ $1] }
