@@ -19,6 +19,11 @@ $codeBackground: #f2f2f2;
 $bodyTextColour: #000000;
 $linkHoverColour: #2f3061;
 
+.emperor_seal {
+	text-align: center;
+	font-size: 30pt;
+}
+
 // Set headers
 @for $i from 1 through 6 {
 	h#{$i} {
