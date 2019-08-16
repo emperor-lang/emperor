@@ -1,4 +1,4 @@
-# Emperor 👑
+# Emperor
 
 _A statically typed, automatically-threaded, imperative language with purity and functional constructs._
 
