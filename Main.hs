@@ -14,11 +14,13 @@ For details on how this is done, see @man emperor@ or @emperor.json@ in the GitH
 -}
 module Main where
 
-import Args (Args, parseArgv, input, entryPoint, doFormat)
+import Args (Args, parseArgv, input, entryPoint, doFormat, outputFile)
+import Control.Monad (when)
 import EmperorParserWrapper (AST, parse)
 import Logger (Loggers, makeLoggers)
 import Formatter (formatFresh)
-import Types.Types (resolveTypes, TypeCheckResult(..))
+import System.Exit (exitSuccess, exitFailure)
+import Types.Types (resolveTypes, TypeCheckResult(..), writeHeader)
 
 -- | Provides the entry-point
 main :: IO ()
@@ -34,21 +36,26 @@ main = do
         then args { input = "-" }
         else args
 
-    parseResult <-  parse (input sanitisedArguments)        
+    parseResult <- parse (input sanitisedArguments)        
+        
     case parseResult of
         Left msg    -> err msg
         Right prog  -> do
-            scc $ "Parsing completed successfully, got AST: " ++ show prog
-            if doFormat args
-                then putStrLn $ formatFresh prog
-                else typeCheck args (err, inf, scc, wrn) prog
-                
+            scc "Parsing done for input file"
+            when (doFormat args) (putStrLn (formatFresh prog) >>= const exitSuccess)
+            typeCheck args (err, inf, scc, wrn) prog
+            when (not (entryPoint args) && outputFile args /= "-") (
+                    do
+                        inf "Outputting header..."
+                        writeHeader (outputFile args ++ ".eh.json.gz") prog
+                )
+
 typeCheck :: Args -> Loggers -> AST -> IO ()
-typeCheck args (err, inf, scc, wrn) prog = do
+typeCheck _ (err, inf, scc, wrn) prog = do
     inf "Checking types"
     typeResult <- resolveTypes (err, inf, scc, wrn) prog
     case typeResult of
-        Fail x -> err x
-        Pass -> do 
-            scc $ "Type-checking passed"
-            putStrLn $ "Outputting header? " ++ show (not (entryPoint args))
+        Fail x -> do
+            err x
+            exitFailure
+        Pass -> scc "Type-checking passed"
