@@ -32,7 +32,6 @@ import AST
     , SwitchCase(..)
     , Tabs(..)
     , Value(..)
-    , getPurity
     )
 import Types.Environment (TypeEnvironment, newTypeEnvironment)
 import Types.Judger (Typable, (|>))
