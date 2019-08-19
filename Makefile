@@ -94,5 +94,5 @@ clean-installation:
 
 clean:
 	cabal clean --verbose=0
-	$(RM) cabal.config Args.hs *_completions.sh ./emperor ./parser/Emperor{Lexer,Parser,ParserData}.hs ./parser/emperorParser.info $(shell find . -name '*.orig') $(shell find . -name '*.info') $(shell find . -name '*.hi')
+	$(RM) cabal.config Args.hs *_completions.sh ./emperor ./parser/Emperor{Lexer,Parser,ParserData}.hs ./parser/emperorParser.info $(shell find . -name '*.orig') $(shell find . -name '*.info') $(shell find . -name '*.hi') *.eh*
 .PHONY: clean
