@@ -12,7 +12,7 @@ Language    : Haskell2010
 
 This module defines the machinery to lexically analyse the Emperor language given in an input string.
 -}
-module EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex, AlexPosn) where
+module EmperorLexer (Alex, AlexPosn(..), Token(..), lexWrap, alexError, runAlex) where
 
 }
 
@@ -353,7 +353,74 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TReturn             {                          position :: AlexPosn } -- ^ @_@
         --    | TEoL                {                          position :: AlexPosn } -- ^ @\\n@
            | TEoF                                                                  -- ^ @\\0@
-    deriving (Eq, Ord, Show)
+    deriving (Eq, Ord)
+
+instance Show Token where
+    show (TDocAssignmentLine   _) = "TDocAssignmentLine"
+    show (TDocLine             _) = "TDocLine"
+    show (TInteger           i _) = show i
+    show (TBool              b _) = show b
+    show (TReal              r _) = show r
+    show (TChar              c _) = show c
+    show (TIf                  _) = "if"
+    show (TElse                _) = "else"
+    show (TWhile               _) = "while"
+    show (TRepeat              _) = "repeat"
+    show (TWith                _) = "with"
+    show (TSwitch              _) = "switch"
+    show (TFor                 _) = "for"
+    show (TImport              _) = "import"
+    show (TModule              _) = "module"
+    show (TIdent             s _) = show s
+    show (TPartSeparator       _) = ";/\n"
+    show (TBlockSeparator      _) = "#"
+    show (TQueue               _) = "<-"
+    show (TGoesTo              _) = "->"
+    show (TGets                _) = "="
+    show (TLParenth            _) = "("
+    show (TRParenth            _) = ")"
+    show (TLBracket            _) = "["
+    show (TRBracket            _) = "]"
+    show (TLBrace              _) = "{"
+    show (TRBrace              _) = "}"
+    show (TImpure              _) = "@"
+    show (TPlus                _) = "+"
+    show (TMinus               _) = "-"
+    show (TDivide              _) = "/"
+    show (TModulo              _) = "%"
+    show (TTimes               _) = "*"
+    show (TShiftLeft           _) = "<<"
+    show (TShiftRight          _) = ">>"
+    show (TShiftRightSameSign  _) = ">>>"
+    show (TAndScrict           _) = "&"
+    show (TAndLazy             _) = "&&"
+    show (TOrStrict            _) = "|"
+    show (TOrLazy              _) = "||"
+    show (TNot                 _) = "!"
+    show (TXor                 _) = "^"
+    show (TLessThan            _) = "<"
+    show (TLessThanOrEqual     _) = "<="
+    show (TGreaterThan         _) = ">"
+    show (TGreaterThanOrEqual  _) = ">="
+    show (TImplies             _) = "=>"
+    show (TEqual               _) = "=="
+    show (TNotEqual            _) = "!="
+    show (TComma               _) = ","
+    show (TIntT                _) = "int"
+    show (TBoolT               _) = "bool"
+    show (TRealT               _) = "real"
+    show (TCharT               _) = "char"
+    show (TUnit                _) = "Unit"
+    show (TAnyT                _) = "Any"
+    show (TColon               _) = ":"
+    show (TIsSubType           _) = "<:"
+    show (TIsImplementeBy      _) = "<~"
+    show (TIsType              _) = "::"
+    show (TClass               _) = "class"
+    show (TComponent           _) = "component"
+    show (TIDC                 _) = "_"
+    show (TReturn              _) = "return"
+    show TEoF                     = "EoF"
 
 -- | AlexPosn is ordered by the total number of characters read (its final field)
 instance Ord AlexPosn where
