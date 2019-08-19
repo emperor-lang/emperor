@@ -38,7 +38,7 @@ instance Format a => Format [a] where
 
 -- | The AST may be formatted by intercalating new-line characters
 instance Format AST where
-    format ctx (AST m is a) = unlines (format ctx m : (sort $ format ctx <$> is) ++ (format ctx <$> a))
+    format ctx (AST m is a) = unlines (format ctx m : "" : (sort $ format ctx <$> is) ++ "" : (format ctx <$> a))
 
 -- | Imports may be formatted as a sorted list of their elements
 instance Format Import where
@@ -56,20 +56,39 @@ instance Format ModuleHeader where
 
 -- | Module items may be formatted by their contents
 instance Format ModuleItem where
-    format ctx (Component i c bs) = "component " ++ format ctx i ++ " " ++ format ctx c ++ "\n" ++ (unlines $ format (ctx + 1) <$> bs)
-    format ctx (TypeClass i c bs) = "class " ++ format ctx i ++ " " ++ format ctx c ++ "\n" ++ (unlines $ format (ctx + 1) <$> bs)
-    format ctx (FunctionItem f) = format ctx f
+    format ctx (Component i c bs) = "component " ++ format ctx i ++ typeComparisonString ++ ":\n" ++ (unlines $ format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
+        where
+            typeComparisonString = let s = formatTypeComparisons ctx c
+                                    in if null s 
+                                        then ""
+                                        else ' ' : s
+    format ctx (TypeClass i c bs) = "class " ++ format ctx i ++ typeComparisonString ++ ":\n" ++ (unlines $ format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
+        where
+            typeComparisonString = let s = formatTypeComparisons ctx c
+                                    in if null s 
+                                        then ""
+                                        else ' ' : s
+    format ctx (FunctionItem f) = format ctx f ++ "\n"
+
+formatTypeComparisons :: FormatContext -> Maybe [TypeComparison] -> String
+formatTypeComparisons _ Nothing = ""
+formatTypeComparisons ctx (Just cs) = unwords $ format ctx <$> cs
 
 instance Format FunctionDef where
-    format ctx (FunctionDef (FunctionTypeDef i t) is bs) = format ctx (FunctionTypeDef i t) ++ "\n" ++ format ctx i ++ format ctx is ++ ":\n" ++ (unlines $ format (ctx + 1) <$> bs) ++ indent ctx ++ "#"
+    format ctx (FunctionDef (FunctionTypeDef i t) is bs) = indent ctx ++ format ctx (FunctionTypeDef i t) ++ "\n" ++ indent ctx ++ format ctx i ++ params ++ ":\n" ++ (unlines $ format (ctx + 1) <$> bs) ++ indent ctx ++ "#"
+        where
+            params = if null paramIdentifierString
+                then ""
+                else ' ' : paramIdentifierString
+            paramIdentifierString = format ctx is
 
 instance Format FunctionTypeDef where
     format ctx (FunctionTypeDef i t) = format ctx i ++ " :: " ++ format ctx t
 
 -- | Type comparisons are formatted with whitespace
 instance Format TypeComparison where
-    format ctx (IsSubType i) = " <: " ++ format ctx i
-    format ctx (IsSubTypeWithImplementor i i') = " <:" ++ format ctx i ++ " <~ " ++ format ctx i'
+    format ctx (IsSubType i) = "<: " ++ format ctx i
+    format ctx (IsSubTypeWithImplementor i i') = "<:" ++ format ctx i ++ " <~ " ++ format ctx i'
 
 -- | Types can be formatted as they would appear
 instance Format EmperorType where
