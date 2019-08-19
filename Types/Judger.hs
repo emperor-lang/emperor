@@ -17,11 +17,11 @@ module Types.Judger
     , Typable
     ) where
 
-import AST (Expr(..), Ident(..), PartialCall(..), Value(..), getPurity)
-import Types.Checker ((<:), (|-))
-import Types.Environment (TypeEnvironment(..), get, newTypeEnvironment, unsafeGet)
-import Types.PreludeTypes (PreludeType, eqable)
-import Types.Results (EmperorType(..), Purity(..), TypeCheckResult(..), TypeJudgementResult(..), isValid, isValidAnd)
+import AST (Expr(..), Ident(..), Call(..), Value(..))
+import Types.SubTyping ((<:), (|-))
+import Types.Environment (TypeEnvironment(..), (=>>), newTypeEnvironment, unsafeGet)
+import Types.PreludeTypes (eqable)
+import Types.Results (EmperorType(..), TypeCheckResult(..), TypeJudgementResult(..), getTypeList, isValid, isValidAnd, unpackTypes)
 
 -- | Class describing constructs which may be assigned a type.
 class Typable a where
@@ -128,30 +128,32 @@ instance Typable Value where
     _ |> (Bool _) = Valid BoolP
     _ |> (IDC) = Valid Unit
     -- _ |> (String _) = Valid $ EList CharP
-    -- g |> (IdentV i) = get i g
-    g |> (Call c) = g |> c 
+    g |> (IdentV (Ident i)) = g =>> i
+    g |> (CallV c) = g |> c 
 
-instance Typable PartialCall where
-    g |> (PartialApplication p e) =
-        case g |> e of
-            Valid u ->
-                case g |> p of
-                    Valid (EFunction _ t1 t2) ->
-                        assert
-                            (isValid $ g |- u <: t1)
-                            ("Type assertion does not hold " ++ show u ++ " <: " ++ show t1)
-                            (Valid t2)
-                    Valid x -> Invalid $ "Could not apply type " ++ show u ++ " to " ++ show x
-                    x -> x
-            x -> x
-    g |> (CallIdentifier pty (Ident i)) =
-        case get i g of
-            Valid (EFunction pty' t1 t2) ->
-                assert
-                    (isValid $ g |- pty <: pty')
-                    ("Purity mismatch in call to " ++ show i)
-                    (Valid $ EFunction pty' t1 t2)
-            x -> x
+instance Typable Call where
+    g |> (Call p (Ident i) es) = case g =>> i of
+        Valid t -> case t of
+            EFunction p' t1 t2 -> case g |- p' <: p of
+                Pass -> let types = getTypeList (EFunction p' t1 t2)
+                    in let expectedInputTypes = init types
+                        in let expectedOutputType = last types
+                            in if length expectedInputTypes == length es
+                                then let inputTypeJudgements = (g |>) <$> es in
+                                    if all isValid inputTypeJudgements
+                                        then
+                                            case unpackTypes inputTypeJudgements of
+                                                Right inputTypes -> if all isValid $ (g |-) <$> zipWith (<:) inputTypes expectedInputTypes
+                                                    then Valid expectedOutputType
+                                                    else Invalid "Some input type is not a sub-type of the expected"
+                                                Left m -> Invalid m
+                                        else
+                                            head $ filter (not . isValid) inputTypeJudgements
+                                else
+                                    Invalid $ "Expected " ++ (show . length) expectedInputTypes ++ " inputs to function, got " ++ (show . length) es
+                Fail m -> Invalid m
+            x -> Invalid $ "Expected function type, got " ++ show x ++ " instead."
+        x -> x
 
 assert :: Bool -> String -> TypeJudgementResult -> TypeJudgementResult
 assert False s _ = Invalid s
