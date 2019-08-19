@@ -21,7 +21,7 @@ module Types.Imports.JsonIO
     ) where
 
 import AST (Ident(..), ImportLocation(..))
-import Codec.Compression.GZip
+import Codec.Compression.GZip (compress, decompress)
 import Data.Aeson (FromJSON, ToJSON, Value(Object), (.:), (.=), eitherDecode', encode, object, parseJSON, toJSON)
 import Data.ByteString.Lazy (readFile, writeFile)
 import Logger (Loggers)
@@ -51,8 +51,8 @@ readHeader :: Loggers -> FilePath -> IO (Either String Header)
 readHeader (_, inf, _, _) p = do
     inf $ "Reading from header file " ++ show p
     c <- readFile p
-    let r = eitherDecode' . decompress $ c :: Either String Header
-    return r
+    inf "Decompressing contents"
+    return $ eitherDecode' . decompress $ c 
 
 -- | Write a type environment to a file to make a header
 writeHeader :: Header -> FilePath -> IO ()
