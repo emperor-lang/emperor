@@ -17,10 +17,12 @@ module Types.Results
     ( EmperorType(..)
     , TypeCheckResult(..)
     , TypeJudgementResult(..)
+    , getTypeList
     , isValid
     , isValidAnd
     , Purity(..)
     , TypeOp
+    , unpackTypes
     ) where
 
 import Data.Aeson (FromJSON, ToJSON, Value(..), (.:), (.=), object, parseJSON, toJSON)
@@ -74,6 +76,14 @@ instance Show EmperorType where
     show Any = "Any"
     show Unit = "Unit"
 
+unpackTypes :: [TypeJudgementResult] -> Either String [EmperorType]
+unpackTypes [] = Right []
+unpackTypes (r:rs) = case r of
+    Valid t -> case unpackTypes rs of
+        Right ts -> Right (t:ts)
+        x -> x
+    Invalid m -> Left m
+
 -- | Marker for whether a function is pure or impure
 data Purity
     = Pure
@@ -99,6 +109,10 @@ isValidAnd _ (Invalid _) = False
 isValidAnd t (Valid t')
     | t == t' = True
     | otherwise = False
+
+getTypeList :: EmperorType -> [EmperorType]
+getTypeList (EFunction _ t1 t2) = t1 : getTypeList t2
+getTypeList x = [x]
 
 instance ToJSON EmperorType where
     toJSON IntP = primitiveToJSON "int"
