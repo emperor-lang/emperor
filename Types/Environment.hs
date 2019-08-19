@@ -11,48 +11,73 @@ Language    : Haskell2010
 This module defines the type environments of Emperor programs.
 -}
 module Types.Environment
-    ( get
+    ( (=>>)
+    , filterEnvironment
+    , fromList
     , newTypeEnvironment
     , TypeEnvironment(..)
+    , insert
     , unsafeGet
     ) where
 
 import Data.Aeson (FromJSON, ToJSON, Value(..), parseJSON, toJSON)
-import Data.Map (Map, empty, lookup, union)
-import Data.Maybe (fromMaybe)
 import Prelude hiding (lookup)
 import Types.Results (EmperorType, TypeJudgementResult(..))
 
 -- | An environment which maps names to types
 newtype TypeEnvironment =
-    TypeEnvironment (Map String EmperorType)
+    TypeEnvironment [(String, EmperorType)]
     deriving (Show)
 
 instance Monoid TypeEnvironment where
     mempty = newTypeEnvironment
-    mappend (TypeEnvironment g) (TypeEnvironment g') = TypeEnvironment $ union g g'
+    mappend (TypeEnvironment g) (TypeEnvironment g') = TypeEnvironment $ g ++ g'
 
 -- | Creates a fresh type-environment
 newTypeEnvironment :: TypeEnvironment
-newTypeEnvironment = TypeEnvironment empty
+newTypeEnvironment = TypeEnvironment []
 
 -- | Get a value from a type environment
-get :: String -> TypeEnvironment -> TypeJudgementResult
-get s (TypeEnvironment g) =
-    case lookup s g of
-        Just t -> Valid t
-        Nothing -> Invalid $ "Type unknown in current environment" ++ s
+(=>>) :: TypeEnvironment -> String -> TypeJudgementResult
+(TypeEnvironment []) =>> s = Invalid $ "Identifier " ++ show s ++ " not in current scope"
+(TypeEnvironment ((i,t):ms)) =>> s = if s == i
+    then Valid t
+    else (TypeEnvironment ms) =>> s
+    -- case lookup s g of
+    --     Just t -> Valid t
+    --     Nothing -> Invalid $ "Type unknown in current environment" ++ s
 
 -- | Get a value from a type environment under the assertion that it already
 -- exists. This should only be used for types guaranteed to be in the prelude.
 unsafeGet :: String -> TypeEnvironment -> EmperorType
-unsafeGet s (TypeEnvironment g) = fromMaybe (error $ "Could not find type " ++ s) (lookup s g)
+unsafeGet s (TypeEnvironment []) = error $ "Identifier " ++ show s ++ " not in current scope, also, the programmer used an unsafe operation!"
+unsafeGet s (TypeEnvironment ((i,t):ms)) = if s == i
+    then t
+    else unsafeGet s (TypeEnvironment ms)
+
+-- | Add a type assertion to the environment
+insert :: String -> EmperorType -> TypeEnvironment -> TypeEnvironment
+insert s t (TypeEnvironment m) = TypeEnvironment ((s,t):m)
+
+-- | Create a type environment from a list
+fromList :: [(String,EmperorType)] -> TypeEnvironment
+fromList = TypeEnvironment
+
+-- | Filter the entries of the type environment
+filterEnvironment :: (String -> Bool) -> TypeEnvironment -> TypeEnvironment
+filterEnvironment f (TypeEnvironment ms) = TypeEnvironment $ filterEnvironment' f ms
+    where
+        filterEnvironment' :: (String -> Bool) -> [(String,EmperorType)] -> [(String,EmperorType)]
+        filterEnvironment' _ [] = []
+        filterEnvironment' f' ((i,t):ms')
+            | f' i = (i,t) : filterEnvironment' f' ms'
+            | otherwise = filterEnvironment' f' ms'
 
 instance ToJSON TypeEnvironment where
-    toJSON (TypeEnvironment m) = toJSON m
+    toJSON (TypeEnvironment ms) = toJSON ms
 
 instance FromJSON TypeEnvironment where
-    parseJSON (Object o) = do
-        x <- parseJSON (Object o)
-        return $ TypeEnvironment x
-    parseJSON _ = fail $ "Expected object when parsing TypeEnvironment"
+    parseJSON (Array o) = do
+        ms <- parseJSON (Array o)
+        return $ TypeEnvironment ms
+    parseJSON _ = fail $ "Expected array object when parsing TypeEnvironment"

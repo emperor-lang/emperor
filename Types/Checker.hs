@@ -1,86 +1,148 @@
-{-|
-Module      : Checker
-Description : Type checker for emperor
-Copyright   : (c) Edward Jones, 2019
-License     : GPL-3
-Maintainer  : Edward Jones
-Stability   : experimental
-Portability : POSIX
-Language    : Haskell2010
+module Types.Checker where
 
-This module defines the type-checker for Emperor
--}
-module Types.Checker
-    ( (|-)
-    , (<:)
-    , SubTypable
-    , TypeComparison
-    ) where
+import AST ( Assignment(..)
+    , AST(..)
+    , BodyBlock(..)
+    , BodyLine(..)
+    , Call(..)
+    , FunctionDef(..)
+    , FunctionTypeDef(..)
+    , Ident(..)
+    , ModuleItem(..)
+    , SwitchCase(..)
+    , Queue(..)
+    )
+import Data.Monoid ((<>))
+import Types.Judger ((|>))
+import Types.Environment ( (=>>)
+    , TypeEnvironment(..)
+    , fromList
+    , insert
+    , unsafeGet
+    )
+import Types.SubTyping ((|-), (<:))
+import Types.Results (EmperorType(BoolP, IntP, EFunction), Purity(..), TypeCheckResult(..), TypeJudgementResult(..), getTypeList, isValid)
+import Types.Imports.Imports (getLocalEnvironment)
 
-import Data.List ((\\))
-import Data.Map (Map, (!), empty, keys)
-import Types.Environment (TypeEnvironment(..))
-import Types.Results (EmperorType(..), Purity(..), TypeCheckResult(..))
+class TypeCheck a where
+    infix 2 >-
+    -- | Check the assertion that a given @a@ has valid type
+    (>-) :: TypeEnvironment -> a -> TypeCheckResult
 
--- | Represents a comparison between two types
-data TypeComparison a b =
-    SubType a b
-
-instance (Show a, Show b) => Show (TypeComparison a b) where
-    show (SubType a b) = show a ++ " <: " ++ show b
-
-infixl 3 <:
-
--- | Sets up a type-comparison
-(<:) ::
-       SubTypable a
-    => SubTypable b =>
-           a -> b -> TypeComparison a b
-a <: b = SubType a b
-
--- | Type class to describe objects upon which the subtype relation is valid
-class SubTypable a where
-    infixl 2 |-
-    -- | Judge the validity of a type comparison
-    (|-) :: TypeEnvironment -> TypeComparison a a -> TypeCheckResult
-
-instance SubTypable EmperorType where
-    _ |- (SubType a b)
-        | a == b = Pass
-    _ |- (SubType _ Any) = Pass
-    _ |- (SubType Unit _) = Pass
-    _ |- (SubType IntP RealP) = Pass
-    e |- (SubType (EList a) (EList b)) = e |- a <: b
-    e |- (SubType (ETuple as) (ETuple bs)) =
-        if all (== Pass) typeResults
+instance TypeCheck AST where
+    g >- (AST m is bs) = let trs = (g' >-) <$> bs in if all isValid trs
             then Pass
-            else head $ dropWhile (== Pass) typeResults
-      where
-        typeResults = (e |-) <$> comparisons
-        comparisons = (<:) <$> as <*> bs
-    e |- (SubType (ERecord as) (ERecord bs))
-        | keys bs `subset` keys as && all (\k -> (e |- (as ! k <: bs ! k)) == Pass) (keys bs) = Pass
-        | otherwise = typeCheckFail (SubType (as ! b) (bs ! b))
-      where
-        b = head $ filter (\k -> (e |- (as ! k <: bs ! k)) /= Pass) $ keys as
-    e |- (SubType (EFunction p i o) (EFunction p' i' o')) =
-        case e |- p <: p' of
-            Pass ->
-                case e |- i' <: i of
-                    Pass -> e |- o <: o'
+            else head $ filter (not . isValid) trs
+        where
+            -- The type environment to use
+            g' = getLocalEnvironment (AST m is bs) <> g
+
+instance TypeCheck ModuleItem where
+    _ >- (Component _ _ _) = Fail "Components have not yet been implemented" -- TODO: Implement components
+    _ >- (TypeClass _ _ _) = Fail "Type classes have not yet been implemented" -- TODO: Implement type classes
+    g >- (FunctionItem f) = g >- f
+
+instance TypeCheck FunctionDef where
+    g >- (FunctionDef (FunctionTypeDef _ t) is bs) = g' `check` bs
+        where
+            g' :: TypeEnvironment
+            g' = (insert "return" returnType $ fromList $ ((\(Ident i) -> i) <$> is) `zip` paramTypes) <> g
+                where
+                    paramTypes = init $ getTypeList t
+                    returnType = last $ getTypeList t
+
+instance TypeCheck SwitchCase where
+    g >- (SwitchCase e b) = case g |> e of
+        Valid (EFunction p ti to) -> case g |- p <: Pure of
+            Pass -> case g =>> "caseExpr" of
+                Valid t -> case g |- t <: ti of
+                    Pass -> case g |- to <: BoolP of
+                        Pass -> g `check` [b]
+                        Fail _ -> Fail "Return type of case guard is not a boolean! "
                     x -> x
+                Invalid _ -> Fail "Missing expression type for case?"
+            Fail _ -> Fail "Case guards must be pure, see `man emperor` to report if this is bad"
+        Valid t -> Fail $ "Case guard had type " ++ show t ++ " but type " ++ show (unsafeGet "caseExpr" g) ++ " -> " ++ show BoolP
+        Invalid m -> Fail m
+
+check :: TypeEnvironment -> [BodyBlock] -> TypeCheckResult
+check _ [] = Pass
+check g (b':bs') = case b' of
+    Line l -> case l of 
+        AssignmentC (Assignment mt (Ident i) e) -> case mt of
+            Just t -> case g =>> i of
+                Valid _ -> Fail $ "Variable " ++ i ++ " already exists in the current scope. Name shadowing is forbidden."
+                Invalid _ -> case g |> e of
+                    Valid t' -> case g |- t' <: t of
+                        Pass -> let g' = insert i t g in
+                            g' `check` bs'
+                        x -> x
+                    Invalid m -> Fail m
+            Nothing -> case g =>> i of
+                Valid t -> case g |> e of
+                    Valid t' -> case g |- t <: t' of
+                        Pass -> g `check` bs'
+                        x -> x
+                    Invalid m -> Fail m
+                Invalid m -> Fail m
+        QueueC (Queue mt (Ident i) e) -> case mt of
+            Just t -> case g |> e of
+                Valid t' -> case g |- t' <: t of
+                    Pass -> let g' = insert i t g in
+                        g' `check` bs'
+                    x -> x
+                Invalid m -> Fail m
+            Nothing -> case g =>> i of
+                Valid t -> case g |> e of
+                    Valid t' -> case g |- t <: t' of
+                        Pass -> g `check` bs'
+                        x -> x
+                    Invalid m -> Fail m
+                Invalid m -> Fail m
+        CallC (Call p (Ident i) es) -> case g |- Impure <: p of
+            Pass -> case g |> (Call p (Ident i) es) of
+                Valid _ -> Pass
+                Invalid m -> Fail m
+            Fail _ -> Fail "Pure bare calls do not have any effect."
+        Return e -> case g =>> "return" of
+            Valid t -> case g |> e of
+                Valid t' -> g |- t' <: t
+                Invalid m -> Fail m
+            Invalid _ -> Fail "Return statement found outside of function"
+    IfElse e as bs -> case g |> e of 
+        Valid t -> case g |- t <: BoolP of
+            Pass -> case g `check` as of
+                Pass -> g `check` bs
+                x -> x
             x -> x
-    _ |- c = typeCheckFail c
-
-instance SubTypable Purity where
-    _ |- (SubType Pure Impure) = Fail "Violated type constraint: Pure <: Impure"
-    _ |- _ = Pass
-
-subset :: Eq a => [a] -> [a] -> Bool
-subset as bs = null $ bs \\ as
-
-typeCheckFail ::
-       Show a
-    => Show b =>
-           TypeComparison a b -> TypeCheckResult
-typeCheckFail c = Fail $ "Type-checking error: " ++ show c ++ " does not hold!"
+        Invalid m -> Fail m
+    While e as -> case g |> e of
+        Valid t -> case g |- t <: BoolP of
+            Pass -> g `check` as
+            x -> x
+        Invalid m -> Fail m
+    For (Ident i) e as -> case g |> e of
+        Valid t -> let g' = insert i t g in g' `check` as
+        Invalid m -> Fail m
+    Repeat e as -> case g |> e of
+        Valid t -> case g |- t <: IntP of
+            Pass -> g `check` as
+            x -> x
+        Invalid m -> Fail m
+    With (Assignment Nothing (Ident i) e) bs -> case g |> e of
+        Valid t -> let g' = insert i t g in g' `check` bs
+        Invalid m -> Fail m
+    With (Assignment (Just t) (Ident i) e) bs -> case g |> e of
+        Valid t' -> case g |- t' <: t of
+            Pass -> let g' = insert i t' g in g' `check` bs
+            x -> x
+        Invalid m -> Fail m
+    Switch e cs -> case g |> e of
+        Valid t -> case g |- t <: BoolP of
+            Pass -> let g' = insert "caseExpr" t g in
+                let trs = (g' >-) <$> cs in
+                if all isValid trs
+                    then Pass
+                    else head $ filter (not . isValid) trs
+            x -> x
+        Invalid m -> Fail m
