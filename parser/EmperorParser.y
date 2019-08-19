@@ -14,7 +14,7 @@ This module defines the machinery to parse the Emperor language from a token str
 module EmperorParser (parseEmperor, parseREPL) where
 
 import AST (AST(..), ModuleHeader(..), Import(..), ImportLocation(..), ImportType(..), Ident(..), ModuleItem(..), FunctionDef(..), FunctionTypeDef(..), TypeComparison(..), BodyBlock(..), SwitchCase(..), BodyLine(..), Assignment(..), Queue(..), Expr(..), Value(..), Call(..))
-import EmperorLexer (Alex, Token(..), lexWrap, alexError, runAlex)
+import EmperorLexer (Alex, AlexPosn(..), Token(..), lexWrap, alexError, runAlex)
 import Types.Results (EmperorType(..), Purity(..))
 
 }
@@ -94,9 +94,11 @@ import Types.Results (EmperorType(..), Purity(..))
     "component"         { TComponent            p }
     "#"                 { TBlockSeparator       p }
     "_"                 { TIDC                  p }
-    "return"                 { TReturn               p }
+    "return"            { TReturn               p }
 --     EOL                 { TEoL                  p }
 
+%nonassoc PURE
+%nonassoc IMPURE
 %nonassoc TYPEDEF
 %nonassoc NONTUPLE
 %nonassoc TUPLE
@@ -179,8 +181,8 @@ functionParamDef : {- empty -}              { [] }
                  | IDENT functionParamDef   { (Ident (identifierVal $1)) : $2 }
 
 typeComparisons :: {[TypeComparison]}
-typeComparisons : typeComparison                    { [$1] }
-                | typeComparison typeComparisons    { $1 : $2 }
+typeComparisons : typeComparison                        { [$1] }
+                | typeComparison "," typeComparisons    { $1 : $3 }
 
 typeComparison :: {TypeComparison}
 typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2)) }
@@ -213,10 +215,10 @@ bodyLine : assignment            { AssignmentC $1 }
          | "return" expr         { Return $2 }
 
 assignment :: {Assignment}
-assignment : typedef IDENT "=" expr { Assignment $1 (Ident (identifierVal $2)) $4 } 
+assignment : maybe(typedef) IDENT "=" expr { Assignment $1 (Ident (identifierVal $2)) $4 }
 
 queue :: {Queue}
-queue : typedef IDENT "<-" expr { Queue $1 (Ident (identifierVal $2)) $4 }
+queue : maybe(typedef) IDENT "<-" expr { Queue $1 (Ident (identifierVal $2)) $4 }
 
 typedef :: {EmperorType}
 typedef : tupleTypeDef  %prec TYPEDEF   { resolveTuple $1 }
@@ -226,17 +228,18 @@ tupleTypeDef : nonTupleTypeDef                  %prec NONTUPLE  { [$1] }
              | nonTupleTypeDef "*" tupleTypeDef %prec TUPLE     { $1 : $3}
 
 nonTupleTypeDef :: {EmperorType}
-nonTupleTypeDef : "int"                 { IntP }
-                | "bool"                { CharP }
-                | "real"                { RealP }
-                | "char"                { BoolP }
-                | "()"                  { Unit }
-                | "Any"                 { Any }
-                | "(" typedef ")"       { $2 }
-                | typedef "->" typedef  { EFunction Impure $1 $3 } 
-                | "[" typedef "]"       { EList $2 }
-                | "{" typedef "}"       { ESet $2 }
-                -- | IDENT                 { Ident }
+nonTupleTypeDef : "int"                                     { IntP }
+                | "bool"                                    { BoolP }
+                | "real"                                    { RealP }
+                | "char"                                    { CharP }
+                | "()"                                      { Unit }
+                | "Any"                                     { Any }
+                | "(" typedef ")"                           { $2 }
+                | typedef "->" typedef      %prec PURE      { EFunction Pure $1 $3 } 
+                | "@" typedef "->" typedef  %prec IMPURE    { EFunction Impure $2 $4 } 
+                | "[" typedef "]"                           { EList $2 }
+                | "{" typedef "}"                           { ESet $2 }
+                -- | IDENT                     { Ident }
 
 expr :: {Expr}
 expr : value                            { Value $1 }
@@ -300,7 +303,10 @@ maybe(p) : {- empty -} { Nothing }
 {
 
 parseError :: Token -> Alex a
-parseError t = alexError $ "Parser error on token " ++ show t
+parseError t = case t of
+    TEoF -> alexError $ "Unexpected EoF"
+    t' -> case position t' of
+        AlexPn _ l c -> alexError $ show l ++ ":" ++ show c ++ ": " ++ "Parse error on " ++ show t
 
 resolveTuple :: [EmperorType] -> EmperorType
 resolveTuple [] = error "The impossible has happened, you seem to have an expression with no type, not even the unit?"
