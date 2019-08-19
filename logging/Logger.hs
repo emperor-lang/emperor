@@ -33,8 +33,8 @@ type Loggers = (Logger, Logger, Logger, Logger)
 -- | Type of a logger function which writes to some output
 type Logger = String -> IO ()
 
--- | Make a set of loggers according to the command-line argument. (Specifically 
--- whether to print verbose output and whether to override the heuristic-based 
+-- | Make a set of loggers according to the command-line argument. (Specifically
+-- whether to print verbose output and whether to override the heuristic-based
 -- method for checking colour-compatibility.)
 makeLoggers :: Args -> IO (Logger, Logger, Logger, Logger)
 makeLoggers args = do
@@ -73,17 +73,17 @@ colouriseLog c args t m = (init . unlines) $ applyHeaders messageStart messageCo
         where
             applyHeaders' :: String -> [String] -> [String]
             applyHeaders' _ [] = []
-            applyHeaders' b' (cs':css') = (b' ++ cs') : applyHeaders' b' css' 
-    
+            applyHeaders' b' (cs':css') = (b' ++ cs') : applyHeaders' b' css'
+
 
     remainderLineLength :: Int
     remainderLineLength = wrapLineLength args - ((length $ messageHeaderText t) + 3)
     messageHeader :: Bool -> LogType -> String
     messageHeader c' t' = colour c' t' ++ messageHeaderText t' ++ useANSI c' args "\x1b[00;00m"
     messageHeaderText :: LogType -> String
-    messageHeaderText Info = "info: "
+    messageHeaderText Info = "info:    "
     messageHeaderText Warning = "warning: "
-    messageHeaderText Error = "error: "
+    messageHeaderText Error = "error:   "
     messageHeaderText Success = "success: "
     colour :: Bool -> LogType -> String
     colour c'' Info = useANSI c'' args "\x1b[01;34m"
@@ -112,4 +112,3 @@ splitToLines f r s
                 where
                     (line, rest') = splitAt r' s'
                     others = splitToLines' r' rest'
-        
