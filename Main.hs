@@ -42,7 +42,7 @@ main = do
         Left msg    -> err msg
         Right prog  -> do
             scc "Parsing done for input file"
-            when (doFormat args) (putStrLn (formatFresh prog) >>= const exitSuccess)
+            when (doFormat args) (output args (formatFresh prog) >>= const exitSuccess)
             typeCheck args (err, inf, scc, wrn) prog
             when (not (entryPoint args) && outputFile args /= "-") (
                     do
@@ -59,3 +59,10 @@ typeCheck _ (err, inf, scc, wrn) prog = do
             err x
             exitFailure
         Pass -> scc "Type-checking passed"
+
+output :: Args -> String -> IO ()
+output args c = do
+    let path = outputFile args
+    if path == "-"
+        then putStrLn c
+        else writeFile path c
