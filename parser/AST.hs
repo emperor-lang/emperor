@@ -177,7 +177,7 @@ data Value
     | Integer Integer
     | Real Double
     | Char Char
-    -- | String String
+    | StringV String
     | IdentV Ident
     | Bool Bool
     | CallV Call
