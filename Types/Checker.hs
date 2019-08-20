@@ -1,4 +1,16 @@
-module Types.Checker where
+{-|
+Module      : Types.Checker
+Description : Type checking for Emperor
+Copyright   : (c) Edward Jones, 2019
+License     : GPL-3
+Maintainer  : Edward Jones
+Stability   : experimental
+Portability : POSIX
+Language    : Haskell2010
+
+This module defines type-checking for Emperor.
+-}
+module Types.Checker (TypeCheck, (>-)) where
 
 import AST ( Assignment(..)
     , AST(..)
@@ -24,11 +36,13 @@ import Types.SubTyping ((|-), (<:))
 import Types.Results (EmperorType(BoolP, IntP, EFunction, Unit), Purity(..), TypeCheckResult(..), TypeJudgementResult(..), getTypeList, isValid)
 import Types.Imports.Imports (getLocalEnvironment)
 
+-- | Describes objects which may be type-checked.
 class TypeCheck a where
     infix 2 >-
     -- | Check the assertion that a given @a@ has valid type
     (>-) :: TypeEnvironment -> a -> TypeCheckResult
 
+-- | An AST can be type-checked by applying its environment to its contents.
 instance TypeCheck AST where
     g >- (AST m is bs) = let trs = (g' >-) <$> bs in if all isValid trs
             then Pass
@@ -37,11 +51,13 @@ instance TypeCheck AST where
             -- The type environment to use
             g' = getLocalEnvironment (AST m is bs) <> g
 
+-- | Module item may be type-checked by considering its contents
 instance TypeCheck ModuleItem where
     _ >- (Component _ _ _) = Fail "Components have not yet been implemented" -- TODO: Implement components
     _ >- (TypeClass _ _ _) = Fail "Type classes have not yet been implemented" -- TODO: Implement type classes
     g >- (FunctionItem f) = g >- f
 
+-- | A function definition may be type-checked using its parameters applied to its contents
 instance TypeCheck FunctionDef where
     g >- (FunctionDef (FunctionTypeDef _ t) is bs) = g' `check` bs
         where
@@ -51,6 +67,7 @@ instance TypeCheck FunctionDef where
                     paramTypes = init $ getTypeList t
                     returnType = last $ getTypeList t
 
+-- | A switch-case is type-checked by considering the type of its expression and applying this to its contents
 instance TypeCheck SwitchCase where
     g >- (SwitchCase e b) = case g |> e of
         Valid (EFunction p ti to) -> case g |- p <: Pure of

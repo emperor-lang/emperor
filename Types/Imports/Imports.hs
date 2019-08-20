@@ -26,6 +26,7 @@ import System.Process (readProcessWithExitCode)
 import Types.Environment (TypeEnvironment(..), filterEnvironment, has, insert, newTypeEnvironment)
 import Types.Imports.JsonIO (Header(..), isHeaderFile, readHeader, writeHeader)
 
+-- | Write a header to a file
 writeHeader :: FilePath -> AST -> IO ()
 writeHeader f a = do
         let g = getLocalEnvironment a

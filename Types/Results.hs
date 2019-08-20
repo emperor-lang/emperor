@@ -76,6 +76,7 @@ instance Show EmperorType where
     show Any = "Any"
     show Unit = "Unit"
 
+-- | Convert a list of type judgements in to a list of emperor types or an error.
 unpackTypes :: [TypeJudgementResult] -> Either String [EmperorType]
 unpackTypes [] = Right []
 unpackTypes (r:rs) = case r of
@@ -110,6 +111,8 @@ isValidAnd t (Valid t')
     | t == t' = True
     | otherwise = False
 
+-- | Get a list of the types mentioned in a function type declaration. Example: 
+-- getTypeList a -> b -> c = [a,b,c] 
 getTypeList :: EmperorType -> [EmperorType]
 getTypeList (EFunction _ t1 t2) = t1 : getTypeList t2
 getTypeList x = [x]

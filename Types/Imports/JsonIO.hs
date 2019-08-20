@@ -41,6 +41,7 @@ instance FromJSON Header where
     parseJSON (Object v) = Header <$> (Ident <$> v .: "name") <*> v .: "depends" <*> v .: "environment"
     parseJSON _ = fail "Expected object when parsing header"
 
+-- | Checks whether a given header file exists
 isHeaderFile :: Loggers -> FilePath -> IO Bool
 isHeaderFile (_, inf, _, _) p = do
     inf $ "Checking for header file " ++ p

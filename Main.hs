@@ -12,7 +12,7 @@ This is the entry-point for the compiler of the @emperor@ language.
 A code-formatter may be invoked from the command-line.
 For details on how this is done, see @man emperor@ or @emperor.json@ in the GitHub repository.
 -}
-module Main where
+module Main (main) where
 
 import Args (Args, parseArgv, input, entryPoint, doFormat, outputFile)
 import Control.Monad (when)
