@@ -184,6 +184,7 @@ instance Format Value where
     format _ (Real r) = show r
     format _ (Char c) = show c
     format ctx (IdentV i) = format ctx i
+    format _ (StringV s) = show s
     format _ (Bool b) =
         if b
             then "true"
