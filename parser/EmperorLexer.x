@@ -380,7 +380,7 @@ instance Show Token where
     show (TImport              _) = "import"
     show (TModule              _) = "module"
     show (TIdent             s _) = show s
-    show (TPartSeparator       _) = ";/\n"
+    show (TPartSeparator       _) = ";/\\n"
     show (TBlockSeparator      _) = "#"
     show (TQueue               _) = "<-"
     show (TGoesTo              _) = "->"
