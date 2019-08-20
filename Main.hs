@@ -14,16 +14,20 @@ For details on how this is done, see @man emperor@ or @emperor.json@ in the GitH
 -}
 module Main where
 
-import Args (parseArgv, input)
+import Args (parseArgv, input, version)
+import Control.Monad (when)
 import EmperorParserWrapper (parse)
 import Logger (makeLoggers)
 import Formatter (formatFresh)
+import System.Exit (exitSuccess)
 
 -- | Provides the entry-point
 main :: IO ()
 main = do
     args <- parseArgv
     (err, inf, scc, wrn) <- makeLoggers args
+
+    when (version args) (putStrLn "emperor v1.0.0" >>= const exitSuccess)
 
     if input args == ""
         then do
