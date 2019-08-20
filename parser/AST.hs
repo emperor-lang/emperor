@@ -128,7 +128,7 @@ data BodyLine
     = AssignmentC Assignment
     | QueueC Queue
     | CallC Call
-    | Return Expr
+    | Return (Maybe Expr)
     deriving (Show)
 
 -- | Data-structure to represent an assignment statement
