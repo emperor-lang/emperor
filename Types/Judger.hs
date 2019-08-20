@@ -38,15 +38,15 @@ instance Typable Expr where
         case g |> e of
             Valid t -> assert ((g |- t <: RealP) == Pass) ("Could not unify Bool and " ++ show t) (Valid t)
             x -> x
-    g |> (Add e1 e2) = assertExpr g RealP e1 e2
-    g |> (Subtract e1 e2) = assertExpr g RealP e1 e2
-    g |> (Multiply e1 e2) = assertExpr g RealP e1 e2
-    g |> (Divide e1 e2) = assertExpr g RealP e1 e2
-    g |> (Modulo e1 e2) = assertExpr g RealP e1 e2
-    g |> (Less e1 e2) = assertExpr g RealP e1 e2
-    g |> (LessOrEqual e1 e2) = assertExpr g RealP e1 e2
-    g |> (Greater e1 e2) = assertExpr g RealP e1 e2
-    g |> (GreaterOrEqual e1 e2) = assertExpr g RealP e1 e2
+    g |> (Add e1 e2) = arithExpr g e1 e2
+    g |> (Subtract e1 e2) = arithExpr g e1 e2
+    g |> (Multiply e1 e2) = arithExpr g e1 e2
+    g |> (Divide e1 e2) = arithExpr g e1 e2
+    g |> (Modulo e1 e2) = arithExpr g e1 e2
+    g |> (Less e1 e2) = arithExpr g e1 e2
+    g |> (LessOrEqual e1 e2) = arithExpr g e1 e2
+    g |> (Greater e1 e2) = arithExpr g e1 e2
+    g |> (GreaterOrEqual e1 e2) = arithExpr g e1 e2
     g |> (Equal e1 e2) = assertEquality g e1 e2
     g |> (NotEqual e1 e2) = assertEquality g e1 e2
     g |> (Not e) =
@@ -54,12 +54,12 @@ instance Typable Expr where
             Valid BoolP -> Valid BoolP
             Valid t -> Invalid $ "Could not unify bool and " ++ show t
             x -> x
-    g |> (AndStrict e1 e2) = assertExpr g RealP e1 e2
-    g |> (AndLazy e1 e2) = assertExpr g RealP e1 e2
-    g |> (OrStrict e1 e2) = assertExpr g RealP e1 e2
-    g |> (OrLazy e1 e2) = assertExpr g RealP e1 e2
-    g |> (Implies e1 e2) = assertExpr g RealP e1 e2
-    g |> (Xor e1 e2) = assertExpr g RealP e1 e2
+    g |> (AndStrict e1 e2) = assertExpr g BoolP e1 e2
+    g |> (AndLazy e1 e2) = assertExpr g BoolP e1 e2
+    g |> (OrStrict e1 e2) = assertExpr g BoolP e1 e2
+    g |> (OrLazy e1 e2) = assertExpr g BoolP e1 e2
+    g |> (Implies e1 e2) = assertExpr g BoolP e1 e2
+    g |> (Xor e1 e2) = assertExpr g BoolP e1 e2
     g |> (ShiftLeft e1 e2) = assertExpr g IntP e1 e2
     g |> (ShiftRight e1 e2) = assertExpr g IntP e1 e2
     g |> (ShiftRightSameSign e1 e2) = assertExpr g IntP e1 e2
@@ -88,6 +88,19 @@ instance Typable Expr where
       where
         tjs = (g |>) <$> es
         ts = unbox tjs
+
+arithExpr :: Typable a => Typable b => TypeEnvironment -> a -> b -> TypeJudgementResult
+arithExpr g e1 e2 = case g |> e1 of
+    Valid IntP -> case g |> e2 of
+        Valid IntP -> Valid IntP
+        Valid t -> Invalid $ "Cannot unify int and " ++ show t
+        x -> x
+    Valid RealP -> case g |> e2 of
+        Valid RealP -> Valid RealP
+        Valid t -> Invalid $ "Cannot unify real and " ++ show t
+        x -> x
+    Valid t -> Invalid $ "Cannot use " ++ show t ++ " in arithmetic expressions."
+    Invalid m -> Invalid m
 
 assertExpr ::
        Typable a
