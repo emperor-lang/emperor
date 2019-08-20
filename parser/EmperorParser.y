@@ -37,6 +37,7 @@ import Types.Results (EmperorType(..), Purity(..))
     BOOL                { TBool                 isTrue p }
     REAL                { TReal                 realVal p }
     CHAR                { TChar                 charVal p }
+    STRING              { TString               stringVal p }
     "if"                { TIf                   p }
     "else"              { TElse                 p }
     "while"             { TWhile                p }
@@ -85,6 +86,7 @@ import Types.Results (EmperorType(..), Purity(..))
     "bool"              { TBoolT                p }
     "real"              { TRealT                p }
     "char"              { TCharT                p }
+    "string"            { TStringT              p }
     "()"                { TUnit                 p }
     "Any"               { TAnyT                 p }
     "<:"                { TIsSubType            p }
@@ -117,7 +119,7 @@ import Types.Results (EmperorType(..), Purity(..))
 %left "*" "/" "%"
 %right NEG "!"
 %right "@"
-%nonassoc "{" "[" "(" INT REAL CHAR BOOL IDENT
+%nonassoc "{" "[" "(" INT REAL CHAR BOOL IDENT STRING
 
 %%
 
@@ -232,6 +234,7 @@ nonTupleTypeDef : "int"                                     { IntP }
                 | "bool"                                    { BoolP }
                 | "real"                                    { RealP }
                 | "char"                                    { CharP }
+                | "string"                                  { EList CharP }
                 | "()"                                      { Unit }
                 | "Any"                                     { Any }
                 | "(" typedef ")"                           { $2 }
@@ -276,6 +279,7 @@ value : "_"         { IDC }
       | IDENT       { IdentV (Ident (identifierVal $1)) }
       | CHAR        { Char (charVal $1) }
       | BOOL        { Bool (isTrue $1) }
+      | STRING      { StringV (stringVal $1) }
       | call %prec CALL { CallV $1 }
 
 call :: {Call}
