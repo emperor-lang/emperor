@@ -127,7 +127,7 @@ instance Typable Value where
     _ |> (Char _) = Valid CharP
     _ |> (Bool _) = Valid BoolP
     _ |> (IDC) = Valid Unit
-    -- _ |> (String _) = Valid $ EList CharP
+    _ |> (StringV _) = Valid $ EList CharP
     g |> (IdentV (Ident i)) = g =>> i
     g |> (CallV c) = g |> c 
 
