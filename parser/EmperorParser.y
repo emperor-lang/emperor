@@ -234,6 +234,7 @@ nonTupleTypeDef : "int"                                     { IntP }
                 | "bool"                                    { BoolP }
                 | "real"                                    { RealP }
                 | "char"                                    { CharP }
+                | "string"                                  { EList CharP }
                 | "()"                                      { Unit }
                 | "Any"                                     { Any }
                 | "(" typedef ")"                           { $2 }
