@@ -33,10 +33,11 @@ $alphaNum = [$alpha$num]
 @real = $num+ \. $num+
 @bool = (true) | (false)
 @char = \'$alphaNum\'
-@string = "$alphaNum*"
+$stringchar = [^\n"]
+@string = \"$stringchar*\"
 
-@partSeparator = (";" @newline?) | (@newline+)
-@blockStarter = ":" @newline?
+@partSeparator = (";" @newline*) | (@newline+)
+@blockStarter = ":" @newline*
 @blockSeparator = "#" @newline*
 
 @docLineStart = @tabs? "///"
