@@ -46,8 +46,8 @@ getLocalEnvironment (AST _ _ as) = getLocalEnvironment' as
         getLocalEnvironment' :: [ModuleItem] -> TypeEnvironment
         getLocalEnvironment' [] = newTypeEnvironment
         getLocalEnvironment' (m:ms) = case m of
-            Component _ _ _ -> error $ "Components have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
-            TypeClass _ _ _ -> error $ "Classes have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
+            Component{} -> error "Components have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
+            TypeClass{} -> error "Classes have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
             FunctionItem (FunctionDef (FunctionTypeDef (Ident i) t) _ _) -> insert i t $ getLocalEnvironment' ms
 
 -- | Given a set of imports, obtain the type environment they form.
@@ -94,10 +94,9 @@ getEnvironmentFromFile' (err, inf, scc, wrn) p = do
 
     e <- isHeaderFile (err, inf, scc, wrn) headerLocation
     if not e
-        then do
-            return . Left $ "Could not find header file from request for " ++ headerLocation ++ " has it definitely been compiled?"
+        then return . Left $ "Could not find header file from request for " ++ headerLocation ++ " has it definitely been compiled?"
         else do
-            headerJson <- readHeader (err, inf, scc, wrn) $ headerLocation
+            headerJson <- readHeader (err, inf, scc, wrn) headerLocation
             case headerJson of
                 Right (Header _ _ g) -> return $ Right g
                 Left m -> return $ Left m

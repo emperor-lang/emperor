@@ -43,7 +43,7 @@ data AST =
     deriving (Show)
 
 -- | A single module header
-data ModuleHeader =
+newtype ModuleHeader =
     Module Ident
     deriving (Show)
 
@@ -72,8 +72,8 @@ data ImportType
     deriving (Show)
 
 instance A.ToJSON ImportType where
-    toJSON Local = A.String $ "local"
-    toJSON Global = A.String $ "global"
+    toJSON Local = A.String "local"
+    toJSON Global = A.String "global"
 
 instance A.FromJSON ImportType where
     parseJSON (A.String s) = case s of

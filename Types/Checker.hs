@@ -53,8 +53,8 @@ instance TypeCheck AST where
 
 -- | Module item may be type-checked by considering its contents
 instance TypeCheck ModuleItem where
-    _ >- (Component _ _ _) = Fail "Components have not yet been implemented" -- TODO: Implement components
-    _ >- (TypeClass _ _ _) = Fail "Type classes have not yet been implemented" -- TODO: Implement type classes
+    _ >- Component{} = Fail "Components have not yet been implemented" -- TODO: Implement components
+    _ >- TypeClass{} = Fail "Type classes have not yet been implemented" -- TODO: Implement type classes
     g >- (FunctionItem f) = g >- f
 
 -- | A function definition may be type-checked using its parameters applied to its contents
@@ -62,7 +62,7 @@ instance TypeCheck FunctionDef where
     g >- (FunctionDef (FunctionTypeDef _ t) is bs) = g' `check` bs
         where
             g' :: TypeEnvironment
-            g' = (insert "return" returnType $ fromList $ ((\(Ident i) -> i) <$> is) `zip` paramTypes) <> g
+            g' = insert "return" returnType (fromList $ ((\(Ident i) -> i) <$> is) `zip` paramTypes) <> g
                 where
                     paramTypes = init $ getTypeList t
                     returnType = last $ getTypeList t
@@ -117,7 +117,7 @@ check g (b':bs') = case b' of
                     Invalid m -> Fail m
                 Invalid m -> Fail m
         CallC (Call p (Ident i) es) -> case g |- Impure <: p of
-            Pass -> case g |> (Call p (Ident i) es) of
+            Pass -> case g |> Call p (Ident i) es of
                 Valid _ -> Pass
                 Invalid m -> Fail m
             Fail _ -> Fail "Pure bare calls do not have any effect."

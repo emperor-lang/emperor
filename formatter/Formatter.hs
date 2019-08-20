@@ -38,12 +38,12 @@ instance Format a => Format [a] where
 
 -- | The AST may be formatted by intercalating new-line characters
 instance Format AST where
-    format ctx (AST m is a) = unlines (format ctx m : "" : (sort $ format ctx <$> is) ++ "" : (format ctx <$> a))
+    format ctx (AST m is a) = unlines (format ctx m : "" : sort (format ctx <$> is) ++ "" : (format ctx <$> a))
 
 -- | Imports may be formatted as a sorted list of their elements
 instance Format Import where
     format ctx (Import l Nothing) = "import " ++ format ctx l
-    format ctx (Import l (Just is)) = "import " ++ format ctx l ++ " (" ++ (intercalate ", " (format ctx <$> (sort is))) ++ ")"
+    format ctx (Import l (Just is)) = "import " ++ format ctx l ++ " (" ++ intercalate ", " (format ctx <$> sort is) ++ ")"
 
 -- | Import locations may be formatted by their type
 instance Format ImportLocation where
@@ -56,13 +56,13 @@ instance Format ModuleHeader where
 
 -- | Module items may be formatted by their contents
 instance Format ModuleItem where
-    format ctx (Component i c bs) = "component " ++ format ctx i ++ typeComparisonString ++ ":\n" ++ (unlines $ format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
+    format ctx (Component i c bs) = "component " ++ format ctx i ++ typeComparisonString ++ ":\n" ++ unlines (format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
         where
             typeComparisonString = let s = formatTypeComparisons ctx c
                                     in if null s 
                                         then ""
                                         else ' ' : s
-    format ctx (TypeClass i c bs) = "class " ++ format ctx i ++ typeComparisonString ++ ":\n" ++ (unlines $ format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
+    format ctx (TypeClass i c bs) = "class " ++ format ctx i ++ typeComparisonString ++ ":\n" ++ unlines ( format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
         where
             typeComparisonString = let s = formatTypeComparisons ctx c
                                     in if null s 
@@ -75,7 +75,7 @@ formatTypeComparisons _ Nothing = ""
 formatTypeComparisons ctx (Just cs) = unwords $ format ctx <$> cs
 
 instance Format FunctionDef where
-    format ctx (FunctionDef (FunctionTypeDef i t) is bs) = indent ctx ++ format ctx (FunctionTypeDef i t) ++ "\n" ++ indent ctx ++ format ctx i ++ params ++ ":\n" ++ (unlines $ format (ctx + 1) <$> bs) ++ indent ctx ++ "#"
+    format ctx (FunctionDef (FunctionTypeDef i t) is bs) = indent ctx ++ format ctx (FunctionTypeDef i t) ++ "\n" ++ indent ctx ++ format ctx i ++ params ++ ":\n" ++ unlines (format (ctx + 1) <$> bs) ++ indent ctx ++ "#"
         where
             params = if null paramIdentifierString
                 then ""
@@ -102,7 +102,7 @@ instance Format EmperorType where
     format ctx (ERecord m) = " { " ++ formattedMap ++ " }"
         where
             formattedMap :: String
-            formattedMap = intercalate ", " $ [k ++ " : " ++ format ctx (m ! k) | k <- keys m]
+            formattedMap = intercalate ", " [k ++ " : " ++ format ctx (m ! k) | k <- keys m]
     format ctx (EFunction p (EFunction p' t1 t1') t2) = format ctx p ++ "(" ++ format ctx (EFunction p' t1 t1') ++ ") -> " ++ format ctx t2
     format ctx (EFunction p t1 t2) = format ctx p ++ format ctx t1 ++ " -> " ++ format ctx t2
     format _ Any = "Any"

@@ -32,5 +32,5 @@ resolveTypes (err, inf, scc, wrn) (AST h is bs) = do
     case r of
         Right g -> do
             inf $ "Got environment " ++ show g
-            return $ g >- (AST h is bs)
+            return $ g >- AST h is bs
         Left m -> return $ Fail m

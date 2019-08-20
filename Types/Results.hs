@@ -26,7 +26,7 @@ module Types.Results
     ) where
 
 import Data.Aeson (FromJSON, ToJSON, Value(..), (.:), (.=), object, parseJSON, toJSON)
-import Data.List (concat, intersperse)
+import Data.List (intercalate)
 import Data.Map (Map, (!), keys)
 import Data.Text (Text, pack, toLower, unpack)
 
@@ -67,11 +67,11 @@ instance Show EmperorType where
     show RealP = "real"
     show (ESet t) = '{' : show t ++ "}"
     show (EList t) = '[' : show t ++ "]"
-    show (ETuple ts) = concat (intersperse "*" $ show <$> ts)
+    show (ETuple ts) = intercalate "*" $ show <$> ts
     show (ERecord m) = " :: " ++ showMap m
       where
         showMap :: Map String EmperorType -> String
-        showMap m' = '{' : (concat $ intersperse ", " [k ++ " :: " ++ show (m' ! k) | k <- keys m]) ++ "}"
+        showMap m' = '{' : intercalate ", " [k ++ " :: " ++ show (m' ! k) | k <- keys m] ++ "}"
     show (EFunction p t1 t2) = show p ++ show t1 ++ " -> " ++ show t2
     show Any = "Any"
     show Unit = "Unit"
@@ -150,7 +150,7 @@ instance FromJSON EmperorType where
             "ERecord" -> ERecord <$> o .: "environment"
             "EFunction" -> EFunction <$> o .: "purity" <*> o .: "inType" <*> o .: "outType"
             x -> fail $ "Unknown argument type " ++ unpack x
-    parseJSON _ = fail $ "Expecting object value when parsing EmperorType from JSON"
+    parseJSON _ = fail "Expecting object value when parsing EmperorType from JSON"
 
 instance ToJSON Purity where
     toJSON p = String $ toLower (pack (show p))
@@ -161,4 +161,4 @@ instance FromJSON Purity where
             "pure" -> return Pure
             "impure" -> return Impure
             x -> fail $ "Unrecognised purity " ++ unpack x
-    parseJSON _ = fail $ "Expected string value when parsing purity"
+    parseJSON _ = fail "Expected string value when parsing purity"

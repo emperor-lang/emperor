@@ -22,7 +22,6 @@ module Types.Environment
     ) where
 
 import Data.Aeson (FromJSON, ToJSON, Value(..), parseJSON, toJSON)
-import Prelude hiding (lookup)
 import Types.Results (EmperorType, TypeJudgementResult(..))
 
 -- | An environment which maps names to types
@@ -46,10 +45,10 @@ has g s = case g =>> s of
 
 -- | Get a value from a type environment
 (=>>) :: TypeEnvironment -> String -> TypeJudgementResult
-(TypeEnvironment []) =>> s = Invalid $ "Identifier " ++ show s ++ " not in current scope"
-(TypeEnvironment ((i,t):ms)) =>> s = if s == i
+TypeEnvironment [] =>> s = Invalid $ "Identifier " ++ show s ++ " not in current scope"
+TypeEnvironment ((i,t):ms) =>> s = if s == i
     then Valid t
-    else (TypeEnvironment ms) =>> s
+    else TypeEnvironment ms =>> s
 
 -- | Get a value from a type environment under the assertion that it already
 -- exists. This should only be used for types guaranteed to be in the prelude.
@@ -84,4 +83,4 @@ instance FromJSON TypeEnvironment where
     parseJSON (Array o) = do
         ms <- parseJSON (Array o)
         return $ TypeEnvironment ms
-    parseJSON _ = fail $ "Expected array object when parsing TypeEnvironment"
+    parseJSON _ = fail "Expected array object when parsing type environment"
