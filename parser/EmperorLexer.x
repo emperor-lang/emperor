@@ -221,7 +221,7 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LBool               -> return (TBool               (if t == "true" then True else False) p)
                                 LReal               -> return (TReal               ((read t) :: Double) p)
                                 LChar               -> return (TChar               (t !! 1) p)
-                                LString             -> return (TString             t p)
+                                LString             -> return (TString             (init $ tail t) p)
                                 LIf                 -> return (TIf                 p)
                                 LElse               -> return (TElse               p)
                                 LWhile              -> return (TWhile              p)
