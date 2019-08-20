@@ -27,7 +27,7 @@ import Types.Results (EmperorType, TypeJudgementResult(..))
 -- | An environment which maps names to types
 newtype TypeEnvironment =
     TypeEnvironment [(String, EmperorType)]
-    deriving (Show)
+    deriving (Eq, Show)
 
 instance Monoid TypeEnvironment where
     mempty = newTypeEnvironment

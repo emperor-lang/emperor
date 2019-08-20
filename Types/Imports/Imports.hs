@@ -57,7 +57,9 @@ getEnvironment (err, inf, scc, wrn) (i:is) = do
     inf $ "Importing " ++ show i
     ti <- getEnvironment' (err, inf, scc, wrn) i
     tis <- getEnvironment (err, inf, scc, wrn) is
-    return $ ti <> tis
+    if ti == Nothing || tis == Nothing 
+        then return Nothing
+        else return $ ti <> tis
 
 getEnvironment' :: Loggers -> Import -> IO (Maybe TypeEnvironment)
 getEnvironment' (err, inf, scc, wrn) (Import (ImportLocation t (Ident i)) mis) = do
