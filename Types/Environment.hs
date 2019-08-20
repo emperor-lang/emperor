@@ -39,42 +39,46 @@ newTypeEnvironment = TypeEnvironment []
 
 -- | Check whether a given type environment contains a symbol of the given name
 has :: TypeEnvironment -> String -> Bool
-has g s = case g =>> s of
-    Valid _ -> True
-    Invalid _ -> False
+has g s =
+    case g =>> s of
+        Valid _ -> True
+        Invalid _ -> False
 
 -- | Get a value from a type environment
 (=>>) :: TypeEnvironment -> String -> TypeJudgementResult
 TypeEnvironment [] =>> s = Invalid $ "Identifier " ++ show s ++ " not in current scope"
-TypeEnvironment ((i,t):ms) =>> s = if s == i
-    then Valid t
-    else TypeEnvironment ms =>> s
+TypeEnvironment ((i, t):ms) =>> s =
+    if s == i
+        then Valid t
+        else TypeEnvironment ms =>> s
 
 -- | Get a value from a type environment under the assertion that it already
 -- exists. This should only be used for types guaranteed to be in the prelude.
 unsafeGet :: String -> TypeEnvironment -> EmperorType
-unsafeGet s (TypeEnvironment []) = error $ "Identifier " ++ show s ++ " not in current scope, also, the programmer used an unsafe operation!"
-unsafeGet s (TypeEnvironment ((i,t):ms)) = if s == i
-    then t
-    else unsafeGet s (TypeEnvironment ms)
+unsafeGet s (TypeEnvironment []) =
+    error $ "Identifier " ++ show s ++ " not in current scope, also, the programmer used an unsafe operation!"
+unsafeGet s (TypeEnvironment ((i, t):ms)) =
+    if s == i
+        then t
+        else unsafeGet s (TypeEnvironment ms)
 
 -- | Add a type assertion to the environment
 insert :: String -> EmperorType -> TypeEnvironment -> TypeEnvironment
-insert s t (TypeEnvironment m) = TypeEnvironment ((s,t):m)
+insert s t (TypeEnvironment m) = TypeEnvironment ((s, t) : m)
 
 -- | Create a type environment from a list
-fromList :: [(String,EmperorType)] -> TypeEnvironment
+fromList :: [(String, EmperorType)] -> TypeEnvironment
 fromList = TypeEnvironment
 
 -- | Filter the entries of the type environment
 filterEnvironment :: (String -> Bool) -> TypeEnvironment -> TypeEnvironment
 filterEnvironment f (TypeEnvironment ms) = TypeEnvironment $ filterEnvironment' f ms
-    where
-        filterEnvironment' :: (String -> Bool) -> [(String,EmperorType)] -> [(String,EmperorType)]
-        filterEnvironment' _ [] = []
-        filterEnvironment' f' ((i,t):ms')
-            | f' i = (i,t) : filterEnvironment' f' ms'
-            | otherwise = filterEnvironment' f' ms'
+  where
+    filterEnvironment' :: (String -> Bool) -> [(String, EmperorType)] -> [(String, EmperorType)]
+    filterEnvironment' _ [] = []
+    filterEnvironment' f' ((i, t):ms')
+        | f' i = (i, t) : filterEnvironment' f' ms'
+        | otherwise = filterEnvironment' f' ms'
 
 instance ToJSON TypeEnvironment where
     toJSON (TypeEnvironment ms) = toJSON ms

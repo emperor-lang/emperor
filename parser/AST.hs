@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 {-|
 Module      : AST
 Description : Data-structures for the abstract syntax tree
@@ -33,7 +34,7 @@ module AST
     , Value(..)
     ) where
 
-import qualified Data.Aeson as A (FromJSON, Value(Object, String), ToJSON, (.:), (.=), parseJSON, object, toJSON)
+import qualified Data.Aeson as A (FromJSON, ToJSON, Value(Object, String), (.:), (.=), object, parseJSON, toJSON)
 import Data.Text (pack, unpack)
 import Types.Results (EmperorType(..), Purity(..))
 
@@ -58,11 +59,10 @@ data ImportLocation =
     deriving (Show)
 
 instance A.ToJSON ImportLocation where
-    toJSON (ImportLocation t (Ident i)) = A.object [ "importType" A..= t, "import" A..= pack i ]
+    toJSON (ImportLocation t (Ident i)) = A.object ["importType" A..= t, "import" A..= pack i]
 
 instance A.FromJSON ImportLocation where
-    parseJSON (A.Object v) = ImportLocation <$> v A..: "importType"
-                                          <*> (Ident <$> v A..: "import")
+    parseJSON (A.Object v) = ImportLocation <$> v A..: "importType" <*> (Ident <$> v A..: "import")
     parseJSON _ = fail "Expected object when parsing import datum"
 
 -- | The type of an import
@@ -76,7 +76,8 @@ instance A.ToJSON ImportType where
     toJSON Global = A.String "global"
 
 instance A.FromJSON ImportType where
-    parseJSON (A.String s) = case s of
+    parseJSON (A.String s) =
+        case s of
             "local" -> return Local
             "global" -> return Global
             _ -> fail $ "Got " ++ unpack s ++ " when parsing import type (expected \"local\"/\"global\""
@@ -90,12 +91,13 @@ data ModuleItem
     deriving (Show)
 
 -- | Describes the definition of a function
-data FunctionDef
-    = FunctionDef FunctionTypeDef [Ident] [BodyBlock]
+data FunctionDef =
+    FunctionDef FunctionTypeDef [Ident] [BodyBlock]
     deriving (Show)
 
 -- | Describes the definition of the type of a function
-data FunctionTypeDef = FunctionTypeDef Ident EmperorType
+data FunctionTypeDef =
+    FunctionTypeDef Ident EmperorType
     deriving (Show)
 
 -- | Describes an explicit type assertion
@@ -184,8 +186,8 @@ data Value
     deriving (Show)
 
 -- | Represents the use of a function
-data Call
-    = Call Purity Ident [Expr]
+data Call =
+    Call Purity Ident [Expr]
     deriving (Show)
 
 -- | Data-structure to represent an identifier

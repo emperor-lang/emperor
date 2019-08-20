@@ -17,11 +17,19 @@ module Types.Judger
     , Typable
     ) where
 
-import AST (Expr(..), Ident(..), Call(..), Value(..))
-import Types.SubTyping ((<:), (|-))
+import AST (Call(..), Expr(..), Ident(..), Value(..))
 import Types.Environment (TypeEnvironment(..), (=>>), newTypeEnvironment, unsafeGet)
 import Types.PreludeTypes (eqable)
-import Types.Results (EmperorType(..), TypeCheckResult(..), TypeJudgementResult(..), getTypeList, isValid, isValidAnd, unpackTypes)
+import Types.Results
+    ( EmperorType(..)
+    , TypeCheckResult(..)
+    , TypeJudgementResult(..)
+    , getTypeList
+    , isValid
+    , isValidAnd
+    , unpackTypes
+    )
+import Types.SubTyping ((<:), (|-))
 
 -- | Class describing constructs which may be assigned a type.
 class Typable a where
@@ -89,18 +97,24 @@ instance Typable Expr where
         tjs = (g |>) <$> es
         ts = unbox tjs
 
-arithExpr :: Typable a => Typable b => TypeEnvironment -> a -> b -> TypeJudgementResult
-arithExpr g e1 e2 = case g |> e1 of
-    Valid IntP -> case g |> e2 of
-        Valid IntP -> Valid IntP
-        Valid t -> Invalid $ "Cannot unify int and " ++ show t
-        x -> x
-    Valid RealP -> case g |> e2 of
-        Valid RealP -> Valid RealP
-        Valid t -> Invalid $ "Cannot unify real and " ++ show t
-        x -> x
-    Valid t -> Invalid $ "Cannot use " ++ show t ++ " in arithmetic expressions."
-    Invalid m -> Invalid m
+arithExpr ::
+       Typable a
+    => Typable b =>
+           TypeEnvironment -> a -> b -> TypeJudgementResult
+arithExpr g e1 e2 =
+    case g |> e1 of
+        Valid IntP ->
+            case g |> e2 of
+                Valid IntP -> Valid IntP
+                Valid t -> Invalid $ "Cannot unify int and " ++ show t
+                x -> x
+        Valid RealP ->
+            case g |> e2 of
+                Valid RealP -> Valid RealP
+                Valid t -> Invalid $ "Cannot unify real and " ++ show t
+                x -> x
+        Valid t -> Invalid $ "Cannot use " ++ show t ++ " in arithmetic expressions."
+        Invalid m -> Invalid m
 
 assertExpr ::
        Typable a
@@ -142,31 +156,39 @@ instance Typable Value where
     _ |> IDC = Valid Unit
     _ |> (StringV _) = Valid $ EList CharP
     g |> (IdentV (Ident i)) = g =>> i
-    g |> (CallV c) = g |> c 
+    g |> (CallV c) = g |> c
 
 instance Typable Call where
-    g |> (Call p (Ident i) es) = case g =>> i of
-        Valid t -> case t of
-            EFunction p' t1 t2 -> case g |- p' <: p of
-                Pass -> let types = getTypeList (EFunction p' t1 t2)
-                    in let expectedInputTypes = init types
-                        in let expectedOutputType = last types
-                            in if length expectedInputTypes == length es
-                                then let inputTypeJudgements = (g |>) <$> es in
-                                    if all isValid inputTypeJudgements
-                                        then
-                                            case unpackTypes inputTypeJudgements of
-                                                Right inputTypes -> if all isValid $ (g |-) <$> zipWith (<:) inputTypes expectedInputTypes
-                                                    then Valid expectedOutputType
-                                                    else Invalid "Some input type is not a sub-type of the expected"
-                                                Left m -> Invalid m
-                                        else
-                                            head $ filter (not . isValid) inputTypeJudgements
-                                else
-                                    Invalid $ "Expected " ++ (show . length) expectedInputTypes ++ " inputs to function, got " ++ (show . length) es
-                Fail m -> Invalid m
-            x -> Invalid $ "Expected function type, got " ++ show x ++ " instead."
-        x -> x
+    g |> (Call p (Ident i) es) =
+        case g =>> i of
+            Valid t ->
+                case t of
+                    EFunction p' t1 t2 ->
+                        case g |- p' <: p of
+                            Pass ->
+                                let types = getTypeList (EFunction p' t1 t2)
+                                 in let expectedInputTypes = init types
+                                     in let expectedOutputType = last types
+                                         in if length expectedInputTypes == length es
+                                                then let inputTypeJudgements = (g |>) <$> es
+                                                      in if all isValid inputTypeJudgements
+                                                             then case unpackTypes inputTypeJudgements of
+                                                                      Right inputTypes ->
+                                                                          if all isValid $
+                                                                             (g |-) <$>
+                                                                             zipWith (<:) inputTypes expectedInputTypes
+                                                                              then Valid expectedOutputType
+                                                                              else Invalid
+                                                                                       "Some input type is not a sub-type of the expected"
+                                                                      Left m -> Invalid m
+                                                             else head $ filter (not . isValid) inputTypeJudgements
+                                                else Invalid $
+                                                     "Expected " ++
+                                                     (show . length) expectedInputTypes ++
+                                                     " inputs to function, got " ++ (show . length) es
+                            Fail m -> Invalid m
+                    x -> Invalid $ "Expected function type, got " ++ show x ++ " instead."
+            x -> x
 
 assert :: Bool -> String -> TypeJudgementResult -> TypeJudgementResult
 assert False s _ = Invalid s

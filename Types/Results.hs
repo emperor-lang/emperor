@@ -79,11 +79,13 @@ instance Show EmperorType where
 -- | Convert a list of type judgements in to a list of emperor types or an error.
 unpackTypes :: [TypeJudgementResult] -> Either String [EmperorType]
 unpackTypes [] = Right []
-unpackTypes (r:rs) = case r of
-    Valid t -> case unpackTypes rs of
-        Right ts -> Right (t:ts)
-        x -> x
-    Invalid m -> Left m
+unpackTypes (r:rs) =
+    case r of
+        Valid t ->
+            case unpackTypes rs of
+                Right ts -> Right (t : ts)
+                x -> x
+        Invalid m -> Left m
 
 -- | Marker for whether a function is pure or impure
 data Purity

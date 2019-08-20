@@ -53,7 +53,7 @@ readHeader (_, inf, _, _) p = do
     inf $ "Reading from header file " ++ show p
     c <- readFile p
     inf "Decompressing contents"
-    return $ eitherDecode' . decompress $ c 
+    return $ eitherDecode' . decompress $ c
 
 -- | Write a type environment to a file to make a header
 writeHeader :: Header -> FilePath -> IO ()

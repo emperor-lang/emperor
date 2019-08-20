@@ -10,9 +10,33 @@ Language    : Haskell2010
 
 This file defines the standard format for all Emperor programs.
 -}
-module Formatter (format, formatFresh, Format, FormatContext) where
+module Formatter
+    ( format
+    , formatFresh
+    , Format
+    , FormatContext
+    ) where
 
-import AST (AST(..), ModuleHeader(..), Import(..), ImportLocation(..), ImportType(..), Ident(..), ModuleItem(..), FunctionDef(..), FunctionTypeDef(..), TypeComparison(..), BodyBlock(..), SwitchCase(..), BodyLine(..), Assignment(..), Queue(..), Expr(..), Value(..), Call(..))
+import AST
+    ( AST(..)
+    , Assignment(..)
+    , BodyBlock(..)
+    , BodyLine(..)
+    , Call(..)
+    , Expr(..)
+    , FunctionDef(..)
+    , FunctionTypeDef(..)
+    , Ident(..)
+    , Import(..)
+    , ImportLocation(..)
+    , ImportType(..)
+    , ModuleHeader(..)
+    , ModuleItem(..)
+    , Queue(..)
+    , SwitchCase(..)
+    , TypeComparison(..)
+    , Value(..)
+    )
 import Data.List (intercalate, sort)
 import Data.Map ((!), keys)
 import Types.Results (EmperorType(..), Purity(..))
@@ -43,7 +67,8 @@ instance Format AST where
 -- | Imports may be formatted as a sorted list of their elements
 instance Format Import where
     format ctx (Import l Nothing) = "import " ++ format ctx l
-    format ctx (Import l (Just is)) = "import " ++ format ctx l ++ " (" ++ intercalate ", " (format ctx <$> sort is) ++ ")"
+    format ctx (Import l (Just is)) =
+        "import " ++ format ctx l ++ " (" ++ intercalate ", " (format ctx <$> sort is) ++ ")"
 
 -- | Import locations may be formatted by their type
 instance Format ImportLocation where
@@ -56,18 +81,24 @@ instance Format ModuleHeader where
 
 -- | Module items may be formatted by their contents
 instance Format ModuleItem where
-    format ctx (Component i c bs) = "component " ++ format ctx i ++ typeComparisonString ++ ":\n" ++ unlines (format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
-        where
-            typeComparisonString = let s = formatTypeComparisons ctx c
-                                    in if null s 
-                                        then ""
-                                        else ' ' : s
-    format ctx (TypeClass i c bs) = "class " ++ format ctx i ++ typeComparisonString ++ ":\n" ++ unlines ( format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
-        where
-            typeComparisonString = let s = formatTypeComparisons ctx c
-                                    in if null s 
-                                        then ""
-                                        else ' ' : s
+    format ctx (Component i c bs) =
+        "component " ++
+        format ctx i ++ typeComparisonString ++ ":\n" ++ unlines (format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
+      where
+        typeComparisonString =
+            let s = formatTypeComparisons ctx c
+             in if null s
+                    then ""
+                    else ' ' : s
+    format ctx (TypeClass i c bs) =
+        "class " ++
+        format ctx i ++ typeComparisonString ++ ":\n" ++ unlines (format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
+      where
+        typeComparisonString =
+            let s = formatTypeComparisons ctx c
+             in if null s
+                    then ""
+                    else ' ' : s
     format ctx (FunctionItem f) = format ctx f ++ "\n"
 
 formatTypeComparisons :: FormatContext -> Maybe [TypeComparison] -> String
@@ -75,12 +106,16 @@ formatTypeComparisons _ Nothing = ""
 formatTypeComparisons ctx (Just cs) = unwords $ format ctx <$> cs
 
 instance Format FunctionDef where
-    format ctx (FunctionDef (FunctionTypeDef i t) is bs) = indent ctx ++ format ctx (FunctionTypeDef i t) ++ "\n" ++ indent ctx ++ format ctx i ++ params ++ ":\n" ++ unlines (format (ctx + 1) <$> bs) ++ indent ctx ++ "#"
-        where
-            params = if null paramIdentifierString
+    format ctx (FunctionDef (FunctionTypeDef i t) is bs) =
+        indent ctx ++
+        format ctx (FunctionTypeDef i t) ++
+        "\n" ++ indent ctx ++ format ctx i ++ params ++ ":\n" ++ unlines (format (ctx + 1) <$> bs) ++ indent ctx ++ "#"
+      where
+        params =
+            if null paramIdentifierString
                 then ""
                 else ' ' : paramIdentifierString
-            paramIdentifierString = format ctx is
+        paramIdentifierString = format ctx is
 
 instance Format FunctionTypeDef where
     format ctx (FunctionTypeDef i t) = format ctx i ++ " :: " ++ format ctx t
@@ -100,10 +135,11 @@ instance Format EmperorType where
     format ctx (EList t) = "[" ++ format ctx t ++ "]"
     format ctx (ETuple ts) = intercalate "*" (format ctx <$> ts)
     format ctx (ERecord m) = " { " ++ formattedMap ++ " }"
-        where
-            formattedMap :: String
-            formattedMap = intercalate ", " [k ++ " : " ++ format ctx (m ! k) | k <- keys m]
-    format ctx (EFunction p (EFunction p' t1 t1') t2) = format ctx p ++ "(" ++ format ctx (EFunction p' t1 t1') ++ ") -> " ++ format ctx t2
+      where
+        formattedMap :: String
+        formattedMap = intercalate ", " [k ++ " : " ++ format ctx (m ! k) | k <- keys m]
+    format ctx (EFunction p (EFunction p' t1 t1') t2) =
+        format ctx p ++ "(" ++ format ctx (EFunction p' t1 t1') ++ ") -> " ++ format ctx t2
     format ctx (EFunction p t1 t2) = format ctx p ++ format ctx t1 ++ " -> " ++ format ctx t2
     format _ Any = "Any"
     format _ Unit = "Unit"
@@ -115,13 +151,18 @@ instance Format BodyBlock where
         unlines $
         [indent ctx ++ "if " ++ format (ctx + 1) c] ++
         (format (ctx + 1) <$> b1) ++ [indent ctx ++ "else"] ++ (format (ctx + 1) <$> b2) ++ [indent ctx ++ "#"]
-    format ctx (While c b) = unlines $ [indent ctx ++ "while " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (While c b) =
+        unlines $ [indent ctx ++ "while " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
     format ctx (For i e b) =
         unlines $
-        [indent ctx ++ "for " ++ format (ctx + 1) i ++ " <- " ++ format (ctx + 1) e] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
-    format ctx (Repeat c b) = unlines $ [indent ctx ++ "repeat " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
-    format ctx (With a b) = unlines $ [indent ctx ++ "with " ++ format (ctx + 1) a] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
-    format ctx (Switch c s) = unlines $ [indent ctx ++ "switch " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> s) ++ [indent ctx ++ "#"]
+        [indent ctx ++ "for " ++ format (ctx + 1) i ++ " <- " ++ format (ctx + 1) e] ++
+        (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (Repeat c b) =
+        unlines $ [indent ctx ++ "repeat " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (With a b) =
+        unlines $ [indent ctx ++ "with " ++ format (ctx + 1) a] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (Switch c s) =
+        unlines $ [indent ctx ++ "switch " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> s) ++ [indent ctx ++ "#"]
 
 -- | Switch-cases may be formatted with their case contents
 instance Format SwitchCase where
