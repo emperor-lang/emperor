@@ -66,7 +66,7 @@ $stringchar = [^\n"]
 @bool               { mkL LBool }
 @real               { mkL LReal }
 @char               { mkL LChar }
--- @string         { mkL LString }
+@string             { mkL LString }
 
 -- Types
 "int"               { mkL LIntT }
@@ -75,7 +75,7 @@ $stringchar = [^\n"]
 "char"              { mkL LCharT }
 "()"                { mkL LUnit }
 "Any"               { mkL LAnyT }
--- "string"            { mkL LStringT}
+"string"            { mkL LStringT }
 
 -- Keywords
 "_"                 { mkL LIDC }
@@ -148,6 +148,7 @@ data LexemeClass = LDocAssignmentLine
                  | LBool
                  | LReal
                  | LChar
+                 | LString
                  | LIf
                  | LElse
                  | LWhile
@@ -196,6 +197,7 @@ data LexemeClass = LDocAssignmentLine
                  | LBoolT
                  | LRealT
                  | LCharT
+                 | LStringT
                  | LUnit
                  | LAnyT
                  | LColon
@@ -219,6 +221,7 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LBool               -> return (TBool               (if t == "true" then True else False) p)
                                 LReal               -> return (TReal               ((read t) :: Double) p)
                                 LChar               -> return (TChar               (t !! 1) p)
+                                LString             -> return (TString             t p)
                                 LIf                 -> return (TIf                 p)
                                 LElse               -> return (TElse               p)
                                 LWhile              -> return (TWhile              p)
@@ -267,6 +270,7 @@ mkL c (p, _, _, str) len = let t = take len str in
                                 LBoolT              -> return (TBoolT              p)
                                 LRealT              -> return (TRealT              p)
                                 LCharT              -> return (TCharT              p)
+                                LStringT            -> return (TStringT            p)
                                 LUnit               -> return (TUnit               p)
                                 LAnyT               -> return (TAnyT               p)
                                 LColon              -> return (TColon              p)
@@ -294,6 +298,7 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TBool               { isTrue :: Bool,          position :: AlexPosn } -- ^ A boolean literal
            | TReal               { realVal :: Double,       position :: AlexPosn } -- ^ A real/floating-point literal
            | TChar               { charVal :: Char,         position :: AlexPosn } -- ^ A single character literal
+           | TString             { stringVal :: String,     position :: AlexPosn } -- ^ A single character literal
            | TIf                 {                          position :: AlexPosn } -- ^ Keyword: @if@
            | TElse               {                          position :: AlexPosn } -- ^ Keyword: @else@
            | TWhile              {                          position :: AlexPosn } -- ^ Keyword: @while@
@@ -342,6 +347,7 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
            | TBoolT              {                          position :: AlexPosn } -- ^ @bool@
            | TRealT              {                          position :: AlexPosn } -- ^ @real@
            | TCharT              {                          position :: AlexPosn } -- ^ @char@
+           | TStringT            {                          position :: AlexPosn } -- ^ @char@
            | TUnit               {                          position :: AlexPosn } -- ^ @()@
            | TAnyT               {                          position :: AlexPosn } -- ^ @AnyT@
            | TColon              {                          position :: AlexPosn } -- ^ @AnyT@
@@ -363,6 +369,7 @@ instance Show Token where
     show (TBool              b _) = show b
     show (TReal              r _) = show r
     show (TChar              c _) = show c
+    show (TString            s _) = show s
     show (TIf                  _) = "if"
     show (TElse                _) = "else"
     show (TWhile               _) = "while"
@@ -411,6 +418,7 @@ instance Show Token where
     show (TBoolT               _) = "bool"
     show (TRealT               _) = "real"
     show (TCharT               _) = "char"
+    show (TStringT               _) = "string"
     show (TUnit                _) = "Unit"
     show (TAnyT                _) = "Any"
     show (TColon               _) = ":"
