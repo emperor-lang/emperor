@@ -30,7 +30,7 @@ resolveTypes (err, inf, scc, wrn) (AST h is bs) = do
     inf "Getting imports..."
     r <- getEnvironment (err, inf, scc, wrn) is
     case r of
-        Just g -> do
+        Right g -> do
             inf $ "Got environment " ++ show g
             return $ g >- (AST h is bs)
-        Nothing -> return $ Fail "Could not get type environment of imports"
+        Left m -> return $ Fail m

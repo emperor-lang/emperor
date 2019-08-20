@@ -22,9 +22,8 @@ import AST (AST(..), Ident(..), Import(..), ImportLocation(..), ImportType(..), 
 import Data.Monoid ((<>))
 import GHC.IO.Exception (ExitCode(..))
 import Logger (Loggers)
-import System.Exit (exitFailure)
 import System.Process (readProcessWithExitCode)
-import Types.Environment (TypeEnvironment(..), filterEnvironment, insert, newTypeEnvironment)
+import Types.Environment (TypeEnvironment(..), filterEnvironment, has, insert, newTypeEnvironment)
 import Types.Imports.JsonIO (Header(..), isHeaderFile, readHeader, writeHeader)
 
 writeHeader :: FilePath -> AST -> IO ()
@@ -51,49 +50,53 @@ getLocalEnvironment (AST _ _ as) = getLocalEnvironment' as
             FunctionItem (FunctionDef (FunctionTypeDef (Ident i) t) _ _) -> insert i t $ getLocalEnvironment' ms
 
 -- | Given a set of imports, obtain the type environment they form.
-getEnvironment :: Loggers -> [Import] -> IO (Maybe TypeEnvironment)
-getEnvironment _ [] = return $ Just newTypeEnvironment
+getEnvironment :: Loggers -> [Import] -> IO (Either String TypeEnvironment)
+getEnvironment _ [] = return $ Right newTypeEnvironment
 getEnvironment (err, inf, scc, wrn) (i:is) = do
     inf $ "Importing " ++ show i
-    ti <- getEnvironment' (err, inf, scc, wrn) i
-    tis <- getEnvironment (err, inf, scc, wrn) is
-    if ti == Nothing || tis == Nothing 
-        then return Nothing
-        else return $ ti <> tis
+    tir <- getEnvironment' (err, inf, scc, wrn) i
+    case tir of
+        Right ti -> do
+            tisr <- getEnvironment (err, inf, scc, wrn) is
+            case tisr of
+                Right tis -> return . Right $ ti <> tis
+                x -> return x
+        x -> return x
 
-getEnvironment' :: Loggers -> Import -> IO (Maybe TypeEnvironment)
+getEnvironment' :: Loggers -> Import -> IO (Either String TypeEnvironment)
 getEnvironment' (err, inf, scc, wrn) (Import (ImportLocation t (Ident i)) mis) = do
     e <- getEnvironmentFromFile (err, inf, scc, wrn) t i
     case e of
-        Just g -> case mis of
-            Just is -> return . Just $ filterEnvironment (`elem` ((\(Ident i') -> i') <$> is)) g
-            Nothing -> return . Just $ g
-        Nothing -> return Nothing
+        Right g -> case mis of
+            Just is -> if all (g `has`) $ (\(Ident i') -> i') <$> is
+                    then return . Right $ filterEnvironment (`elem` ((\(Ident i') -> i') <$> is)) g
+                    else return . Left $ "Environment of " ++ show i ++ " does not contain " ++ show (head $ filter (\(Ident i') -> not $ g `has` i') is)
+            Nothing -> return . Right $ g
+        Left m -> return $ Left m
 
-getEnvironmentFromFile :: Loggers -> ImportType -> FilePath -> IO (Maybe TypeEnvironment)
-getEnvironmentFromFile _ Local _ = error "Cannot import local files!"
+getEnvironmentFromFile :: Loggers -> ImportType -> FilePath -> IO (Either String TypeEnvironment)
+getEnvironmentFromFile l Local p = getEnvironmentFromFile' l $ "./" ++ p
 getEnvironmentFromFile (err, inf, scc, wrn) Global p = do
     inf "Getting install location"
     (c, stdoutContent, stderrContent) <- readProcessWithExitCode "emperor-setup" ["-L"] ""
     let libraryInstallationDirectory = init stdoutContent
-    if c == ExitSuccess
-        then scc $ "Got import location: " ++ libraryInstallationDirectory
+    if c /= ExitSuccess
+        then return . Left $ "Could not obtain library information from emperor-setup! Is this installed? Got error output:\n" ++ stderrContent
         else do
-            err ("Could not obtain library information from emperor-setup! Is this installed?")
-            err stderrContent
+            scc $ "Got import location: " ++ libraryInstallationDirectory
+            getEnvironmentFromFile' (err, inf, scc, wrn) $ libraryInstallationDirectory ++ p
 
-    let headerLocation = libraryInstallationDirectory ++ p ++ ".json.gz"
-    inf $ "Operating on header " ++ headerLocation
+getEnvironmentFromFile' :: Loggers -> FilePath -> IO (Either String TypeEnvironment)
+getEnvironmentFromFile' (err, inf, scc, wrn) p = do
+    let headerLocation = p ++ ".eh.json.gz"
+    inf $ "Operating on header " ++ p
 
     e <- isHeaderFile (err, inf, scc, wrn) headerLocation
     if not e
         then do
-            err $ "Could not find header file from request for " ++ headerLocation
-            return Nothing
+            return . Left $ "Could not find header file from request for " ++ headerLocation ++ " has it definitely been compiled?"
         else do
             headerJson <- readHeader (err, inf, scc, wrn) $ headerLocation
             case headerJson of
-                Left x -> do
-                    err x
-                    exitFailure
-                Right (Header _ _ g) -> return $ Just g
+                Right (Header _ _ g) -> return $ Right g
+                Left m -> return $ Left m

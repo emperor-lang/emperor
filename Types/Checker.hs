@@ -21,7 +21,7 @@ import Types.Environment ( (=>>)
     , unsafeGet
     )
 import Types.SubTyping ((|-), (<:))
-import Types.Results (EmperorType(BoolP, IntP, EFunction), Purity(..), TypeCheckResult(..), TypeJudgementResult(..), getTypeList, isValid)
+import Types.Results (EmperorType(BoolP, IntP, EFunction, Unit), Purity(..), TypeCheckResult(..), TypeJudgementResult(..), getTypeList, isValid)
 import Types.Imports.Imports (getLocalEnvironment)
 
 class TypeCheck a where
@@ -104,7 +104,11 @@ check g (b':bs') = case b' of
                 Valid _ -> Pass
                 Invalid m -> Fail m
             Fail _ -> Fail "Pure bare calls do not have any effect."
-        Return e -> case g =>> "return" of
+        Return Nothing -> case g =>> "return" of
+            Valid Unit -> Pass
+            Valid t -> Fail $ "Cannot return the unit, expected " ++ show t
+            Invalid m -> Fail m
+        Return (Just e) -> case g =>> "return" of
             Valid t -> case g |> e of
                 Valid t' -> g |- t' <: t
                 Invalid m -> Fail m

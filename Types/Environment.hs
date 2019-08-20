@@ -14,6 +14,7 @@ module Types.Environment
     ( (=>>)
     , filterEnvironment
     , fromList
+    , has
     , newTypeEnvironment
     , TypeEnvironment(..)
     , insert
@@ -37,15 +38,18 @@ instance Monoid TypeEnvironment where
 newTypeEnvironment :: TypeEnvironment
 newTypeEnvironment = TypeEnvironment []
 
+-- | Check whether a given type environment contains a symbol of the given name
+has :: TypeEnvironment -> String -> Bool
+has g s = case g =>> s of
+    Valid _ -> True
+    Invalid _ -> False
+
 -- | Get a value from a type environment
 (=>>) :: TypeEnvironment -> String -> TypeJudgementResult
 (TypeEnvironment []) =>> s = Invalid $ "Identifier " ++ show s ++ " not in current scope"
 (TypeEnvironment ((i,t):ms)) =>> s = if s == i
     then Valid t
     else (TypeEnvironment ms) =>> s
-    -- case lookup s g of
-    --     Just t -> Valid t
-    --     Nothing -> Invalid $ "Type unknown in current environment" ++ s
 
 -- | Get a value from a type environment under the assertion that it already
 -- exists. This should only be used for types guaranteed to be in the prelude.

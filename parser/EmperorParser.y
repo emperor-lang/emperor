@@ -143,7 +143,7 @@ using : "import" usingLabel                      { Import $2 Nothing }
 
 usingLabel :: {ImportLocation}
 usingLabel : "<" IDENT ">" { ImportLocation Global (Ident (identifierVal $2)) }
-        --    | STRING            { ImportLocation Local (Ident (stringVal $1)) }
+           | STRING        { ImportLocation Local (Ident (stringVal $1)) }
 
 identList :: {[Ident]}
 identList : IDENT               { [Ident (identifierVal $1)]}
@@ -214,7 +214,7 @@ bodyLine :: {BodyLine}
 bodyLine : assignment            { AssignmentC $1 }
          | queue                 { QueueC $1 }
          | impureCall            { CallC $1 }
-         | "return" expr         { Return $2 }
+         | "return" maybe(expr)  { Return $2 }
 
 assignment :: {Assignment}
 assignment : maybe(typedef) IDENT "=" expr { Assignment $1 (Ident (identifierVal $2)) $4 }
