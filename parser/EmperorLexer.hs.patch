@@ -1,18 +1,18 @@
---- EmperorLexer.hs.orig	2019-07-23 14:46:43.617863622 +0100
-+++ EmperorLexer.hs	2019-07-23 14:46:43.621863588 +0100
-@@ -366,6 +366,9 @@
+--- ./EmperorLexer.hs.orig	2019-08-13 14:21:44.906604056 +0200
++++ ./EmperorLexer.hs	2019-08-13 14:21:44.910602055 +0200
+@@ -367,6 +367,9 @@
  -- assuming the usual eight character tab stops.
- 
- 
+
+
 +-- | Constructor to represent the position of a token in code.
 +-- Format: current line, current character on line, current total character over
 +-- all lines
  data AlexPosn = AlexPn !Int !Int !Int
          deriving (Eq,Show)
- 
+
 @@ -394,7 +397,7 @@
      }
- 
+
  -- Compile with -funbox-strict-fields for best results!
 -
 +-- | Function to run the generated lexer
@@ -22,16 +22,16 @@
 @@ -407,6 +410,7 @@
                          alex_scd = 0}) of Left msg -> Left msg
                                            Right ( _, a ) -> Right a
- 
+
 +-- | State information for an Alex lexer
  newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
- 
+
  instance Functor Alex where
 @@ -438,6 +442,7 @@
   = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} of
                    state__@(AlexState{}) -> Right (state__, ())
- 
+
 +-- | Function to return an Alex error state
  alexError :: String -> Alex a
  alexError message = Alex $ const $ Left message
- 
+

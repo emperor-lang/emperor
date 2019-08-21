@@ -22,8 +22,9 @@ cabal.project.local~
 .HTF/
 .ghc.environment.*
 
-# Executable
+# Executable, headers and generated libraries
 emperor
+*.eh*
 
 # Generated MAN files
 *.[1-9].gz
@@ -43,5 +44,8 @@ parser/*.info
 # Generated bash completions
 *_completions.sh
 
-# Patch conflicts
+# Failed patches
 *.orig
+
+# VSCode things
+.vscode/

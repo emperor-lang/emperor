@@ -8,6 +8,10 @@ SHELL := /bin/bash
 # HC := ghc
 # HC_FLAGS := -Wall -Wextra -Werror -O2
 
+ifdef DEBUG
+PARSER_DEBUG_FLAGS = -d
+endif
+
 OPEN := xdg-open
 
 LEXER_GENERATOR := alex
@@ -15,23 +19,28 @@ LEXER_GENERATOR_FLAGS := -g
 PARSER_GENERATOR := happy
 PARSER_GENERATOR_FLAGS := -ga -m emperorParser
 PATCH := patch
-PATCHFLAGS := -F 0 -s 
+PATCHFLAGS := -F 0 -s
 LINTER := hlint
 LINTER_FLAGS := -s
 FORMATTER := hindent
 FORMATTER_FLAGS := --tab-size 4 --line-length 120
 FORMATTER_FLAGS_VALIDATE := $(FORMATTER_FLAGS) --validate
 
-SOFT_LINK_COMMAND := [[ ! -f $@ ]] && ln -s $^ $@
+LEXER_GENERATOR = alex
+LEXER_GENERATOR_FLAGS = -g
+PARSER_GENERATOR = happy
+PARSER_GENERATOR_FLAGS = -ga $(PARSER_DEBUG_FLAGS) -m emperorParser
 
-COMPLETION_INSTALL_LOCATION := /usr/share/bash-completion/completions/emperor
+SOFT_LINK_COMMAND = [[ ! -f $@ ]] && ln -s $^ $@
+
+COMPLETION_INSTALL_LOCATION = /usr/share/bash-completion/completions/emperor
 
 .DEFAULT_GOAL := all
 
-# All required source file 
+# All required source file
 SOURCE_FILES = $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
 
-all: build 
+all: build
 .PHONY: all
 
 build: ./emperor
@@ -40,6 +49,7 @@ build: ./emperor
 ./emperor: ./dist/build/emperor/emperor
 	@echo "[[ ! -f $@ ]] && ln -s $^ $@"
 	$(shell [[ ! -f $@ ]] && ln -s $^ $@)
+.DELETE_ON_ERROR: ./emperor
 
 ./dist/build/emperor/emperor: $(SOURCE_FILES)
 	cabal build $(CABALFLAGS)
@@ -50,7 +60,7 @@ build: ./emperor
 .DELETE_ON_ERROR: ./parser/EmperorLexer.hs
 
 ./parser/EmperorParser.hs: ./parser/EmperorParser.y ./parser/EmperorParser.hs.patch
-	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/emperorParser.info $< -o $@
+	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/EmperorParser.info $< -o $@
 	$(PATCH) $(PATCHFLAGS) $@ $@.patch
 .DELETE_ON_ERROR: ./parser/EmperorParser.hs
 
@@ -87,15 +97,15 @@ $(COMPLETION_INSTALL_LOCATION): ./emperor_completions.sh;
 	argcompgen < $< > $@
 .DELETE_ON_ERROR: ./emperor_completions.sh
 
-validate-format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs) 
+validate-format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs)
 	$(FORMATTER) $(FORMATTER_FLAGS_VALIDATE) $^
 .PHONY: validate-format
 
-format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs) 
+format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs)
 	$(FORMATTER) $(FORMATTER_FLAGS) $^
 .PHONY: format
 
-lint: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs) 
+lint: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs)
 	$(LINTER) $(LINTER_FLAGS) $^
 .PHONY: lint
 
@@ -116,13 +126,6 @@ clean-installation:
 .PHONY: clean-installation
 
 clean:
-	-@cabal clean												1>/dev/null || true
-	-@$(RM) cabal.config										2>/dev/null || true
-	-@$(RM) Args.hs												2>/dev/null	|| true
-	-@$(RM) *_completions.sh									2>/dev/null || true
-	-@$(RM) ./emperor											2>/dev/null || true
-	-@$(RM) ./parser/Emperor{Lexer,Parser,ParserData}.h{s,i}	2>/dev/null || true
-	-@$(RM) ./parser/emperorParser.info							2>/dev/null || true
-	-@$(RM) $(shell find . -name '*.o')							2>/dev/null || true
-	-@$(RM) $(shell find . -name '*.orig')						2>/dev/null || true
+	cabal clean --verbose=0
+	$(RM) cabal.config Args.hs *_completions.sh ./emperor ./parser/Emperor{Lexer,Parser,ParserData}.hs ./parser/EmperorParser.info $(shell find . -name '*.orig') $(shell find . -name '*.info') $(shell find . -name '*.hi') *.eh*
 .PHONY: clean
