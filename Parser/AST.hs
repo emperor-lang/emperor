@@ -36,6 +36,7 @@ module Parser.AST
 
 import qualified Data.Aeson as A (FromJSON, ToJSON, Value(Object, String), (.:), (.=), object, parseJSON, toJSON)
 import Data.Text (pack, unpack)
+import Parser.EmperorLexer (AlexPosn(..))
 import Types.Results (EmperorType(..), Purity(..))
 
 -- | Data type to represent the abstract syntax tree for a single module. This is specified by its name, its imports and its code.
@@ -44,25 +45,25 @@ data AST =
     deriving (Show)
 
 -- | A single module header
-newtype ModuleHeader =
-    Module Ident
+data ModuleHeader =
+    Module Ident AlexPosn
     deriving (Show)
 
 -- | A single imported file
 data Import =
-    Import ImportLocation (Maybe [Ident])
+    Import ImportLocation (Maybe [Ident]) AlexPosn
     deriving (Show)
 
 -- | Location of an import and how to treat it
 data ImportLocation =
-    ImportLocation ImportType Ident
+    ImportLocation ImportType Ident AlexPosn
     deriving (Show)
 
 instance A.ToJSON ImportLocation where
-    toJSON (ImportLocation t (Ident i)) = A.object ["importType" A..= t, "import" A..= pack i]
+    toJSON (ImportLocation t (Ident i _) p) = A.object ["importType" A..= t, "import" A..= pack i, "location" A..= p]
 
 instance A.FromJSON ImportLocation where
-    parseJSON (A.Object v) = ImportLocation <$> v A..: "importType" <*> (Ident <$> v A..: "import")
+    parseJSON (A.Object v) = ImportLocation <$> v A..: "importType" <*> (Ident <$> v A..: "import" <*> v A..: "location") <*> v A..: "location"
     parseJSON _ = fail "Expected object when parsing import datum"
 
 -- | The type of an import
@@ -85,37 +86,37 @@ instance A.FromJSON ImportType where
 
 -- | Describes a single named item in the module
 data ModuleItem
-    = Component Ident (Maybe [TypeComparison]) [FunctionDef]
-    | TypeClass Ident (Maybe [TypeComparison]) [FunctionTypeDef]
-    | FunctionItem FunctionDef
+    = Component Ident (Maybe [TypeComparison]) [FunctionDef] AlexPosn
+    | TypeClass Ident (Maybe [TypeComparison]) [FunctionTypeDef] AlexPosn
+    | FunctionItem FunctionDef AlexPosn
     deriving (Show)
 
 -- | Describes the definition of a function
 data FunctionDef =
-    FunctionDef FunctionTypeDef [Ident] [BodyBlock]
+    FunctionDef FunctionTypeDef [Ident] [BodyBlock] AlexPosn
     deriving (Show)
 
 -- | Describes the definition of the type of a function
 data FunctionTypeDef =
-    FunctionTypeDef Ident EmperorType
+    FunctionTypeDef Ident EmperorType AlexPosn
     deriving (Show)
 
 -- | Describes an explicit type assertion
 data TypeComparison
-    = IsSubType Ident
-    | IsSubTypeWithImplementor Ident Ident
+    = IsSubType Ident AlexPosn
+    | IsSubTypeWithImplementor Ident Ident AlexPosn
     deriving (Show)
 
 -- | Represents a single construction in the body of a function. This may be a
 -- further construct or just a single line
 data BodyBlock
-    = Line BodyLine -- ^ A single line of code
-    | IfElse Expr [BodyBlock] [BodyBlock] -- ^ An if-else block
-    | While Expr [BodyBlock] -- ^ A while-loop
-    | For Ident Expr [BodyBlock] -- ^ A for-loop
-    | Repeat Expr [BodyBlock] -- ^ A repeat-loop
-    | With Assignment [BodyBlock] -- ^ A resource acquisition
-    | Switch Expr [SwitchCase] -- ^ A switch-case statement
+    = Line BodyLine AlexPosn -- ^ A single line of code
+    | IfElse Expr [BodyBlock] [BodyBlock] AlexPosn -- ^ An if-else block
+    | While Expr [BodyBlock] AlexPosn -- ^ A while-loop
+    | For Ident Expr [BodyBlock] AlexPosn -- ^ A for-loop
+    | Repeat Expr [BodyBlock] AlexPosn -- ^ A repeat-loop
+    | With Assignment [BodyBlock] AlexPosn -- ^ A resource acquisition
+    | Switch Expr [SwitchCase] AlexPosn -- ^ A switch-case statement
     deriving (Show)
 
 -- instance Functor SwitchCases where
@@ -127,70 +128,70 @@ data SwitchCase =
 
 -- | Data-structure for a single body-line
 data BodyLine
-    = AssignmentC Assignment
-    | QueueC Queue
-    | CallC Call
-    | Return (Maybe Expr)
+    = AssignmentC Assignment AlexPosn
+    | QueueC Queue AlexPosn
+    | CallC Call AlexPosn
+    | Return (Maybe Expr) AlexPosn
     deriving (Show)
 
 -- | Data-structure to represent an assignment statement
 data Assignment =
-    Assignment (Maybe EmperorType) Ident Expr
+    Assignment (Maybe EmperorType) Ident Expr AlexPosn
     deriving (Show)
 
 -- | Data-structure to represent an queue statement
 data Queue =
-    Queue (Maybe EmperorType) Ident Expr
+    Queue (Maybe EmperorType) Ident Expr AlexPosn
     deriving (Show)
 
 -- | Data-structure to represent an expression
 data Expr
-    = Value Value
-    | Neg Expr
-    | Add Expr Expr
-    | Subtract Expr Expr
-    | Multiply Expr Expr
-    | Divide Expr Expr
-    | Modulo Expr Expr
-    | Less Expr Expr
-    | LessOrEqual Expr Expr
-    | Greater Expr Expr
-    | GreaterOrEqual Expr Expr
-    | Equal Expr Expr
-    | NotEqual Expr Expr
-    | Not Expr
-    | AndStrict Expr Expr
-    | AndLazy Expr Expr
-    | OrStrict Expr Expr
-    | OrLazy Expr Expr
-    | Implies Expr Expr
-    | Xor Expr Expr
-    | ShiftLeft Expr Expr
-    | ShiftRight Expr Expr
-    | ShiftRightSameSign Expr Expr
-    | Set [Expr]
-    | Tuple [Expr]
-    | List [Expr]
+    = Value Value AlexPosn
+    | Neg Expr AlexPosn
+    | Add Expr Expr AlexPosn
+    | Subtract Expr Expr AlexPosn
+    | Multiply Expr Expr AlexPosn
+    | Divide Expr Expr AlexPosn
+    | Modulo Expr Expr AlexPosn
+    | Less Expr Expr AlexPosn
+    | LessOrEqual Expr Expr AlexPosn
+    | Greater Expr Expr AlexPosn
+    | GreaterOrEqual Expr Expr AlexPosn
+    | Equal Expr Expr AlexPosn
+    | NotEqual Expr Expr AlexPosn
+    | Not Expr AlexPosn
+    | AndStrict Expr Expr AlexPosn
+    | AndLazy Expr Expr AlexPosn
+    | OrStrict Expr Expr AlexPosn
+    | OrLazy Expr Expr AlexPosn
+    | Implies Expr Expr AlexPosn
+    | Xor Expr Expr AlexPosn
+    | ShiftLeft Expr Expr AlexPosn
+    | ShiftRight Expr Expr AlexPosn
+    | ShiftRightSameSign Expr Expr AlexPosn
+    | Set [Expr] AlexPosn
+    | Tuple [Expr] AlexPosn
+    | List [Expr] AlexPosn
     deriving (Show)
 
 -- | Data-structure to represent a single value
 data Value
-    = IDC
-    | Integer Integer
-    | Real Double
-    | Char Char
-    | StringV String
-    | IdentV Ident
-    | Bool Bool
-    | CallV Call
+    = IDC AlexPosn
+    | Integer Integer AlexPosn
+    | Real Double AlexPosn
+    | Char Char AlexPosn
+    | StringV String AlexPosn
+    | IdentV Ident AlexPosn
+    | Bool Bool AlexPosn
+    | CallV Call AlexPosn
     deriving (Show)
 
 -- | Represents the use of a function
 data Call =
-    Call Purity Ident [Expr]
+    Call Purity Ident [Expr] AlexPosn
     deriving (Show)
 
 -- | Data-structure to represent an identifier
-newtype Ident =
-    Ident String
+data Ident =
+    Ident String AlexPosn
     deriving (Eq, Ord, Show)
