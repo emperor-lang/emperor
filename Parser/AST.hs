@@ -126,10 +126,10 @@ data SwitchCase =
 
 -- | Data-structure for a single body-line
 data BodyLine
-    = AssignmentC Assignment AlexPosn
-    | QueueC Queue AlexPosn
-    | CallC Call AlexPosn
-    | Return (Maybe Expr) AlexPosn
+    = AssignmentC Assignment
+    | QueueC Queue
+    | CallC Call
+    | Return (Maybe Expr)
     deriving (Show)
 
 -- | Data-structure to represent an assignment statement
