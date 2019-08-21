@@ -32,12 +32,12 @@ gcc $(emperor-setup --cflags) ... ./program.e.c ... $(emperor-setup --libs)
 
 For complete installation from the source, this project requires the following:
 
-- [`arggen_haskell`][arggen]
+- [`arggen_haskell`][arggen] argument parser generator from [`argspec`][argspec] json files
 - [`ghc`][ghc] Glasgow Haskell Compiler
 - [`alex`][alex] Haskell lexer generator
 - [`happy`][happy] Haskell parser generator
 - [`patch`][patch] the applicator of [`diff`][diff] patches.
-- [`make`][make] the GNU
+- [`make`][make] the GNU tool for generating executables
 
 The following are optional but may be useful development.
 
