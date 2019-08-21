@@ -1,0 +1,9 @@
+{
+	"recommendations": [
+		"ms-vscode.cpptools",
+		"webfreak.debug",
+		"editorconfig.editorconfig",
+		"davidanson.vscode-markdownlint",
+		"yzhang.markdown-all-in-one"
+	]
+}

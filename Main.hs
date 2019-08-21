@@ -16,7 +16,7 @@ module Main
     ( main
     ) where
 
-import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv)
+import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv, version)
 import Control.Monad (when)
 import EmperorParserWrapper (AST, parse)
 import Formatter (formatFresh)
@@ -29,6 +29,9 @@ main :: IO ()
 main = do
     args <- parseArgv
     (err, inf, scc, wrn) <- makeLoggers args
+
+    when (version args) (putStrLn "emperor v1.0.0" >>= const exitSuccess)
+
     if input args == ""
         then wrn "No input files detected, reading from stdin"
         else inf $ "Using input file " ++ input args

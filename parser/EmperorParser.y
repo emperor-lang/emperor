@@ -238,8 +238,8 @@ nonTupleTypeDef : "int"                                     { IntP }
                 | "()"                                      { Unit }
                 | "Any"                                     { Any }
                 | "(" typedef ")"                           { $2 }
-                | typedef "->" typedef      %prec PURE      { EFunction Pure $1 $3 } 
-                | "@" typedef "->" typedef  %prec IMPURE    { EFunction Impure $2 $4 } 
+                | typedef "->" typedef      %prec PURE      { EFunction Pure $1 $3 }
+                | "@" typedef "->" typedef  %prec IMPURE    { EFunction Impure $2 $4 }
                 | "[" typedef "]"                           { EList $2 }
                 | "{" typedef "}"                           { ESet $2 }
                 -- | IDENT                     { Ident }

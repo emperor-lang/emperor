@@ -7,8 +7,8 @@
 +-- | Run the emperor parser
  parseEmperor = emperorparserSomeParser where
   emperorparserSomeParser = emperorparserThen (emperorparserParse 0#) (\x -> case x of {EmperorparserAbsSyn5 z -> emperorparserReturn z; _other -> notEmperorparserAtAll })
- 
+
 +-- | Run the parser for REPL lines
  parseREPL = emperorparserSomeParser where
   emperorparserSomeParser = emperorparserThen (emperorparserParse 1#) (\x -> case x of {EmperorparserAbsSyn12 z -> emperorparserReturn z; _other -> notEmperorparserAtAll })
- 
+

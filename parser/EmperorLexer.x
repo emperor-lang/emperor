@@ -23,6 +23,7 @@ $num = [0-9]
 $alphaNum = [$alpha$num]
 @newline = \r\n | \r | \n
 
+@newline = \r\n | \r | \n
 @tabs = \t+
 @spaces = \ +
 
@@ -40,14 +41,16 @@ $stringchar = [^\n"]
 @blockStarter = ":" @newline*
 @blockSeparator = "#" @newline*
 
-@docLineStart = @tabs? "///"
-@docAssignmentLine = @docLineStart @spaces? "~" @ident ("(" @ident ")")? ":" .*
-@docLine = @docLineStart .*
+@partSeparator = (";" @newline?) | (@newline)
+@blockStarter = ":" @newline?
+@blockSeparator = "#" @newline?
 
-@lineComment = \/\/ .* \n
-@ignoredWhitespace = \\\n
+@docStart = @tabs? "/*" \n?
+@docEnd = @tabs? "*/" \n?
+@docLineStart = @tabs? " *" (@spaces | @tabs)?
 
--- @string = \"[^\"]*\"
+@lineComment = \/\/ .* @newline @tabs?
+@ignoredWhitespace = \\ @newline
 
 :-
 
@@ -57,9 +60,14 @@ $stringchar = [^\n"]
 @lineComment        ;
 @ignoredWhitespace  ;
 
--- Documentation
-@docAssignmentLine  { mkL LDocAssignmentLine }
-@docLine            { mkL LDocLine }
+-- -- Documentation
+-- <0>                 @docStart           { begin docs }
+-- <docs>              @docLineStart       { begin docLineContents }
+-- <docLineContents>   .*                  { mkL LDocLine }
+-- <docLineContents>   \n                  { begin docs }
+-- <docLineContents>   @docEnd             { begin 0 }
+-- <docs>              @docEnd             { begin 0 }
+-- -- <0>                 @docLine            { mkL LDocLine }
 
 -- Values
 @int                { mkL LInteger }
@@ -96,7 +104,13 @@ $stringchar = [^\n"]
 "component"         { mkL LComponent }
 
 -- Identifiers
-@ident              { mkL LIdent }
+<0>                 @ident              { mkL LIdent }
+
+-- Things to ignore
+<0>                 @lineComment        ;
+<0>                 @spaces             ;
+<0>                 @ignoredWhitespace  ;
+<0>                 @tabs               ; -- { mkL LTabs }
 
 -- Syntax things
 "<-"                { mkL LQueue }
@@ -142,8 +156,7 @@ $stringchar = [^\n"]
 
 {
 
-data LexemeClass = LDocAssignmentLine
-                 | LDocLine
+data LexemeClass = LDocLine
                  | LInteger
                  | LBool
                  | LReal
@@ -211,12 +224,10 @@ data LexemeClass = LDocAssignmentLine
                 --  | LEoL
     deriving (Eq, Show)
 
-
 mkL :: LexemeClass -> AlexInput -> Int -> Alex Token
 mkL c (p, _, _, str) len = let t = take len str in
-                            case c of 
-                                LDocAssignmentLine  -> return (TDocAssignmentLine  p)
-                                LDocLine            -> return (TDocLine            p)
+                            case c of
+                                LDocLine            -> return (TDocLine            t p)
                                 LInteger            -> return (TInteger            ((read t) :: Integer) p)
                                 LBool               -> return (TBool               (if t == "true" then True else False) p)
                                 LReal               -> return (TReal               ((read t) :: Double) p)
@@ -286,14 +297,14 @@ mkL c (p, _, _, str) len = let t = take len str in
 alexEOF :: Alex Token
 alexEOF = return TEoF
 
--- | Wrapper function for the lexer---allows the monadic lexer to be used with 
+-- | Wrapper function for the lexer---allows the monadic lexer to be used with
 -- a monadic parser
 lexWrap :: (Token -> Alex a) -> Alex a
 lexWrap = (alexMonadScan >>=)
 
 -- | Type to represent tokens in the output stream
 data Token = TDocAssignmentLine  {                          position :: AlexPosn } -- ^ Documentation field line
-           | TDocLine            {                          position :: AlexPosn } -- ^ Generic line of documentation
+           | TDocLine            { content :: String,       position :: AlexPosn } -- ^ Generic line of documentation
            | TInteger            { intVal :: Integer,       position :: AlexPosn } -- ^ An integral literal
            | TBool               { isTrue :: Bool,          position :: AlexPosn } -- ^ A boolean literal
            | TReal               { realVal :: Double,       position :: AlexPosn } -- ^ A real/floating-point literal
@@ -364,7 +375,7 @@ data Token = TDocAssignmentLine  {                          position :: AlexPosn
 
 instance Show Token where
     show (TDocAssignmentLine   _) = "TDocAssignmentLine"
-    show (TDocLine             _) = "TDocLine"
+    show (TDocLine           c _) = "// " ++ c
     show (TInteger           i _) = show i
     show (TBool              b _) = show b
     show (TReal              r _) = show r
@@ -433,7 +444,7 @@ instance Show Token where
 
 -- | AlexPosn is ordered by the total number of characters read (its final field)
 instance Ord AlexPosn where
-    (AlexPn _ _ c1) < (AlexPn _ _ c2) = c1 < c2
+    (AlexPn c1 _ _ ) < (AlexPn c2 _ _) = c1 < c2
     a <= b = (a < b) || (a == b)
 
 }

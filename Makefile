@@ -1,5 +1,5 @@
 #!/usr/bin/make
-SHELL := bash
+SHELL := /bin/bash
 
 # CC = gcc-8
 # CFLAGS := $(shell emperor-setup --cflags) # $(CFLAGS) -Wall -Os -I . -I /usr/include/python3.6m -g
@@ -12,6 +12,20 @@ ifdef DEBUG
 PARSER_DEBUG_FLAGS = -d
 endif
 
+OPEN := xdg-open
+
+LEXER_GENERATOR := alex
+LEXER_GENERATOR_FLAGS := -g
+PARSER_GENERATOR := happy
+PARSER_GENERATOR_FLAGS := -ga -m emperorParser
+PATCH := patch
+PATCHFLAGS := -F 0 -s
+LINTER := hlint
+LINTER_FLAGS := -s
+FORMATTER := hindent
+FORMATTER_FLAGS := --tab-size 4 --line-length 120
+FORMATTER_FLAGS_VALIDATE := $(FORMATTER_FLAGS) --validate
+
 LEXER_GENERATOR = alex
 LEXER_GENERATOR_FLAGS = -g
 PARSER_GENERATOR = happy
@@ -23,7 +37,10 @@ COMPLETION_INSTALL_LOCATION = /usr/share/bash-completion/completions/emperor
 
 .DEFAULT_GOAL := all
 
-all: build 
+# All required source file
+SOURCE_FILES = $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
+
+all: build
 .PHONY: all
 
 build: ./emperor
@@ -34,17 +51,17 @@ build: ./emperor
 	$(shell [[ ! -f $@ ]] && ln -s $^ $@)
 .DELETE_ON_ERROR: ./emperor
 
-./dist/build/emperor/emperor: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
+./dist/build/emperor/emperor: $(SOURCE_FILES)
 	cabal build $(CABALFLAGS)
 
-./parser/EmperorLexer.hs: ./parser/EmperorLexer.x ./parser/EmperorLexer.patch
+./parser/EmperorLexer.hs: ./parser/EmperorLexer.x ./parser/EmperorLexer.hs.patch
 	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $< -o $@
-	patch -s $@ ./parser/EmperorLexer.patch
+	$(PATCH) $(PATCHFLAGS) $@ $@.patch
 .DELETE_ON_ERROR: ./parser/EmperorLexer.hs
 
-./parser/EmperorParser.hs: ./parser/EmperorParser.y ./parser/EmperorParser.patch
+./parser/EmperorParser.hs: ./parser/EmperorParser.y ./parser/EmperorParser.hs.patch
 	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/EmperorParser.info $< -o $@
-	patch -s $@ ./parser/EmperorParser.patch
+	$(PATCH) $(PATCHFLAGS) $@ $@.patch
 .DELETE_ON_ERROR: ./parser/EmperorParser.hs
 
 %.patch:;
@@ -80,10 +97,26 @@ $(COMPLETION_INSTALL_LOCATION): ./emperor_completions.sh;
 	argcompgen < $< > $@
 .DELETE_ON_ERROR: ./emperor_completions.sh
 
+validate-format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs)
+	$(FORMATTER) $(FORMATTER_FLAGS_VALIDATE) $^
+.PHONY: validate-format
+
+format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs)
+	$(FORMATTER) $(FORMATTER_FLAGS) $^
+.PHONY: format
+
+lint: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs)
+	$(LINTER) $(LINTER_FLAGS) $^
+.PHONY: lint
+
 doc: dist/doc/html/emperor/emperor/index.html ./dist/doc/man/emperor.1.gz
 .PHONY: doc
 
-dist/doc/html/emperor/emperor/index.html: $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
+open-doc: dist/doc/html/emperor/emperor/index.html
+	$(OPEN) $<
+.PHONY: open-doc
+
+dist/doc/html/emperor/emperor/index.html: $(SOURCE_FILES)
 	cabal haddock --executables
 
 clean-installation:
@@ -94,5 +127,5 @@ clean-installation:
 
 clean:
 	cabal clean --verbose=0
-	$(RM) cabal.config Args.hs *_completions.sh ./emperor ./parser/Emperor{Lexer,Parser,ParserData}.hs ./parser/emperorParser.info $(shell find . -name '*.orig') $(shell find . -name '*.info') $(shell find . -name '*.hi') *.eh*
+	$(RM) cabal.config Args.hs *_completions.sh ./emperor ./parser/Emperor{Lexer,Parser,ParserData}.hs ./parser/EmperorParser.info $(shell find . -name '*.orig') $(shell find . -name '*.info') $(shell find . -name '*.hi') *.eh*
 .PHONY: clean

@@ -1,0 +1,157 @@
+---
+---
+
+@import '{{ site.theme }}';
+
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans:400,700|Noto+Serif:400,400i,700&display=swap');
+
+// Typefaces and fonts
+$headerTypeface: 'Noto Sans', sans-serif;
+$bodyTypeface: 'Noto Serif', Georgia, 'Times New Roman', Times, serif;
+$monospaceTypeface: 'Noto Mono', 'Fira Code', monospace;
+$bodyFontSize: 12pt;
+
+// Colour scheme
+$monospaceBackgroundColour: #f2f2f2;
+$accentColour: #4b0082;
+$backgroundColour: #ffffff;
+$codeBackground: #f2f2f2;
+$bodyTextColour: #000000;
+$linkHoverColour: #2f3061;
+
+.emperor_seal {
+	text-align: center;
+	font-size: 30pt;
+	margin-top: -15px;
+	margin-bottom: -10px;
+}
+
+// Set headers
+@for $i from 1 through 6 {
+	h#{$i} {
+		font-family: $headerTypeface;
+		font-size: 30 - ($i - 1) * 6pt;
+		color: $accentColour;
+		font-weight: bold;
+		font-kerning: auto;
+		font-variant-ligatures: common-ligatures;
+	}
+}
+
+// Modifications for mobile
+@media screen and (max-width: 480px) {
+	$mobileBodySize: 13pt;
+
+	body {
+		font-size: $mobileBodySize;
+	}
+
+	code {
+		font-size: $mobileBodySize;
+	}
+}
+
+body {
+	font-family: $bodyTypeface;
+	color: $bodyTextColour;
+	background-color: $backgroundColour;
+	font-kerning: auto;
+	font-variant-ligatures: common-ligatures;
+	line-height: 1.55;
+	font-size: $bodyFontSize;
+}
+
+code {
+	box-shadow: unset; // 0 0 0 rgba(255, 255, 255, 0);
+	background: $backgroundColour;
+	font-size: $bodyFontSize;
+	font-family: $monospaceTypeface;
+	font-variant-ligatures: common-ligatures;
+	background: $codeBackground;
+	margin: 0px;
+}
+
+pre {
+	padding: 0;
+	box-shadow: unset;
+}
+
+pre code {
+	margin: 0px;
+	padding: 3px;
+	padding-left: 6px;
+	border-left: 3px solid $accentColour;
+}
+
+@media screen and (min-width: 480px) {
+	pre {
+		overflow: visible;
+	}
+}
+
+code.highligher-rouge {
+	background: $monospaceBackgroundColour;
+	margin: 0px;
+}
+
+a {
+	color: $accentColour;
+}
+
+a:visited {
+	color: #343434;
+}
+
+a:hover {
+	color: $linkHoverColour;
+}
+
+#forkme_banner {
+	box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+	font-family: $headerTypeface;
+	background: url(../images/blacktocat.png) $linkHoverColour no-repeat 95% 50%;
+}
+
+#project_title {
+	font-family: $bodyTypeface;
+	font-kerning: auto;
+	font-weight: normal;
+	letter-spacing: 0.01em;
+	font-variant-ligatures: common-ligatures;
+	text-transform: capitalize;
+	text-shadow: unset;
+}
+
+#project_tagline {
+	font-family: $headerTypeface;
+	font-weight: 400;
+	letter-spacing: 0.0125;
+	text-shadow: unset;
+}
+
+#header_wrap {
+	background: $accentColour;
+	color: $backgroundColour;
+}
+
+.highlight .k {
+	font-weight: normal;
+}
+
+.highlight .nt {
+	color: $accentColour;
+}
+
+#main_content_wrap {
+	background: $backgroundColour;
+}
+
+// Selected text colour
+::selection {
+	background: $accentColour; /* WebKit/Blink Browsers */
+	color: $backgroundColour;
+}
+::-moz-selection {
+	background: $accentColour; /* Gecko Browsers */
+	color: $backgroundColour;
+}
