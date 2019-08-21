@@ -5,42 +5,41 @@ SHELL := /bin/bash
 # CFLAGS := $(shell emperor-setup --cflags) # $(CFLAGS) -Wall -Os -I . -I /usr/include/python3.6m -g
 # CLIBS := $(shell emperor-setup --libs)
 
-# HC := ghc
-# HC_FLAGS := -Wall -Wextra -Werror -O2
-
+# Apply debug options if specified
 ifdef DEBUG
 PARSER_DEBUG_FLAGS = -d
 endif
 
 OPEN := xdg-open
 
+# Code generation commands
 LEXER_GENERATOR := alex
 LEXER_GENERATOR_FLAGS := -g
 PARSER_GENERATOR := happy
 PARSER_GENERATOR_FLAGS := -ga -m emperorParser
 PATCH := patch
 PATCHFLAGS := -F 0 -s
-LINTER := hlint
-LINTER_FLAGS := -s
-FORMATTER := hindent
-FORMATTER_FLAGS := --tab-size 4 --line-length 120
 FORMATTER_FLAGS_VALIDATE := $(FORMATTER_FLAGS) --validate
-
 LEXER_GENERATOR = alex
 LEXER_GENERATOR_FLAGS = -g
 PARSER_GENERATOR = happy
 PARSER_GENERATOR_FLAGS = -ga $(PARSER_DEBUG_FLAGS) -m emperorParser
-
 SOFT_LINK_COMMAND = [[ ! -f $@ ]] && ln -s $^ $@
+
+# Code up-keep commands
+LINTER := hlint
+LINTER_FLAGS := -s
+FORMATTER := hindent
+FORMATTER_FLAGS := --tab-size 4 --line-length 120
 
 COMPLETION_INSTALL_LOCATION = /usr/share/bash-completion/completions/emperor
 
 .DEFAULT_GOAL := all
 
-# All required source file
+# All required source files (existent or otherwise)
 SOURCE_FILES = $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
 
-all: build
+all: build ## Build everything
 .PHONY: all
 
 build: ./emperor
