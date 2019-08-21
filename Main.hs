@@ -20,7 +20,7 @@ import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv, version)
 import Control.Monad (when)
 import Parser.EmperorParserWrapper (AST, parse)
 import Formatter.Formatter (formatFresh)
-import Logging.Logger (Loggers, makeLoggers)
+import Logger.Logger (Loggers, makeLoggers)
 import System.Exit (exitFailure, exitSuccess)
 import Types.Types (TypeCheckResult(..), resolveTypes, writeHeader)
 

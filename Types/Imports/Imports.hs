@@ -31,7 +31,7 @@ import Parser.AST
     )
 import Data.Monoid ((<>))
 import GHC.IO.Exception (ExitCode(..))
-import Logging.Logger (Loggers)
+import Logger.Logger (Loggers)
 import System.Process (readProcessWithExitCode)
 import Types.Environment (TypeEnvironment(..), filterEnvironment, has, insert, newTypeEnvironment)
 import Types.Imports.JsonIO (Header(..), isHeaderFile, readHeader, writeHeader)
