@@ -119,11 +119,9 @@ data BodyBlock
     | Switch Expr [SwitchCase] AlexPosn -- ^ A switch-case statement
     deriving (Show)
 
--- instance Functor SwitchCases where
---     fmap f (SwitchCases as) = SwitchCases (fmap f as)
 -- | Data-struecture for the switch-case statement
 data SwitchCase =
-    SwitchCase Expr BodyBlock
+    SwitchCase Expr BodyBlock AlexPosn
     deriving (Show)
 
 -- | Data-structure for a single body-line
