@@ -18,7 +18,7 @@ module Types.Imports.Imports
     , Types.Imports.Imports.writeHeader
     ) where
 
-import AST
+import Parser.AST
     ( AST(..)
     , FunctionDef(..)
     , FunctionTypeDef(..)
@@ -31,7 +31,7 @@ import AST
     )
 import Data.Monoid ((<>))
 import GHC.IO.Exception (ExitCode(..))
-import Logger (Loggers)
+import Logger.Logger (Loggers)
 import System.Process (readProcessWithExitCode)
 import Types.Environment (TypeEnvironment(..), filterEnvironment, has, insert, newTypeEnvironment)
 import Types.Imports.JsonIO (Header(..), isHeaderFile, readHeader, writeHeader)

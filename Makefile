@@ -37,7 +37,7 @@ COMPLETION_INSTALL_LOCATION = /usr/share/bash-completion/completions/emperor
 .DEFAULT_GOAL := all
 
 # All required source files (existent or otherwise)
-SOURCE_FILES = $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/EmperorLexer.hs ./parser/EmperorParser.hs
+SOURCE_FILES = $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./Parser/EmperorLexer.hs ./Parser/EmperorParser.hs
 
 all: build ## Build everything
 .PHONY: all
@@ -53,16 +53,18 @@ build: ./emperor ## Build everything, explicitly
 ./dist/build/emperor/emperor: $(SOURCE_FILES)
 	cabal build $(CABALFLAGS)
 
-./parser/EmperorLexer.hs: ./parser/EmperorLexer.x ./parser/EmperorLexer.hs.patch
+./Parser/EmperorLexer.hs: ./Parser/EmperorLexer.x ./Parser/EmperorLexer.hs.patch
 	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $< -o $@
 	$(PATCH) $(PATCHFLAGS) $@ $@.patch
-.DELETE_ON_ERROR: ./parser/EmperorLexer.hs
+.DELETE_ON_ERROR: ./Parser/EmperorLexer.hs
 
-./parser/EmperorParser.hs: ./parser/EmperorParser.y ./parser/EmperorParser.hs.patch
-	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./parser/EmperorParser.info $< -o $@
+./Parser/EmperorParser.hs: ./Parser/EmperorParser.y ./Parser/EmperorParser.hs.patch
+	$(PARSER_GENERATOR) $(PARSER_GENERATOR_FLAGS) -i./Parser/EmperorParser.info $< -o $@
 	$(PATCH) $(PATCHFLAGS) $@ $@.patch
-.DELETE_ON_ERROR: ./parser/EmperorParser.hs
+.DELETE_ON_ERROR: ./Parser/EmperorParser.hs
 
+%.x:;
+%.y:;
 %.patch:;
 
 ./Args.hs: emperor.json
@@ -96,15 +98,15 @@ $(COMPLETION_INSTALL_LOCATION): ./emperor_completions.sh;
 	argcompgen < $< > $@
 .DELETE_ON_ERROR: ./emperor_completions.sh
 
-validate-format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs)
+validate-format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v Parser/EmperorLexer.hs | grep -v Parser/EmperorParser.hs)
 	$(FORMATTER) $(FORMATTER_FLAGS_VALIDATE) $^
 .PHONY: validate-format
 
-format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs) ## Run the formatter on all non-generated source files
+format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v Parser/EmperorLexer.hs | grep -v Parser/EmperorParser.hs) ## Run the formatter on all non-generated source files
 	$(FORMATTER) $(FORMATTER_FLAGS) $^
 .PHONY: format
 
-lint: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs) ## Run the linter on all non-generated source files
+lint: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v Parser/EmperorLexer.hs | grep -v Parser/EmperorParser.hs) ## Run the linter on all non-generated source files
 	$(LINTER) $(LINTER_FLAGS) $^
 .PHONY: lint
 
@@ -126,7 +128,7 @@ clean-installation: ## Remove installed executables, libraries and documentation
 
 clean: ## Delete all generated files
 	cabal clean --verbose=0
-	$(RM) cabal.config Args.hs *_completions.sh ./emperor ./parser/Emperor{Lexer,Parser,ParserData}.hs ./parser/EmperorParser.info $(shell find . -name '*.orig') $(shell find . -name '*.info') $(shell find . -name '*.hi') *.eh*
+	$(RM) cabal.config Args.hs *_completions.sh ./emperor ./Parser/Emperor{Lexer,Parser,ParserData}.hs ./Parser/EmperorParser.info $(shell find . -name '*.orig') $(shell find . -name '*.info') $(shell find . -name '*.hi') *.eh*
 .PHONY: clean
 
 # Thanks, François Zaninotto! https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html

@@ -15,7 +15,7 @@ module Types.Checker
     , (>-)
     ) where
 
-import AST
+import Parser.AST
     ( AST(..)
     , Assignment(..)
     , BodyBlock(..)

@@ -10,7 +10,7 @@ Language    : Haskell2010
 
 Used to create loggers which output to @stderr@ using ANSI formatted output.
 -}
-module Logger
+module Logger.Logger
     ( makeLoggers
     , Loggers
     , Logger

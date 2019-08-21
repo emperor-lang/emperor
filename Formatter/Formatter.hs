@@ -10,14 +10,14 @@ Language    : Haskell2010
 
 This file defines the standard format for all Emperor programs.
 -}
-module Formatter
+module Formatter.Formatter
     ( format
     , formatFresh
     , Format
     , FormatContext
     ) where
 
-import AST
+import Parser.AST
     ( AST(..)
     , Assignment(..)
     , BodyBlock(..)
