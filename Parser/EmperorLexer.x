@@ -12,7 +12,7 @@ Language    : Haskell2010
 
 This module defines the machinery to lexically analyse the Emperor language given in an input string.
 -}
-module EmperorLexer (Alex, AlexPosn(..), Token(..), lexWrap, alexError, runAlex) where
+module Parser.EmperorLexer (Alex, AlexPosn(..), Token(..), lexWrap, alexError, runAlex) where
 
 }
 

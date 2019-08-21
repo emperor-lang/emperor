@@ -13,7 +13,7 @@ Language    : Haskell2010
 This module defines the data-types used to form the abstract syntax tree of the
 emperor language.
 -}
-module AST
+module Parser.AST
     ( Assignment(..)
     , AST(..)
     , BodyBlock(..)

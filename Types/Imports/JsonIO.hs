@@ -10,7 +10,7 @@ Stability   : experimental
 Portability : POSIX
 Language    : Haskell2010
 
-This defines the machinery to encode and decode the type environments exported 
+This defines the machinery to encode and decode the type environments exported
 by modules in JSON. Common I/O operations are also provided
 -}
 module Types.Imports.JsonIO
@@ -20,11 +20,11 @@ module Types.Imports.JsonIO
     , writeHeader
     ) where
 
-import AST (Ident(..), ImportLocation(..))
+import Parser.AST (Ident(..), ImportLocation(..))
 import Codec.Compression.GZip (compress, decompress)
 import Data.Aeson (FromJSON, ToJSON, Value(Object), (.:), (.=), eitherDecode', encode, object, parseJSON, toJSON)
 import Data.ByteString.Lazy (readFile, writeFile)
-import Logger (Loggers)
+import Logging.Logger (Loggers)
 import Prelude hiding (readFile, writeFile)
 import System.Directory (doesFileExist)
 import Types.Environment (TypeEnvironment(..))

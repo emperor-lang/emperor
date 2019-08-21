@@ -8,7 +8,7 @@ Stability   : experimental
 Portability : POSIX
 Language    : Haskell2010
 
-This module defines typing judgements for the AST. Types are found and checked 
+This module defines typing judgements for the AST. Types are found and checked
 for compatibility.
 -}
 module Types.Judger
@@ -17,7 +17,7 @@ module Types.Judger
     , Typable
     ) where
 
-import AST (Call(..), Expr(..), Ident(..), Value(..))
+import Parser.AST (Call(..), Expr(..), Ident(..), Value(..))
 import Types.Environment (TypeEnvironment(..), (=>>), newTypeEnvironment, unsafeGet)
 import Types.PreludeTypes (eqable)
 import Types.Results
