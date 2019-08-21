@@ -11,11 +11,16 @@ Language    : Haskell2010
 This forms a wrapper to make the Emperor parser and lexer easier to use.
 It extends functionality by allowing the format of strings, arbitrary files on disk, and @stdin@ when the file "-" is used.
 -}
-module EmperorParserWrapper (parse, parseFile, parseString) where
+module Parser.EmperorParserWrapper
+    ( AST
+    , parse
+    , parseFile
+    , parseString
+    ) where
 
-import EmperorLexer (runAlex)
-import EmperorParser (parseEmperor)
-import AST (AST)
+import Parser.AST (AST)
+import Parser.EmperorLexer (runAlex)
+import Parser.EmperorParser (parseEmperor)
 
 -- | Parse a file of "-" for @stdin@
 parse :: String -> IO (Either String AST)

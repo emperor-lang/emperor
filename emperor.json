@@ -118,6 +118,22 @@
 			"default": "false"
 		},
 		{
+			"short": "-e",
+			"long": "--entry-point",
+			"dest": "entryPoint",
+			"type": "flag",
+			"help": "Compile as the entry-point of a program",
+			"default": "false"
+		},
+		{
+			"short": "-f",
+			"long": "--format",
+			"dest": "doFormat",
+			"type": "flag",
+			"help": "run the formatter on the input",
+			"default": "false"
+		},
+		{
 			"short": "-w",
 			"long": "--wrap-log",
 			"dest": "wrapLineLength",
