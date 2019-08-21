@@ -41,38 +41,38 @@ class Typable a where
     (|>) :: TypeEnvironment -> a -> TypeJudgementResult
 
 instance Typable Expr where
-    g |> (Value v) = g |> v
-    g |> (Neg e) =
+    g |> (Value v _) = g |> v
+    g |> (Neg e _) =
         case g |> e of
             Valid t -> assert ((g |- t <: RealP) == Pass) ("Could not unify Bool and " ++ show t) (Valid t)
             x -> x
-    g |> (Add e1 e2) = arithExpr g e1 e2
-    g |> (Subtract e1 e2) = arithExpr g e1 e2
-    g |> (Multiply e1 e2) = arithExpr g e1 e2
-    g |> (Divide e1 e2) = arithExpr g e1 e2
-    g |> (Modulo e1 e2) = arithExpr g e1 e2
-    g |> (Less e1 e2) = arithExpr g e1 e2
-    g |> (LessOrEqual e1 e2) = arithExpr g e1 e2
-    g |> (Greater e1 e2) = arithExpr g e1 e2
-    g |> (GreaterOrEqual e1 e2) = arithExpr g e1 e2
-    g |> (Equal e1 e2) = assertEquality g e1 e2
-    g |> (NotEqual e1 e2) = assertEquality g e1 e2
-    g |> (Not e) =
+    g |> (Add e1 e2 _) = arithExpr g e1 e2
+    g |> (Subtract e1 e2 _) = arithExpr g e1 e2
+    g |> (Multiply e1 e2 _) = arithExpr g e1 e2
+    g |> (Divide e1 e2 _) = arithExpr g e1 e2
+    g |> (Modulo e1 e2 _) = arithExpr g e1 e2
+    g |> (Less e1 e2 _) = arithExpr g e1 e2
+    g |> (LessOrEqual e1 e2 _) = arithExpr g e1 e2
+    g |> (Greater e1 e2 _) = arithExpr g e1 e2
+    g |> (GreaterOrEqual e1 e2 _) = arithExpr g e1 e2
+    g |> (Equal e1 e2 _) = assertEquality g e1 e2
+    g |> (NotEqual e1 e2 _) = assertEquality g e1 e2
+    g |> (Not e _) =
         case g |> e of
             Valid BoolP -> Valid BoolP
             Valid t -> Invalid $ "Could not unify bool and " ++ show t
             x -> x
-    g |> (AndStrict e1 e2) = assertExpr g BoolP e1 e2
-    g |> (AndLazy e1 e2) = assertExpr g BoolP e1 e2
-    g |> (OrStrict e1 e2) = assertExpr g BoolP e1 e2
-    g |> (OrLazy e1 e2) = assertExpr g BoolP e1 e2
-    g |> (Implies e1 e2) = assertExpr g BoolP e1 e2
-    g |> (Xor e1 e2) = assertExpr g BoolP e1 e2
-    g |> (ShiftLeft e1 e2) = assertExpr g IntP e1 e2
-    g |> (ShiftRight e1 e2) = assertExpr g IntP e1 e2
-    g |> (ShiftRightSameSign e1 e2) = assertExpr g IntP e1 e2
-    _ |> (Set []) = Valid $ ESet Any
-    g |> (Set (e:es)) =
+    g |> (AndStrict e1 e2 _) = assertExpr g BoolP e1 e2
+    g |> (AndLazy e1 e2 _) = assertExpr g BoolP e1 e2
+    g |> (OrStrict e1 e2 _) = assertExpr g BoolP e1 e2
+    g |> (OrLazy e1 e2 _) = assertExpr g BoolP e1 e2
+    g |> (Implies e1 e2 _) = assertExpr g BoolP e1 e2
+    g |> (Xor e1 e2 _) = assertExpr g BoolP e1 e2
+    g |> (ShiftLeft e1 e2 _) = assertExpr g IntP e1 e2
+    g |> (ShiftRight e1 e2 _) = assertExpr g IntP e1 e2
+    g |> (ShiftRightSameSign e1 e2 _) = assertExpr g IntP e1 e2
+    _ |> (Set [] _) = Valid $ ESet Any
+    g |> (Set (e:es) _) =
         case g |> e of
             Valid t ->
                 assert
@@ -80,8 +80,8 @@ instance Typable Expr where
                     "All elements of a set must have the same type"
                     (Valid $ EList t)
             x -> x
-    _ |> (List []) = Valid $ EList Any
-    g |> (List (e:es)) =
+    _ |> (List [] _) = Valid $ EList Any
+    g |> (List (e:es) _) =
         case g |> e of
             Valid t ->
                 assert
@@ -89,7 +89,7 @@ instance Typable Expr where
                     "All elements of a list must have the same type"
                     (Valid $ EList t)
             x -> x
-    g |> (Tuple es) =
+    g |> (Tuple es _) =
         if all isValid tjs
             then Valid (ETuple ts)
             else head (filter (not . isValid) tjs)
@@ -149,17 +149,17 @@ assertEquality g e1 e2 =
         x -> x
 
 instance Typable Value where
-    _ |> (Integer _) = Valid IntP
-    _ |> (Real _) = Valid RealP
-    _ |> (Char _) = Valid CharP
-    _ |> (Bool _) = Valid BoolP
-    _ |> IDC = Valid Unit
-    _ |> (StringV _) = Valid $ EList CharP
-    g |> (IdentV (Ident i)) = g =>> i
-    g |> (CallV c) = g |> c
+    _ |> (Integer _ _) = Valid IntP
+    _ |> (Real _ _) = Valid RealP
+    _ |> (Char _ _) = Valid CharP
+    _ |> (Bool _ _) = Valid BoolP
+    _ |> (IDC _) = Valid Unit
+    _ |> (StringV _ _) = Valid $ EList CharP
+    g |> (IdentV (Ident i _) _) = g =>> i
+    g |> (CallV c _) = g |> c
 
 instance Typable Call where
-    g |> (Call p (Ident i) es) =
+    g |> (Call p (Ident i _) es _) =
         case g =>> i of
             Valid t ->
                 case t of
