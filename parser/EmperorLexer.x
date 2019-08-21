@@ -50,7 +50,7 @@ $stringchar = [^\n"]
 @docLineStart = @tabs? " *" (@spaces | @tabs)?
 
 @lineComment = \/\/ .* @newline @tabs?
-@ignoredWhitespace = \\ @newline
+@ignoredWhitespace = \\ @newline @whitespace*
 
 :-
 
