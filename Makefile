@@ -42,7 +42,7 @@ SOURCE_FILES = $(shell find . -name '*.hs' | grep -v dist) ./Args.hs ./parser/Em
 all: build ## Build everything
 .PHONY: all
 
-build: ./emperor
+build: ./emperor ## Build everything, explicitly
 .PHONY: build
 
 ./emperor: ./dist/build/emperor/emperor
@@ -72,13 +72,13 @@ build: ./emperor
 
 ./emperor.json:;
 
-install: /usr/bin/emperor /usr/share/man/man1/emperor.1.gz $(COMPLETION_INSTALL_LOCATION);
+install: /usr/bin/emperor /usr/share/man/man1/emperor.1.gz $(COMPLETION_INSTALL_LOCATION); ## Install binaries, libraries and documentation
 .PHONY: install
 
 /usr/bin/emperor: ./dist/build/emperor/emperor
 	sudo install -m 755 $^ $@
 
-man: ./dist/doc/man/emperor.1.gz;
+man: ./dist/doc/man/emperor.1.gz; ## Make the man page
 .PHONY: man
 
 /usr/share/man/man1/emperor.1.gz: ./dist/doc/man/emperor.1.gz
@@ -100,31 +100,36 @@ validate-format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | 
 	$(FORMATTER) $(FORMATTER_FLAGS_VALIDATE) $^
 .PHONY: validate-format
 
-format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs)
+format: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs) ## Run the formatter on all non-generated source files
 	$(FORMATTER) $(FORMATTER_FLAGS) $^
 .PHONY: format
 
-lint: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs)
+lint: $(shell find . -name '*.hs' | grep -v dist | grep -v Args.hs | grep -v parser/EmperorLexer.hs | grep -v parser/EmperorParser.hs) ## Run the linter on all non-generated source files
 	$(LINTER) $(LINTER_FLAGS) $^
 .PHONY: lint
 
-doc: dist/doc/html/emperor/emperor/index.html ./dist/doc/man/emperor.1.gz
+doc: dist/doc/html/emperor/emperor/index.html ## Make the documentation
 .PHONY: doc
 
-open-doc: dist/doc/html/emperor/emperor/index.html
+open-doc: dist/doc/html/emperor/emperor/index.html ## Open the documentationin the default browser
 	$(OPEN) $<
 .PHONY: open-doc
 
 dist/doc/html/emperor/emperor/index.html: $(SOURCE_FILES)
 	cabal haddock --executables
 
-clean-installation:
+clean-installation: ## Remove installed executables, libraries and documentation
 	sudo $(RM) /usr/bin/emperor
 	sudo $(RM) /usr/share/man/man1/emperor.1.gz
 	sudo $(RM) /usr/share/bash-completion/completions/emperor 2>/dev/null || true
 .PHONY: clean-installation
 
-clean:
+clean: ## Delete all generated files
 	cabal clean --verbose=0
 	$(RM) cabal.config Args.hs *_completions.sh ./emperor ./parser/Emperor{Lexer,Parser,ParserData}.hs ./parser/EmperorParser.info $(shell find . -name '*.orig') $(shell find . -name '*.info') $(shell find . -name '*.hi') *.eh*
 .PHONY: clean
+
+# Thanks, François Zaninotto! https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
+help: ## Output this help summary
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+.PHONY: help
