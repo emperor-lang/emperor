@@ -12,7 +12,9 @@ This module handles the generation of C code from an AST. Output is given as a
 pair of strings, the first containing C to execute, and the second containing
 its C header.
 -}
-module CodeGenerator.Generate (generate) where
+module CodeGenerator.Generate
+    ( generate
+    ) where
 
 import Args (Args)
 import Parser.AST (AST)

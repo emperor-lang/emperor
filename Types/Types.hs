@@ -17,8 +17,8 @@ module Types.Types
     , writeHeader
     ) where
 
-import Parser.AST (AST(..))
 import Logger.Logger (Loggers)
+import Parser.AST (AST(..))
 import Types.Checker ((>-))
 import Types.Imports.Imports (getEnvironment, writeHeader)
 import Types.Results (TypeCheckResult(..))

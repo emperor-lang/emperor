@@ -17,9 +17,9 @@ module Main
     ) where
 
 import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv, version)
+import CodeGenerator.Generate (generate)
 import Control.Monad (when)
 import Formatter.Formatter (formatFresh)
-import CodeGenerator.Generate (generate)
 import Logger.Logger (Loggers, makeLoggers)
 import Optimiser.Optimise (optimiseAST)
 import Parser.EmperorParserWrapper (AST, parse)
@@ -76,7 +76,7 @@ output args c = do
         then putStrLn c
         else writeFile path c
 
-generateCode :: Args -> Loggers -> AST -> IO (Either String (String,String))
+generateCode :: Args -> Loggers -> AST -> IO (Either String (String, String))
 generateCode args (_, inf, scc, _) prog = do
     inf "Optimising program"
     let prog' = optimiseAST args prog

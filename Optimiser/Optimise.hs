@@ -10,7 +10,9 @@ Language    : Haskell2010
 
 Performs optimisations on Emperor programs.
 -}
-module Optimiser.Optimise (optimiseAST) where
+module Optimiser.Optimise
+    ( optimiseAST
+    ) where
 
 import Args (Args)
 import Parser.AST (AST)
