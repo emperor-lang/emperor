@@ -14,10 +14,17 @@ its C header.
 -}
 module CodeGenerator.Generate
     ( generate
+    , generateHeadless
     ) where
 
 import Args (Args)
 import Parser.AST (AST)
 
 generate :: Args -> AST -> Either String (String, String)
-generate _ _ = Left "Code generation has not been implemented yet" -- TODO: This <--
+generate args prog = (,) <$> generateHeadless args prog <*> generateHeader args prog
+
+generateHeadless :: Args -> AST -> Either String String
+generateHeadless _ _ = Left "Headless code generation has not been implemented yet"
+
+generateHeader :: Args -> AST -> Either String String
+generateHeader _ _ = Left "Header code generation has not been implemented yet" -- TODO: This <--

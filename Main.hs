@@ -17,7 +17,7 @@ module Main
     ) where
 
 import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv, version)
-import CodeGenerator.Generate (generate)
+import CodeGenerator.Generate (generate, generateHeadless)
 import Control.Monad (when)
 import Formatter.Formatter (formatFresh)
 import Logger.Logger (Loggers, makeLoggers)
@@ -52,12 +52,24 @@ main = do
                     writeHeader (outputFile args ++ ".eh.json.gz") prog)
             r <- generateCode args (err, inf, scc, wrn) prog
             case r of
-                Left m -> do
-                    err m
-                    exitFailure
-                Right code -> do
-                    print code
-                    exitSuccess
+                Left br ->
+                    case br of
+                        Left m -> do
+                            err m
+                            exitFailure
+                        Right b -> do
+                            putStrLn b
+                            exitSuccess
+                Right bhr ->
+                    case bhr of
+                        Left m -> do
+                            err m
+                            exitFailure
+                        Right (b,h) -> do
+                            putStrLn b
+                            putStrLn "==="
+                            putStrLn h
+                            exitSuccess
 
 typeCheck :: Args -> Loggers -> AST -> IO ()
 typeCheck _ (err, inf, scc, wrn) prog = do
@@ -76,10 +88,12 @@ output args c = do
         then putStrLn c
         else writeFile path c
 
-generateCode :: Args -> Loggers -> AST -> IO (Either String (String, String))
+generateCode :: Args -> Loggers -> AST -> IO (Either (Either String String) (Either String (String, String)))
 generateCode args (_, inf, scc, _) prog = do
     inf "Optimising program"
     let prog' = optimiseAST args prog
     scc "Optimisation complete"
     inf "Generating code"
-    return $ generate args prog'
+    return $ if entryPoint args
+        then Left $ generateHeadless args prog'
+        else Right $ generate args prog'
