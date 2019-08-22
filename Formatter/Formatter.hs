@@ -173,7 +173,7 @@ instance Format BodyLine where
     format ctx (AssignmentC a) = indent ctx ++ format ctx a
     format ctx (QueueC q) = indent ctx ++ format ctx q
     format ctx (CallC c) = indent ctx ++ format ctx c
-    format ctx (Return e) = indent ctx ++ "return " ++ format ctx e
+    format ctx (Return e _) = indent ctx ++ "return " ++ format ctx e
 
 -- | Assignments may be formatted using their left and right sides
 instance Format Assignment where

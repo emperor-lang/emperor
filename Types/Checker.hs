@@ -63,21 +63,21 @@ instance TypeCheck AST where
 instance TypeCheck ModuleItem where
     _ >- Component {} = Fail "Components have not yet been implemented" -- TODO: Implement components
     _ >- TypeClass {} = Fail "Type classes have not yet been implemented" -- TODO: Implement type classes
-    g >- (FunctionItem f) = g >- f
+    g >- (FunctionItem f _) = g >- f
 
 -- | A function definition may be type-checked using its parameters applied to its contents
 instance TypeCheck FunctionDef where
-    g >- (FunctionDef (FunctionTypeDef _ t) is bs) = g' `check` bs
+    g >- (FunctionDef (FunctionTypeDef _ t _) is bs _) = g' `check` bs
       where
         g' :: TypeEnvironment
-        g' = insert "return" returnType (fromList $ ((\(Ident i) -> i) <$> is) `zip` paramTypes) <> g
+        g' = insert "return" returnType (fromList $ ((\(Ident i _) -> i) <$> is) `zip` paramTypes) <> g
           where
             paramTypes = init $ getTypeList t
             returnType = last $ getTypeList t
 
 -- | A switch-case is type-checked by considering the type of its expression and applying this to its contents
 instance TypeCheck SwitchCase where
-    g >- (SwitchCase e b) =
+    g >- (SwitchCase e b _) =
         case g |> e of
             Valid (EFunction p ti to) ->
                 case g |- p <: Pure of
@@ -102,9 +102,9 @@ check :: TypeEnvironment -> [BodyBlock] -> TypeCheckResult
 check _ [] = Pass
 check g (b':bs') =
     case b' of
-        Line l ->
+        Line l _ ->
             case l of
-                AssignmentC (Assignment mt (Ident i) e) ->
+                AssignmentC (Assignment mt (Ident i _) e _) ->
                     case mt of
                         Just t ->
                             case g =>> i of
@@ -131,7 +131,7 @@ check g (b':bs') =
                                                 x -> x
                                         Invalid m -> Fail m
                                 Invalid m -> Fail m
-                QueueC (Queue mt (Ident i) e) ->
+                QueueC (Queue mt (Ident i _) e _) ->
                     case mt of
                         Just t ->
                             case g |> e of
@@ -152,26 +152,26 @@ check g (b':bs') =
                                                 x -> x
                                         Invalid m -> Fail m
                                 Invalid m -> Fail m
-                CallC (Call p (Ident i) es) ->
+                CallC (Call p (Ident i q) es q') ->
                     case g |- Impure <: p of
                         Pass ->
-                            case g |> Call p (Ident i) es of
+                            case g |> Call p (Ident i q) es q' of
                                 Valid _ -> Pass
                                 Invalid m -> Fail m
                         Fail _ -> Fail "Pure bare calls do not have any effect."
-                Return Nothing ->
+                Return Nothing _ ->
                     case g =>> "return" of
                         Valid Unit -> Pass
                         Valid t -> Fail $ "Cannot return the unit, expected " ++ show t
                         Invalid m -> Fail m
-                Return (Just e) ->
+                Return (Just e) _ ->
                     case g =>> "return" of
                         Valid t ->
                             case g |> e of
                                 Valid t' -> g |- t' <: t
                                 Invalid m -> Fail m
                         Invalid _ -> Fail "Return statement found outside of function"
-        IfElse e as bs ->
+        IfElse e as bs _ ->
             case g |> e of
                 Valid t ->
                     case g |- t <: BoolP of
@@ -181,33 +181,33 @@ check g (b':bs') =
                                 x -> x
                         x -> x
                 Invalid m -> Fail m
-        While e as ->
+        While e as _ ->
             case g |> e of
                 Valid t ->
                     case g |- t <: BoolP of
                         Pass -> g `check` as
                         x -> x
                 Invalid m -> Fail m
-        For (Ident i) e as ->
+        For (Ident i _) e as _ ->
             case g |> e of
                 Valid t ->
                     let g' = insert i t g
                      in g' `check` as
                 Invalid m -> Fail m
-        Repeat e as ->
+        Repeat e as _ ->
             case g |> e of
                 Valid t ->
                     case g |- t <: IntP of
                         Pass -> g `check` as
                         x -> x
                 Invalid m -> Fail m
-        With (Assignment Nothing (Ident i) e) bs ->
+        With (Assignment Nothing (Ident i _) e _) bs _ ->
             case g |> e of
                 Valid t ->
                     let g' = insert i t g
                      in g' `check` bs
                 Invalid m -> Fail m
-        With (Assignment (Just t) (Ident i) e) bs ->
+        With (Assignment (Just t) (Ident i _) e _) bs _ ->
             case g |> e of
                 Valid t' ->
                     case g |- t' <: t of
@@ -216,7 +216,7 @@ check g (b':bs') =
                              in g' `check` bs
                         x -> x
                 Invalid m -> Fail m
-        Switch e cs ->
+        Switch e cs _ ->
             case g |> e of
                 Valid t ->
                     case g |- t <: BoolP of
