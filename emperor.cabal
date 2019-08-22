@@ -19,7 +19,7 @@ synopsis:            Emperor compiler
 description:         Compiler for the emperor language
 
 -- URL for the project homepage or repository.
-homepage:            emperor-lang.github.io
+homepage:            emperor-lang.github.io/emperor
 
 -- The license under which the package is released.
 license:             GPL-3
