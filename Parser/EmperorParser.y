@@ -127,7 +127,7 @@ ast :: {AST}
 ast : moduleHeader usings moduleBody                 { AST $1 $2 $3 }
 
 moduleHeader :: {ModuleHeader}
-moduleHeader : "module" IDENT ";" { Module (Ident (identifierVal $2)) }
+moduleHeader : "module" IDENT ";" { Module (Ident (identifierVal $2) (position $2)) (position $1) }
 
 -- docs :: {[DocLine]}
 -- docs : DOCLINE          { [ $1] }
@@ -138,16 +138,16 @@ usings : {- empty -}        { [] }
        | using ";" usings   { $1 : $3 }
 
 using :: {Import}
-using : "import" usingLabel                      { Import $2 Nothing }
-      | "import" usingLabel "(" identList ")"    { Import $2 (Just $4) }
+using : "import" usingLabel                      { Import $2 Nothing (position $1) }
+      | "import" usingLabel "(" identList ")"    { Import $2 (Just $4) (position $1) }
 
 usingLabel :: {ImportLocation}
-usingLabel : "<" IDENT ">" { ImportLocation Global (Ident (identifierVal $2)) }
-           | STRING        { ImportLocation Local (Ident (stringVal $1)) }
+usingLabel : "<" IDENT ">" { ImportLocation Global (Ident (identifierVal $2) (position $2)) (position $1) }
+           | STRING        { ImportLocation Local (Ident (stringVal $1) (position $1)) (position $1) }
 
 identList :: {[Ident]}
-identList : IDENT               { [Ident (identifierVal $1)]}
-          | IDENT "," identList { Ident (identifierVal $1) : $3 }
+identList : IDENT               { [ Ident (identifierVal $1) (position $1) ]}
+          | IDENT "," identList { Ident (identifierVal $1) (position $1) : $3 }
 
 moduleBody :: {[ModuleItem]}
 moduleBody : moduleItem             { [$1] }
@@ -156,71 +156,71 @@ moduleBody : moduleItem             { [$1] }
 moduleItem :: {ModuleItem}
 moduleItem : component    { $1 }
            | typeClass    { $1 }
-           | functionDef  { FunctionItem $1 }
+           | functionDef  { FunctionItem $1 (getPos $1) }
 
 component :: {ModuleItem}
-component : "component" IDENT maybe(typeComparisons) ":" functionDefs "#" { Component (Ident (identifierVal $2)) $3 $5 }
+component : "component" IDENT maybe(typeComparisons) ":" functionDefs "#" { Component (Ident (identifierVal $2) (position $2)) $3 $5 (position $1) }
 
 functionDefs :: {[FunctionDef]}
 functionDefs : {- empty -}              { [] }
              | functionDef functionDefs { $1 : $2 }
 
 typeClass :: {ModuleItem}
-typeClass : "class" IDENT maybe(typeComparisons) ":" memberTypes "#" { TypeClass (Ident (identifierVal $2)) $3 $5 }
+typeClass : "class" IDENT maybe(typeComparisons) ":" memberTypes "#" { TypeClass (Ident (identifierVal $2) (position $2)) $3 $5 (position $1) }
 
 memberTypes :: {[FunctionTypeDef]}
-memberTypes : {- empty -}               { [] }
-            | functionTypeDef memberTypes    { $1 : $2 }
+memberTypes : {- empty -}                   { [] }
+            | functionTypeDef memberTypes   { $1 : $2 }
 
 functionDef :: {FunctionDef}
-functionDef : functionTypeDef ";" IDENT functionParamDef ":" body "#" { FunctionDef $1 $4 $6 }
+functionDef : functionTypeDef ";" IDENT functionParamDef ":" body "#" { FunctionDef $1 $4 $6 (getPos $1) }
 
 functionTypeDef :: {FunctionTypeDef}
-functionTypeDef : IDENT "::" typedef { FunctionTypeDef (Ident (identifierVal $1)) $3 }
+functionTypeDef : IDENT "::" typedef { FunctionTypeDef (Ident (identifierVal $1) (position $1)) $3 (position $1) }
 
 functionParamDef :: {[Ident]}
 functionParamDef : {- empty -}              { [] }
-                 | IDENT functionParamDef   { (Ident (identifierVal $1)) : $2 }
+                 | IDENT functionParamDef   { (Ident (identifierVal $1) (position $1)) : $2 }
 
 typeComparisons :: {[TypeComparison]}
 typeComparisons : typeComparison                        { [$1] }
                 | typeComparison "," typeComparisons    { $1 : $3 }
 
 typeComparison :: {TypeComparison}
-typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2)) }
-               | "<:" IDENT "<~" IDENT { IsSubTypeWithImplementor (Ident (identifierVal $2)) (Ident (identifierVal $4)) }
+typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2) (position $2)) (position $1) }
+               | "<:" IDENT "<~" IDENT { IsSubTypeWithImplementor (Ident (identifierVal $2) (position $2)) (Ident (identifierVal $4) (position $4)) (position $1) }
 
 body :: {[BodyBlock]}
 body : bodyBlock        { [$1] }
      | bodyBlock body   { $1 : $2 }
 
 bodyBlock :: {BodyBlock}
-bodyBlock : bodyLine ";"                                    { Line $1 }
-          | "if" expr ":" body "else" ":" body "#"          { IfElse $2 $4 $7 }
-          | "while" expr ":" body "#"                       { While $2 $4 }
-          | "for" IDENT "<-" expr ":" body "#"              { For (Ident (identifierVal $2)) $4 $6 }
-          | "repeat" expr ":" body "#"                      { Repeat $2 $4 }
-          | "with" assignment ":" body "#"                  { With $2 $4 }
-          | "switch" expr ":" switchBody "#"                { Switch $2 $4 }
+bodyBlock : bodyLine ";"                                    { Line $1 (getPos $1) }
+          | "if" expr ":" body "else" ":" body "#"          { IfElse $2 $4 $7 (position $1) }
+          | "while" expr ":" body "#"                       { While $2 $4 (position $1) }
+          | "for" IDENT "<-" expr ":" body "#"              { For (Ident (identifierVal $2) (position $1)) $4 $6 (position $1) }
+          | "repeat" expr ":" body "#"                      { Repeat $2 $4 (position $1) }
+          | "with" assignment ":" body "#"                  { With $2 $4 (position $1) }
+          | "switch" expr ":" switchBody "#"                { Switch $2 $4 (position $1) }
 
 switchBody :: {[SwitchCase]}
 switchBody : {- empty -}    { [] }
            | switchCase "#" switchBody { $1 : $3 }
 
 switchCase :: {SwitchCase}
-switchCase : expr "->" bodyBlock    { SwitchCase $1 $3 }
+switchCase : expr "->" bodyBlock    { SwitchCase $1 $3 (getPos $1) }
 
 bodyLine :: {BodyLine}
 bodyLine : assignment            { AssignmentC $1 }
          | queue                 { QueueC $1 }
          | impureCall            { CallC $1 }
-         | "return" maybe(expr)  { Return $2 }
+         | "return" maybe(expr)  { Return $2 (position $1) }
 
 assignment :: {Assignment}
-assignment : maybe(typedef) IDENT "=" expr { Assignment $1 (Ident (identifierVal $2)) $4 }
+assignment : maybe(typedef) IDENT "=" expr { Assignment $1 (Ident (identifierVal $2) (position $2)) $4 (position $2) }
 
 queue :: {Queue}
-queue : maybe(typedef) IDENT "<-" expr { Queue $1 (Ident (identifierVal $2)) $4 }
+queue : maybe(typedef) IDENT "<-" expr { Queue $1 (Ident (identifierVal $2) (position $2)) $4 (position $2) }
 
 typedef :: {EmperorType}
 typedef : tupleTypeDef  %prec TYPEDEF   { resolveTuple $1 }
@@ -245,53 +245,52 @@ nonTupleTypeDef : "int"                                     { IntP }
                 -- | IDENT                     { Ident }
 
 expr :: {Expr}
-expr : value                            { Value $1 }
-     | "!" expr                         { Not $2 }
-     | "-" expr %prec NEG               { Neg $2 }
-     | expr "+" expr                    { Add $1 $3 }
-     | expr "-" expr                    { Subtract $1 $3 }
-     | expr "*" expr                    { Multiply $1 $3 }
-     | expr "/" expr                    { Divide $1 $3 }
-     | expr "%" expr                    { Modulo $1 $3 }
-     | expr "<" expr                    { Less $1 $3 }
-     | expr "<=" expr                   { LessOrEqual $1 $3 }
-     | expr ">" expr                    { Greater $1 $3 }
-     | expr ">=" expr                   { GreaterOrEqual $1 $3 }
-     | expr "==" expr                   { Equal $1 $3 }
-     | expr "!=" expr                   { NotEqual $1 $3 }
-     | expr "&" expr                    { AndStrict $1 $3 }
-     | expr "&&" expr                   { AndLazy $1 $3 }
-     | expr "|" expr                    { OrStrict $1 $3 }
-     | expr "||" expr                   { OrLazy $1 $3 }
-     | expr "=>" expr                   { Implies $1 $3 }
-     | expr "^" expr                    { Xor $1 $3 }
-     | expr "<<" expr                   { ShiftLeft $1 $3 }
-     | expr ">>" expr                   { ShiftRight $1 $3 }
-     | expr ">>>" expr                  { ShiftRightSameSign $1 $3 }
-     | "{" exprList "}"                 { Set $2 }
-     | "(" exprList ")"                 { Tuple $2 }
-     | "[" exprList "]"                 { List $2 }
+expr : value                            { Value $1 (getPos $1)}
+     | "!" expr                         { Not $2 (position $1) }
+     | "-" expr %prec NEG               { Neg $2 (position $1) }
+     | expr "+" expr                    { Add $1 $3 (getPos $1)}
+     | expr "-" expr                    { Subtract $1 $3 (getPos $1) }
+     | expr "*" expr                    { Multiply $1 $3 (getPos $1) }
+     | expr "/" expr                    { Divide $1 $3 (getPos $1) }
+     | expr "%" expr                    { Modulo $1 $3 (getPos $1) }
+     | expr "<" expr                    { Less $1 $3 (getPos $1) }
+     | expr "<=" expr                   { LessOrEqual $1 $3 (getPos $1) }
+     | expr ">" expr                    { Greater $1 $3 (getPos $1) }
+     | expr ">=" expr                   { GreaterOrEqual $1 $3 (getPos $1) }
+     | expr "==" expr                   { Equal $1 $3 (getPos $1) }
+     | expr "!=" expr                   { NotEqual $1 $3 (getPos $1) }
+     | expr "&" expr                    { AndStrict $1 $3 (getPos $1) }
+     | expr "&&" expr                   { AndLazy $1 $3 (getPos $1) }
+     | expr "|" expr                    { OrStrict $1 $3 (getPos $1) }
+     | expr "||" expr                   { OrLazy $1 $3 (getPos $1) }
+     | expr "=>" expr                   { Implies $1 $3 (getPos $1) }
+     | expr "^" expr                    { Xor $1 $3 (getPos $1) }
+     | expr "<<" expr                   { ShiftLeft $1 $3 (getPos $1) }
+     | expr ">>" expr                   { ShiftRight $1 $3 (getPos $1) }
+     | expr ">>>" expr                  { ShiftRightSameSign $1 $3 (getPos $1) }
+     | "{" exprList "}"                 { Set $2 (position $1) }
+     | "(" exprList ")"                 { Tuple $2 (position $1) }
+     | "[" exprList "]"                 { List $2 (position $1) }
 
 value :: {Value}
-value : "_"         { IDC }
-      | INT         { Integer (intVal $1) }
-      | REAL        { Real (realVal $1)}
-      | IDENT       { IdentV (Ident (identifierVal $1)) }
-      | CHAR        { Char (charVal $1) }
-      | BOOL        { Bool (isTrue $1) }
-      | STRING      { StringV (stringVal $1) }
-      | call %prec CALL { CallV $1 }
+value : "_"         { IDC (position $1) }
+      | INT         { Integer (intVal $1) (position $1)}
+      | REAL        { Real (realVal $1) (position $1) }
+      | IDENT       { IdentV (Ident (identifierVal $1) (position $1)) (position $1) }
+      | CHAR        { Char (charVal $1) (position $1) }
+      | BOOL        { Bool (isTrue $1) (position $1) }
+      | STRING      { StringV (stringVal $1) (position $1) }
+      | call %prec CALL { CallV $1 (getPos $1) }
 
 call :: {Call}
 call : impureCall   { $1 }
      | pureCall     { $1 }
 
 impureCall :: {Call}
-impureCall : "@" IDENT "(" exprList ")" { Call Impure (Ident (identifierVal $2)) $4 }
+impureCall : "@" IDENT "(" exprList ")" { Call Impure (Ident (identifierVal $2) (position $2)) $4 (position $1) }
 
 pureCall :: {Call}
-pureCall : IDENT "(" exprList ")" { Call Pure (Ident (identifierVal $1)) $3}
-
+pureCall : IDENT "(" exprList ")" { Call Pure (Ident (identifierVal $1) (position $1)) $3 (position $1) }
 
 exprList :: {[Expr]}
 exprList : {- empty -}          { [] }
@@ -316,5 +315,67 @@ resolveTuple :: [EmperorType] -> EmperorType
 resolveTuple [] = error "The impossible has happened, you seem to have an expression with no type, not even the unit?"
 resolveTuple [t] = t
 resolveTuple ts = ETuple ts
+
+class GetPos a where
+    getPos :: a -> AlexPosn -- ^ Return the position in the input stream
+
+instance GetPos FunctionDef where
+    getPos (FunctionDef _ _ _ p) = p
+
+instance GetPos FunctionTypeDef where
+    getPos (FunctionTypeDef _ _ p) = p
+
+instance GetPos BodyLine where
+    getPos (AssignmentC a) = getPos a
+    getPos (QueueC q) = getPos q
+    getPos (CallC c) = getPos c
+    getPos (Return _ p) = p
+
+instance GetPos Assignment where
+    getPos (Assignment _ _ _ p) = p
+
+instance GetPos Queue where
+    getPos (Queue _ _ _ p) = p
+
+instance GetPos Call where
+    getPos (Call _ _ _ p) = p
+
+instance GetPos Expr where
+    getPos (Value _ p) = p
+    getPos (Neg _ p) = p
+    getPos (Add _ _ p) = p
+    getPos (Subtract _ _ p) = p
+    getPos (Multiply _ _ p) = p
+    getPos (Divide _ _ p) = p
+    getPos (Modulo _ _ p) = p
+    getPos (Less _ _ p) = p
+    getPos (LessOrEqual _ _ p) = p
+    getPos (Greater _ _ p) = p
+    getPos (GreaterOrEqual _ _ p) = p
+    getPos (Equal _ _ p) = p
+    getPos (NotEqual _ _ p) = p
+    getPos (Not _ p) = p
+    getPos (AndStrict _ _ p) = p
+    getPos (AndLazy _ _ p) = p
+    getPos (OrStrict _ _ p) = p
+    getPos (OrLazy _ _ p) = p
+    getPos (Implies _ _ p) = p
+    getPos (Xor _ _ p) = p
+    getPos (ShiftLeft _ _ p) = p
+    getPos (ShiftRight _ _ p) = p
+    getPos (ShiftRightSameSign _ _ p) = p
+    getPos (Set _ p) = p
+    getPos (Tuple _ p) = p
+    getPos (List _ p) = p
+
+instance GetPos Value where
+    getPos (IDC p) = p
+    getPos (Integer _ p) = p
+    getPos (Real _ p) = p
+    getPos (Char _ p) = p
+    getPos (StringV _ p) = p
+    getPos (IdentV _ p) = p
+    getPos (Bool _ p) = p
+    getPos (CallV _ p) = p
 
 }
