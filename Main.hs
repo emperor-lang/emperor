@@ -31,7 +31,7 @@ main = do
     (err, inf, scc, wrn) <- makeLoggers args
     when (version args) (putStrLn "emperor v1.0.0" >>= const exitSuccess)
     if input args == ""
-        then wrn "No input files detected, reading from stdin"
+        then inf "No input files detected, reading from stdin"
         else inf $ "Using input file " ++ input args
     let sanitisedArguments =
             if input args == ""
