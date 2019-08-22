@@ -17,6 +17,8 @@ module Formatter.Formatter
     , FormatContext
     ) where
 
+import Data.List (intercalate, sort)
+import Data.Map ((!), keys)
 import Parser.AST
     ( AST(..)
     , Assignment(..)
@@ -37,8 +39,6 @@ import Parser.AST
     , TypeComparison(..)
     , Value(..)
     )
-import Data.List (intercalate, sort)
-import Data.Map ((!), keys)
 import Types.Results (EmperorType(..), Purity(..))
 
 -- | The information required to format code in a given context
@@ -66,22 +66,22 @@ instance Format AST where
 
 -- | Imports may be formatted as a sorted list of their elements
 instance Format Import where
-    format ctx (Import l Nothing) = "import " ++ format ctx l
-    format ctx (Import l (Just is)) =
+    format ctx (Import l Nothing _) = "import " ++ format ctx l
+    format ctx (Import l (Just is) _) =
         "import " ++ format ctx l ++ " (" ++ intercalate ", " (format ctx <$> sort is) ++ ")"
 
 -- | Import locations may be formatted by their type
 instance Format ImportLocation where
-    format ctx (ImportLocation Global i) = "<" ++ format ctx i ++ ">"
-    format ctx (ImportLocation Local i) = "\"" ++ format ctx i ++ "\""
+    format ctx (ImportLocation Global i _) = "<" ++ format ctx i ++ ">"
+    format ctx (ImportLocation Local i _) = "\"" ++ format ctx i ++ "\""
 
 -- | Module headers may be formatted with their docs and name
 instance Format ModuleHeader where
-    format ctx (Module i) = "module " ++ format ctx i
+    format ctx (Module i _) = "module " ++ format ctx i
 
 -- | Module items may be formatted by their contents
 instance Format ModuleItem where
-    format ctx (Component i c bs) =
+    format ctx (Component i c bs _) =
         "component " ++
         format ctx i ++ typeComparisonString ++ ":\n" ++ unlines (format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
       where
@@ -90,7 +90,7 @@ instance Format ModuleItem where
              in if null s
                     then ""
                     else ' ' : s
-    format ctx (TypeClass i c bs) =
+    format ctx (TypeClass i c bs _) =
         "class " ++
         format ctx i ++ typeComparisonString ++ ":\n" ++ unlines (format (ctx + 1) <$> bs) ++ indent ctx ++ "#\n"
       where
@@ -99,16 +99,16 @@ instance Format ModuleItem where
              in if null s
                     then ""
                     else ' ' : s
-    format ctx (FunctionItem f) = format ctx f ++ "\n"
+    format ctx (FunctionItem f _) = format ctx f ++ "\n"
 
 formatTypeComparisons :: FormatContext -> Maybe [TypeComparison] -> String
 formatTypeComparisons _ Nothing = ""
 formatTypeComparisons ctx (Just cs) = unwords $ format ctx <$> cs
 
 instance Format FunctionDef where
-    format ctx (FunctionDef (FunctionTypeDef i t) is bs) =
+    format ctx (FunctionDef (FunctionTypeDef i t p) is bs _) =
         indent ctx ++
-        format ctx (FunctionTypeDef i t) ++
+        format ctx (FunctionTypeDef i t p) ++
         "\n" ++ indent ctx ++ format ctx i ++ params ++ ":\n" ++ unlines (format (ctx + 1) <$> bs) ++ indent ctx ++ "#"
       where
         params =
@@ -118,12 +118,12 @@ instance Format FunctionDef where
         paramIdentifierString = format ctx is
 
 instance Format FunctionTypeDef where
-    format ctx (FunctionTypeDef i t) = format ctx i ++ " :: " ++ format ctx t
+    format ctx (FunctionTypeDef i t _) = format ctx i ++ " :: " ++ format ctx t
 
 -- | Type comparisons are formatted with whitespace
 instance Format TypeComparison where
-    format ctx (IsSubType i) = "<: " ++ format ctx i
-    format ctx (IsSubTypeWithImplementor i i') = "<:" ++ format ctx i ++ " <~ " ++ format ctx i'
+    format ctx (IsSubType i _) = "<: " ++ format ctx i
+    format ctx (IsSubTypeWithImplementor i i' _) = "<:" ++ format ctx i ++ " <~ " ++ format ctx i'
 
 -- | Types can be formatted as they would appear
 instance Format EmperorType where
@@ -146,71 +146,71 @@ instance Format EmperorType where
 
 -- | Body block may be formatted with included code indented one layer further
 instance Format BodyBlock where
-    format ctx (Line l) = format ctx l
-    format ctx (IfElse c b1 b2) =
+    format ctx (Line l _) = format ctx l
+    format ctx (IfElse c b1 b2 _) =
         unlines $
         [indent ctx ++ "if " ++ format (ctx + 1) c] ++
         (format (ctx + 1) <$> b1) ++ [indent ctx ++ "else"] ++ (format (ctx + 1) <$> b2) ++ [indent ctx ++ "#"]
-    format ctx (While c b) =
+    format ctx (While c b _) =
         unlines $ [indent ctx ++ "while " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
-    format ctx (For i e b) =
+    format ctx (For i e b _) =
         unlines $
         [indent ctx ++ "for " ++ format (ctx + 1) i ++ " <- " ++ format (ctx + 1) e] ++
         (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
-    format ctx (Repeat c b) =
+    format ctx (Repeat c b _) =
         unlines $ [indent ctx ++ "repeat " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
-    format ctx (With a b) =
+    format ctx (With a b _) =
         unlines $ [indent ctx ++ "with " ++ format (ctx + 1) a] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
-    format ctx (Switch c s) =
+    format ctx (Switch c s _) =
         unlines $ [indent ctx ++ "switch " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> s) ++ [indent ctx ++ "#"]
 
 -- | Switch-cases may be formatted with their case contents
 instance Format SwitchCase where
-    format ctx (SwitchCase e b) = indent ctx ++ format (ctx + 1) e ++ " -> " ++ format (ctx + 1) b
+    format ctx (SwitchCase e b _) = indent ctx ++ format (ctx + 1) e ++ " -> " ++ format (ctx + 1) b
 
 -- | Body-lines may be formatted by their structure
 instance Format BodyLine where
     format ctx (AssignmentC a) = indent ctx ++ format ctx a
     format ctx (QueueC q) = indent ctx ++ format ctx q
     format ctx (CallC c) = indent ctx ++ format ctx c
-    format ctx (Return e) = indent ctx ++ "return " ++ format ctx e
+    format ctx (Return e _) = indent ctx ++ "return " ++ format ctx e
 
 -- | Assignments may be formatted using their left and right sides
 instance Format Assignment where
-    format ctx (Assignment t i e) = unwords [format ctx t, format ctx i, "=", format (ctx + 1) e]
+    format ctx (Assignment t i e _) = unwords [format ctx t, format ctx i, "=", format (ctx + 1) e]
 
 -- | Queue statements may be formatted using their left and right sides
 instance Format Queue where
-    format ctx (Queue t i e) = unwords [format ctx t, format ctx i, "=", format (ctx + 1) e]
+    format ctx (Queue t i e _) = unwords [format ctx t, format ctx i, "=", format (ctx + 1) e]
 
 -- | Expressions may be formatted according to their context
 instance Format Expr where
-    format ctx (Value v) = format ctx v
-    format ctx (Neg e) = '-' : format ctx e
-    format ctx (Not e) = '!' : format ctx e
-    format ctx (Add e1 e2) = formatBinOp ctx "+" e1 e2
-    format ctx (Subtract e1 e2) = formatBinOp ctx "-" e1 e2
-    format ctx (Multiply e1 e2) = formatBinOp ctx "*" e1 e2
-    format ctx (Divide e1 e2) = formatBinOp ctx "/" e1 e2
-    format ctx (Modulo e1 e2) = formatBinOp ctx "%" e1 e2
-    format ctx (Less e1 e2) = formatBinOp ctx "<" e1 e2
-    format ctx (LessOrEqual e1 e2) = formatBinOp ctx "<=" e1 e2
-    format ctx (Greater e1 e2) = formatBinOp ctx ">" e1 e2
-    format ctx (GreaterOrEqual e1 e2) = formatBinOp ctx ">=" e1 e2
-    format ctx (Equal e1 e2) = formatBinOp ctx "==" e1 e2
-    format ctx (NotEqual e1 e2) = formatBinOp ctx "!=" e1 e2
-    format ctx (AndStrict e1 e2) = formatBinOp ctx "&" e1 e2
-    format ctx (AndLazy e1 e2) = formatBinOp ctx "&&" e1 e2
-    format ctx (OrStrict e1 e2) = formatBinOp ctx "|" e1 e2
-    format ctx (OrLazy e1 e2) = formatBinOp ctx "||" e1 e2
-    format ctx (Implies e1 e2) = formatBinOp ctx "=>" e1 e2
-    format ctx (Xor e1 e2) = formatBinOp ctx "^" e1 e2
-    format ctx (ShiftLeft e1 e2) = formatBinOp ctx "<<" e1 e2
-    format ctx (ShiftRight e1 e2) = formatBinOp ctx ">>" e1 e2
-    format ctx (ShiftRightSameSign e1 e2) = formatBinOp ctx ">>>" e1 e2
-    format ctx (Set l) = "(" ++ format ctx l ++ "}"
-    format ctx (Tuple l) = "(" ++ format ctx l ++ ")"
-    format ctx (List l) = "[" ++ format ctx l ++ "]"
+    format ctx (Value v _) = format ctx v
+    format ctx (Neg e _) = '-' : format ctx e
+    format ctx (Not e _) = '!' : format ctx e
+    format ctx (Add e1 e2 _) = formatBinOp ctx "+" e1 e2
+    format ctx (Subtract e1 e2 _) = formatBinOp ctx "-" e1 e2
+    format ctx (Multiply e1 e2 _) = formatBinOp ctx "*" e1 e2
+    format ctx (Divide e1 e2 _) = formatBinOp ctx "/" e1 e2
+    format ctx (Modulo e1 e2 _) = formatBinOp ctx "%" e1 e2
+    format ctx (Less e1 e2 _) = formatBinOp ctx "<" e1 e2
+    format ctx (LessOrEqual e1 e2 _) = formatBinOp ctx "<=" e1 e2
+    format ctx (Greater e1 e2 _) = formatBinOp ctx ">" e1 e2
+    format ctx (GreaterOrEqual e1 e2 _) = formatBinOp ctx ">=" e1 e2
+    format ctx (Equal e1 e2 _) = formatBinOp ctx "==" e1 e2
+    format ctx (NotEqual e1 e2 _) = formatBinOp ctx "!=" e1 e2
+    format ctx (AndStrict e1 e2 _) = formatBinOp ctx "&" e1 e2
+    format ctx (AndLazy e1 e2 _) = formatBinOp ctx "&&" e1 e2
+    format ctx (OrStrict e1 e2 _) = formatBinOp ctx "|" e1 e2
+    format ctx (OrLazy e1 e2 _) = formatBinOp ctx "||" e1 e2
+    format ctx (Implies e1 e2 _) = formatBinOp ctx "=>" e1 e2
+    format ctx (Xor e1 e2 _) = formatBinOp ctx "^" e1 e2
+    format ctx (ShiftLeft e1 e2 _) = formatBinOp ctx "<<" e1 e2
+    format ctx (ShiftRight e1 e2 _) = formatBinOp ctx ">>" e1 e2
+    format ctx (ShiftRightSameSign e1 e2 _) = formatBinOp ctx ">>>" e1 e2
+    format ctx (Set l _) = "(" ++ format ctx l ++ "}"
+    format ctx (Tuple l _) = "(" ++ format ctx l ++ ")"
+    format ctx (List l _) = "[" ++ format ctx l ++ "]"
 
 -- | Binary operators are formatted with the operator symbol surrounded by spaces and the formatted left and right expressions
 formatBinOp ::
@@ -221,21 +221,21 @@ formatBinOp ctx op e1 e2 = format ctx e1 ++ " " ++ op ++ " " ++ format ctx e2
 
 -- | Values are formatted according to their type
 instance Format Value where
-    format _ (Integer i) = show i
-    format _ (Real r) = show r
-    format _ (Char c) = show c
-    format ctx (IdentV i) = format ctx i
-    format _ (StringV s) = show s
-    format _ (Bool b) =
+    format _ (Integer i _) = show i
+    format _ (Real r _) = show r
+    format _ (Char c _) = show c
+    format ctx (IdentV i _) = format ctx i
+    format _ (StringV s _) = show s
+    format _ (Bool b _) =
         if b
             then "true"
             else "false"
-    format _ IDC = "_"
-    format ctx (CallV c) = format ctx c
+    format _ (IDC _) = "_"
+    format ctx (CallV c _) = format ctx c
 
 -- | Calls are formatted by their contents
 instance Format Call where
-    format ctx (Call p i es) = format ctx p ++ format ctx i ++ '(' : format ctx es ++ ")"
+    format ctx (Call p i es _) = format ctx p ++ format ctx i ++ '(' : format ctx es ++ ")"
 
 -- | Impure functions have an "\@" in from of them, pure ones have nothing
 instance Format Purity where
@@ -244,7 +244,7 @@ instance Format Purity where
 
 -- | Identifiers are formatted as their name
 instance Format Ident where
-    format _ (Ident i) = i
+    format _ (Ident i _) = i
 
 -- | Maybe formattables may be formatted as an empty string or their contents
 instance Format a => Format (Maybe a) where

@@ -18,6 +18,9 @@ module Types.Imports.Imports
     , Types.Imports.Imports.writeHeader
     ) where
 
+import Data.Monoid ((<>))
+import GHC.IO.Exception (ExitCode(..))
+import Logger.Logger (Loggers)
 import Parser.AST
     ( AST(..)
     , FunctionDef(..)
@@ -29,9 +32,6 @@ import Parser.AST
     , ModuleHeader(..)
     , ModuleItem(..)
     )
-import Data.Monoid ((<>))
-import GHC.IO.Exception (ExitCode(..))
-import Logger.Logger (Loggers)
 import System.Process (readProcessWithExitCode)
 import Types.Environment (TypeEnvironment(..), filterEnvironment, has, insert, newTypeEnvironment)
 import Types.Imports.JsonIO (Header(..), isHeaderFile, readHeader, writeHeader)
@@ -44,10 +44,10 @@ writeHeader f a = do
     Types.Imports.JsonIO.writeHeader h f
   where
     generateHeader :: TypeEnvironment -> AST -> Header
-    generateHeader g' (AST (Module i) is _) = Header i (loc <$> is) g'
+    generateHeader g' (AST (Module i _) is _) = Header i (loc <$> is) g'
       where
         loc :: Import -> ImportLocation
-        loc (Import l _) = l
+        loc (Import l _ _) = l
 
 -- | Obtain the type environment created by the content of the module
 getLocalEnvironment :: AST -> TypeEnvironment
@@ -62,7 +62,7 @@ getLocalEnvironment (AST _ _ as) = getLocalEnvironment' as
                     "Components have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
             TypeClass {} ->
                 error "Classes have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
-            FunctionItem (FunctionDef (FunctionTypeDef (Ident i) t) _ _) -> insert i t $ getLocalEnvironment' ms
+            FunctionItem (FunctionDef (FunctionTypeDef (Ident i _) t _) _ _ _) _ -> insert i t $ getLocalEnvironment' ms
 
 -- | Given a set of imports, obtain the type environment they form.
 getEnvironment :: Loggers -> [Import] -> IO (Either String TypeEnvironment)
@@ -79,17 +79,18 @@ getEnvironment (err, inf, scc, wrn) (i:is) = do
         x -> return x
 
 getEnvironment' :: Loggers -> Import -> IO (Either String TypeEnvironment)
-getEnvironment' (err, inf, scc, wrn) (Import (ImportLocation t (Ident i)) mis) = do
+getEnvironment' (err, inf, scc, wrn) (Import (ImportLocation t (Ident i _) _) mis _) = do
     e <- getEnvironmentFromFile (err, inf, scc, wrn) t i
     case e of
         Right g ->
             case mis of
                 Just is ->
-                    if all (g `has`) $ (\(Ident i') -> i') <$> is
-                        then return . Right $ filterEnvironment (`elem` ((\(Ident i') -> i') <$> is)) g
+                    if all (g `has`) $ (\(Ident i' _) -> i') <$> is
+                        then return . Right $ filterEnvironment (`elem` ((\(Ident i' _) -> i') <$> is)) g
                         else return . Left $
                              "Environment of " ++
-                             show i ++ " does not contain " ++ show (head $ filter (\(Ident i') -> not $ g `has` i') is)
+                             show i ++
+                             " does not contain " ++ show (head $ filter (\(Ident i' _) -> not $ g `has` i') is)
                 Nothing -> return . Right $ g
         Left m -> return $ Left m
 

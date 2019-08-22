@@ -20,11 +20,12 @@ module Types.Imports.JsonIO
     , writeHeader
     ) where
 
-import Parser.AST (Ident(..), ImportLocation(..))
 import Codec.Compression.GZip (compress, decompress)
 import Data.Aeson (FromJSON, ToJSON, Value(Object), (.:), (.=), eitherDecode', encode, object, parseJSON, toJSON)
 import Data.ByteString.Lazy (readFile, writeFile)
 import Logger.Logger (Loggers)
+import Parser.AST (Ident(..), ImportLocation(..))
+import Parser.EmperorLexer (AlexPosn(..))
 import Prelude hiding (readFile, writeFile)
 import System.Directory (doesFileExist)
 import Types.Environment (TypeEnvironment(..))
@@ -35,10 +36,11 @@ data Header =
     deriving (Show)
 
 instance ToJSON Header where
-    toJSON (Header (Ident s) ds g) = object ["name" .= s, "depends" .= ds, "environment" .= g]
+    toJSON (Header (Ident s _) ds g) = object ["name" .= s, "depends" .= ds, "environment" .= g]
 
 instance FromJSON Header where
-    parseJSON (Object v) = Header <$> (Ident <$> v .: "name") <*> v .: "depends" <*> v .: "environment"
+    parseJSON (Object v) =
+        Header <$> (Ident <$> v .: "name" <*> return (AlexPn 1 0 1)) <*> v .: "depends" <*> v .: "environment"
     parseJSON _ = fail "Expected object when parsing header"
 
 -- | Checks whether a given header file exists

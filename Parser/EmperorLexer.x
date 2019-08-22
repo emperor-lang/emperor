@@ -1,5 +1,6 @@
 {
 {-# OPTIONS_GHC -Wno-unused-imports #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-|
 Module      : EmperorLexer
 Description : Lexer for the emperor language
@@ -13,6 +14,8 @@ Language    : Haskell2010
 This module defines the machinery to lexically analyse the Emperor language given in an input string.
 -}
 module Parser.EmperorLexer (Alex, AlexPosn(..), Token(..), lexWrap, alexError, runAlex) where
+
+import Data.Aeson (FromJSON, Value(Object), ToJSON, (.:), (.=), object, parseJSON, toJSON)
 
 }
 
@@ -104,13 +107,13 @@ $stringchar = [^\n"]
 "component"         { mkL LComponent }
 
 -- Identifiers
-<0>                 @ident              { mkL LIdent }
+@ident              { mkL LIdent }
 
 -- Things to ignore
-<0>                 @lineComment        ;
-<0>                 @spaces             ;
-<0>                 @ignoredWhitespace  ;
-<0>                 @tabs               ; -- { mkL LTabs }
+@lineComment        ;
+@spaces             ;
+@ignoredWhitespace  ;
+@tabs               ; -- { mkL LTabs }
 
 -- Syntax things
 "<-"                { mkL LQueue }
@@ -446,5 +449,12 @@ instance Show Token where
 instance Ord AlexPosn where
     (AlexPn c1 _ _ ) < (AlexPn c2 _ _) = c1 < c2
     a <= b = (a < b) || (a == b)
+
+instance ToJSON AlexPosn where
+    toJSON (AlexPn a b c) = object ["total" .= a, "line" .= b, "char" .= c]
+
+instance FromJSON AlexPosn where
+    parseJSON (Object v) = AlexPn <$> v .: "total" <*> v .: "line" <*> v .: "char"
+    parseJSON _ = fail "Expected object when parsing position datum"
 
 }
