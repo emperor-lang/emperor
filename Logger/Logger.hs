@@ -66,7 +66,7 @@ colouriseLog c args t m =
     messageContinue :: String
     messageContinue = messageStart ++ "↪  "
     firstLineLength :: Int
-    firstLineLength = wrapLineLength args - ((length $ messageHeaderText t))
+    firstLineLength = wrapLineLength args - length (messageHeaderText t)
     applyHeaders :: String -> String -> [String] -> [String]
     applyHeaders _ _ [] = []
     applyHeaders a b (cs:css) = (a ++ cs) : applyHeaders' b css
@@ -75,7 +75,7 @@ colouriseLog c args t m =
         applyHeaders' _ [] = []
         applyHeaders' b' (cs':css') = (b' ++ cs') : applyHeaders' b' css'
     remainderLineLength :: Int
-    remainderLineLength = wrapLineLength args - ((length $ messageHeaderText t) + 3)
+    remainderLineLength = wrapLineLength args - length (messageHeaderText t) + 3
     messageHeader :: Bool -> LogType -> String
     messageHeader c' t' = colour c' t' ++ messageHeaderText t' ++ useANSI c' args "\x1b[00;00m"
     messageHeaderText :: LogType -> String

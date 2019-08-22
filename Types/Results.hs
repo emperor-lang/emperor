@@ -95,7 +95,8 @@ data Purity
 
 -- | Class of types which describe type operation results
 class TypeOp a where
-    isValid :: a -> Bool-- ^ Indicates whether a type operation has returned a valid result
+    isValid :: a -> Bool
+    -- ^ Indicates whether a type operation has returned a valid result
 
 instance TypeOp TypeCheckResult where
     isValid Pass = True
@@ -112,8 +113,8 @@ isValidAnd t (Valid t')
     | t == t' = True
     | otherwise = False
 
--- | Get a list of the types mentioned in a function type declaration. Example: 
--- getTypeList a -> b -> c = [a,b,c] 
+-- | Get a list of the types mentioned in a function type declaration. Example:
+-- getTypeList a -> b -> c = [a,b,c]
 getTypeList :: EmperorType -> [EmperorType]
 getTypeList (EFunction _ t1 t2) = t1 : getTypeList t2
 getTypeList x = [x]
