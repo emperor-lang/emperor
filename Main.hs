@@ -19,11 +19,12 @@ module Main
 import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv, version)
 import Control.Monad (when)
 import Formatter.Formatter (formatFresh)
+import CodeGenerator.Generate (generate)
 import Logger.Logger (Loggers, makeLoggers)
+import Optimiser.Optimise (optimiseAST)
 import Parser.EmperorParserWrapper (AST, parse)
 import System.Exit (exitFailure, exitSuccess)
 import Types.Types (TypeCheckResult(..), resolveTypes, writeHeader)
-import Optimiser.Optimise (optimiseAST)
 
 -- | Provides the entry-point
 main :: IO ()
@@ -51,10 +52,10 @@ main = do
                     writeHeader (outputFile args ++ ".eh.json.gz") prog)
             r <- generateCode args (err, inf, scc, wrn) prog
             case r of
-                Nothing -> do
-                    err "Code generation failed."
+                Left m -> do
+                    err m
                     exitFailure
-                Just code -> do
+                Right code -> do
                     print code
                     exitSuccess
 
@@ -75,9 +76,10 @@ output args c = do
         then putStrLn c
         else writeFile path c
 
-generateCode :: Args -> Loggers -> AST -> IO (Maybe (String,String))
-generateCode args (err, inf, scc, wrn) prog = do
+generateCode :: Args -> Loggers -> AST -> IO (Either String (String,String))
+generateCode args (_, inf, scc, _) prog = do
     inf "Optimising program"
     let prog' = optimiseAST args prog
-    err "Code generation has not been implemented yet..."
-    exitFailure
+    scc "Optimisation complete"
+    inf "Generating code"
+    return $ generate args prog'
