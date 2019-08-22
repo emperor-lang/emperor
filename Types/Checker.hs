@@ -15,6 +15,7 @@ module Types.Checker
     , (>-)
     ) where
 
+import Data.Monoid ((<>))
 import Parser.AST
     ( AST(..)
     , Assignment(..)
@@ -28,7 +29,6 @@ import Parser.AST
     , Queue(..)
     , SwitchCase(..)
     )
-import Data.Monoid ((<>))
 import Types.Environment (TypeEnvironment(..), (=>>), fromList, insert, unsafeGet)
 import Types.Imports.Imports (getLocalEnvironment)
 import Types.Judger ((|>))

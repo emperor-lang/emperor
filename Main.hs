@@ -18,9 +18,9 @@ module Main
 
 import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv, version)
 import Control.Monad (when)
-import Parser.EmperorParserWrapper (AST, parse)
 import Formatter.Formatter (formatFresh)
 import Logger.Logger (Loggers, makeLoggers)
+import Parser.EmperorParserWrapper (AST, parse)
 import System.Exit (exitFailure, exitSuccess)
 import Types.Types (TypeCheckResult(..), resolveTypes, writeHeader)
 
@@ -29,9 +29,7 @@ main :: IO ()
 main = do
     args <- parseArgv
     (err, inf, scc, wrn) <- makeLoggers args
-
     when (version args) (putStrLn "emperor v1.0.0" >>= const exitSuccess)
-
     if input args == ""
         then wrn "No input files detected, reading from stdin"
         else inf $ "Using input file " ++ input args

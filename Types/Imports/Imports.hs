@@ -18,6 +18,9 @@ module Types.Imports.Imports
     , Types.Imports.Imports.writeHeader
     ) where
 
+import Data.Monoid ((<>))
+import GHC.IO.Exception (ExitCode(..))
+import Logger.Logger (Loggers)
 import Parser.AST
     ( AST(..)
     , FunctionDef(..)
@@ -29,9 +32,6 @@ import Parser.AST
     , ModuleHeader(..)
     , ModuleItem(..)
     )
-import Data.Monoid ((<>))
-import GHC.IO.Exception (ExitCode(..))
-import Logger.Logger (Loggers)
 import System.Process (readProcessWithExitCode)
 import Types.Environment (TypeEnvironment(..), filterEnvironment, has, insert, newTypeEnvironment)
 import Types.Imports.JsonIO (Header(..), isHeaderFile, readHeader, writeHeader)
@@ -89,7 +89,8 @@ getEnvironment' (err, inf, scc, wrn) (Import (ImportLocation t (Ident i _) _) mi
                         then return . Right $ filterEnvironment (`elem` ((\(Ident i' _) -> i') <$> is)) g
                         else return . Left $
                              "Environment of " ++
-                             show i ++ " does not contain " ++ show (head $ filter (\(Ident i' _) -> not $ g `has` i') is)
+                             show i ++
+                             " does not contain " ++ show (head $ filter (\(Ident i' _) -> not $ g `has` i') is)
                 Nothing -> return . Right $ g
         Left m -> return $ Left m
 

@@ -17,6 +17,8 @@ module Formatter.Formatter
     , FormatContext
     ) where
 
+import Data.List (intercalate, sort)
+import Data.Map ((!), keys)
 import Parser.AST
     ( AST(..)
     , Assignment(..)
@@ -37,8 +39,6 @@ import Parser.AST
     , TypeComparison(..)
     , Value(..)
     )
-import Data.List (intercalate, sort)
-import Data.Map ((!), keys)
 import Types.Results (EmperorType(..), Purity(..))
 
 -- | The information required to format code in a given context

@@ -63,7 +63,9 @@ instance A.ToJSON ImportLocation where
     toJSON (ImportLocation t (Ident i _) p) = A.object ["importType" A..= t, "import" A..= pack i, "location" A..= p]
 
 instance A.FromJSON ImportLocation where
-    parseJSON (A.Object v) = ImportLocation <$> v A..: "importType" <*> (Ident <$> v A..: "import" <*> v A..: "location") <*> v A..: "location"
+    parseJSON (A.Object v) =
+        ImportLocation <$> v A..: "importType" <*> (Ident <$> v A..: "import" <*> v A..: "location") <*>
+        v A..: "location"
     parseJSON _ = fail "Expected object when parsing import datum"
 
 -- | The type of an import
