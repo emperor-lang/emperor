@@ -23,6 +23,7 @@ import Logger.Logger (Loggers, makeLoggers)
 import Parser.EmperorParserWrapper (AST, parse)
 import System.Exit (exitFailure, exitSuccess)
 import Types.Types (TypeCheckResult(..), resolveTypes, writeHeader)
+import Optimiser.Optimise (optimiseAST)
 
 -- | Provides the entry-point
 main :: IO ()
@@ -48,6 +49,14 @@ main = do
                 (not (entryPoint args) && outputFile args /= "-")
                 (do inf "Outputting header..."
                     writeHeader (outputFile args ++ ".eh.json.gz") prog)
+            r <- generateCode args (err, inf, scc, wrn) prog
+            case r of
+                Nothing -> do
+                    err "Code generation failed."
+                    exitFailure
+                Just code -> do
+                    print code
+                    exitSuccess
 
 typeCheck :: Args -> Loggers -> AST -> IO ()
 typeCheck _ (err, inf, scc, wrn) prog = do
@@ -65,3 +74,10 @@ output args c = do
     if path == "-"
         then putStrLn c
         else writeFile path c
+
+generateCode :: Args -> Loggers -> AST -> IO (Maybe (String,String))
+generateCode args (err, inf, scc, wrn) prog = do
+    inf "Optimising program"
+    let prog' = optimiseAST args prog
+    err "Code generation has not been implemented yet..."
+    exitFailure
