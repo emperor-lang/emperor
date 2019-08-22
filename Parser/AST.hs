@@ -129,7 +129,7 @@ data BodyLine
     = AssignmentC Assignment
     | QueueC Queue
     | CallC Call
-    | Return (Maybe Expr)
+    | Return (Maybe Expr) AlexPosn
     deriving (Show)
 
 -- | Data-structure to represent an assignment statement
