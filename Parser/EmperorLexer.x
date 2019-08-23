@@ -44,10 +44,6 @@ $stringchar = [^\n"]
 @blockStarter = ":" @newline*
 @blockSeparator = "#" @newline*
 
-@partSeparator = (";" @newline?) | (@newline)
-@blockStarter = ":" @newline?
-@blockSeparator = "#" @newline?
-
 @docStart = @tabs? "/*" \n?
 @docEnd = @tabs? "*/" \n?
 @docLineStart = @tabs? " *" (@spaces | @tabs)?
