@@ -40,7 +40,7 @@ instance ToJSON Header where
 
 instance FromJSON Header where
     parseJSON (Object v) =
-        Header <$> (Ident <$> v .: "name" <*> return (AlexPn 1 0 1)) <*> v .: "depends" <*> v .: "environment"
+        Header <$> (Ident <$> v .: "name" <*> return (AlexPn 1 1 1)) <*> v .: "depends" <*> v .: "environment"
     parseJSON _ = fail "Expected object when parsing header"
 
 -- | Checks whether a given header file exists
