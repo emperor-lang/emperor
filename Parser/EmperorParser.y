@@ -16,6 +16,7 @@ module Parser.EmperorParser (parseEmperor, parseREPL) where
 import Parser.AST (AST(..), ModuleHeader(..), Import(..), ImportLocation(..), ImportType(..), Ident(..), ModuleItem(..), FunctionDef(..), FunctionTypeDef(..), TypeComparison(..), BodyBlock(..), SwitchCase(..), BodyLine(..), Assignment(..), Queue(..), Expr(..), Value(..), Call(..))
 import Parser.EmperorLexer (Alex, AlexPosn(..), Token(..), lexWrap, alexError, runAlex)
 import Types.Results (EmperorType(..), Purity(..))
+import Parser.Position (GetPos, getPos)
 
 }
 
@@ -315,67 +316,5 @@ resolveTuple :: [EmperorType] -> EmperorType
 resolveTuple [] = error "The impossible has happened, you seem to have an expression with no type, not even the unit?"
 resolveTuple [t] = t
 resolveTuple ts = ETuple ts
-
-class GetPos a where
-    getPos :: a -> AlexPosn -- ^ Return the position in the input stream
-
-instance GetPos FunctionDef where
-    getPos (FunctionDef _ _ _ p) = p
-
-instance GetPos FunctionTypeDef where
-    getPos (FunctionTypeDef _ _ p) = p
-
-instance GetPos BodyLine where
-    getPos (AssignmentC a) = getPos a
-    getPos (QueueC q) = getPos q
-    getPos (CallC c) = getPos c
-    getPos (Return _ p) = p
-
-instance GetPos Assignment where
-    getPos (Assignment _ _ _ p) = p
-
-instance GetPos Queue where
-    getPos (Queue _ _ _ p) = p
-
-instance GetPos Call where
-    getPos (Call _ _ _ p) = p
-
-instance GetPos Expr where
-    getPos (Value _ p) = p
-    getPos (Neg _ p) = p
-    getPos (Add _ _ p) = p
-    getPos (Subtract _ _ p) = p
-    getPos (Multiply _ _ p) = p
-    getPos (Divide _ _ p) = p
-    getPos (Modulo _ _ p) = p
-    getPos (Less _ _ p) = p
-    getPos (LessOrEqual _ _ p) = p
-    getPos (Greater _ _ p) = p
-    getPos (GreaterOrEqual _ _ p) = p
-    getPos (Equal _ _ p) = p
-    getPos (NotEqual _ _ p) = p
-    getPos (Not _ p) = p
-    getPos (AndStrict _ _ p) = p
-    getPos (AndLazy _ _ p) = p
-    getPos (OrStrict _ _ p) = p
-    getPos (OrLazy _ _ p) = p
-    getPos (Implies _ _ p) = p
-    getPos (Xor _ _ p) = p
-    getPos (ShiftLeft _ _ p) = p
-    getPos (ShiftRight _ _ p) = p
-    getPos (ShiftRightSameSign _ _ p) = p
-    getPos (Set _ p) = p
-    getPos (Tuple _ p) = p
-    getPos (List _ p) = p
-
-instance GetPos Value where
-    getPos (IDC p) = p
-    getPos (Integer _ p) = p
-    getPos (Real _ p) = p
-    getPos (Char _ p) = p
-    getPos (StringV _ p) = p
-    getPos (IdentV _ p) = p
-    getPos (Bool _ p) = p
-    getPos (CallV _ p) = p
 
 }
