@@ -25,6 +25,10 @@
 		{
 			"name": "gcc",
 			"manLocation": 1
+		},
+		{
+			"name": "make",
+			"manLocation": 1
 		}
 	],
 	"bugs": "If you find any bugs, please report them at <https://github.com/TheSignPainter98/emperor/issues>",
