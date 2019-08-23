@@ -65,7 +65,7 @@ main = do
                         Left m -> do
                             err m
                             exitFailure
-                        Right (b,h) -> do
+                        Right (b, h) -> do
                             putStrLn b
                             putStrLn "==="
                             putStrLn h
@@ -94,6 +94,7 @@ generateCode args (_, inf, scc, _) prog = do
     let prog' = optimiseAST args prog
     scc "Optimisation complete"
     inf "Generating code"
-    return $ if entryPoint args
-        then Left $ generateHeadless args prog'
-        else Right $ generate args prog'
+    return $
+        if entryPoint args
+            then Left $ generateHeadless args prog'
+            else Right $ generate args prog'
