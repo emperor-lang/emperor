@@ -17,14 +17,53 @@ module CodeGenerator.Generate
     , generateHeadless
     ) where
 
-import Args (Args)
-import Parser.AST (AST)
+import Args (Args, input)
+import CodeGenerator.Context (GenerationContext, makeContext, sourceFile)
+import CodeGenerator.Position (generatePos)
+import Parser.AST
+    ( AST(..)
+    , Assignment(..)
+    , BodyBlock(..)
+    , BodyLine(..)
+    , Call(..)
+    , Expr(..)
+    , FunctionDef(..)
+    , FunctionTypeDef(..)
+    , Ident(..)
+    , Import(..)
+    , ImportLocation(..)
+    , ImportType(..)
+    , ModuleHeader(..)
+    , ModuleItem(..)
+    , Queue(..)
+    , SwitchCase(..)
+    , TypeComparison(..)
+    , Value(..)
+    )
 
 generate :: Args -> AST -> Either String (String, String)
 generate args prog = (,) <$> generateHeadless args prog <*> generateHeader args prog
 
 generateHeadless :: Args -> AST -> Either String String
-generateHeadless _ _ = Left "Headless code generation has not been implemented yet"
+generateHeadless args p = Right $ genCode c p
+    where
+        c = makeContext args
 
 generateHeader :: Args -> AST -> Either String String
-generateHeader _ _ = Left "Header code generation has not been implemented yet" -- TODO: This <--
+generateHeader args (AST _ _ bs) = Right . unlines $ (generatePos (sourceFile c)) <$> bs
+    where
+        c = makeContext args
+
+class GenHeadlessCode a where
+    genCode :: GenerationContext -> a -> String
+    genCode c x = unlines $ genCodeLines c x
+    genCodeLines :: GenerationContext -> a -> [String]
+
+instance GenHeadlessCode AST where
+    genCodeLines c (AST m is bs) = generatePos (sourceFile c) (AST m is bs) : genCodeLines c is ++ genCodeLines c bs
+
+instance GenHeadlessCode a => GenHeadlessCode [a] where
+    genCodeLines c as = foldr1 (++) (genCodeLines c <$> as)
+
+instance GenHeadlessCode Import where 
+    genCodeLines _ _ = [""]
