@@ -16,9 +16,10 @@ module CodeGenerator.Position
 
 import Parser.EmperorLexer (AlexPosn(..))
 import Parser.Position (GetPos, getPos)
+import CodeGenerator.Context (GenerationContext, sourceFile)
 
 -- | Get the line position directive
-generatePos :: GetPos a => FilePath -> a -> String
-generatePos p x = "#line " ++ show q ++ " " ++ show p
+generatePos :: GetPos a => GenerationContext -> a -> String
+generatePos c x = "#line " ++ show p ++ " " ++ (show . sourceFile) c
   where
-    AlexPn _ q _ = getPos x
+    AlexPn _ p _ = getPos x
