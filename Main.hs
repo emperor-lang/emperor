@@ -50,26 +50,8 @@ main = do
                 (not (entryPoint args) && outputFile args /= "-")
                 (do inf "Outputting header..."
                     writeHeader (outputFile args ++ ".eh.json.gz") prog)
-            r <- generateCode args (err, inf, scc, wrn) prog
-            case r of
-                Left br ->
-                    case br of
-                        Left m -> do
-                            err m
-                            exitFailure
-                        Right b -> do
-                            putStrLn b
-                            exitSuccess
-                Right bhr ->
-                    case bhr of
-                        Left m -> do
-                            err m
-                            exitFailure
-                        Right (b, h) -> do
-                            putStrLn b
-                            putStrLn "==="
-                            putStrLn h
-                            exitSuccess
+            let r = generateCode args (err, inf, scc, wrn) prog
+            putStrLn r
 
 typeCheck :: Args -> Loggers -> AST -> IO ()
 typeCheck _ (err, inf, scc, wrn) prog = do
