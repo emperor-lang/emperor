@@ -20,11 +20,18 @@ module CodeGenerator.Generate
 import Args (Args, input)
 import CodeGenerator.Context (GenerationContext, makeContext, sourceFile)
 import CodeGenerator.Position (generatePos)
-import CodeGenerator.Results (GenerationResult)
+import CodeGenerator.Results (GenerationResult, getHeaderLines, getBodyLines, getConstantMapping)
 import CodeGenerator.ToC (toC)
 import Parser.AST (AST)
 
 generate :: Args -> AST -> (String,String)
-generate args prog =
+generate args prog = (unlines b, unlines h ++ unlines ml)
     where
         r = toC (makeContext args) prog
+        h = getHeaderLines r
+        b = getBodyLines b
+        m = getConstantMapping m
+        ml = mapgen <$> m
+        mapgen :: (String,Value) -> String
+        mapgen (k,v) = "#define " ++ k ++ " " ++ toC v
+
