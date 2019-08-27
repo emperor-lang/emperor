@@ -17,6 +17,8 @@ module CodeGenerator.Context
     , indent
     , isEntryPoint
     , makeContext
+    , makeIndent
+    , moreIndent
     , sourceFile
     ) where
 
@@ -34,3 +36,9 @@ makeContext :: Args -> GenerationContext
 makeContext args = GenerationContext { isEntryPoint = entryPoint args, sourceFile = inputFile, indent = 0 }
     where
         inputFile = if null $ input args then "stdin" else input args
+
+makeIndent :: GenerationContext -> String
+makeIndent c = replicate (indent c) '\t'
+
+moreIndent :: GenerationContext -> GenerationContext
+moreIndent c = c { indent = indent c + 1 }
