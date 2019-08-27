@@ -12,26 +12,24 @@ This module handles the generation of C code from an AST. Output is given as a
 pair of strings, the first containing C to execute, and the second containing
 its C header.
 -}
-module CodeGenerator.Generate
-    ( generate
-    , generateHeadless
-    ) where
+module CodeGenerator.Generate ( generate ) where
 
-import Args (Args, input)
-import CodeGenerator.Context (GenerationContext, makeContext, sourceFile)
-import CodeGenerator.Position (generatePos)
-import CodeGenerator.Results (GenerationResult, getHeaderLines, getBodyLines, getConstantMapping)
-import CodeGenerator.ToC (toC)
-import Parser.AST (AST)
+import Args (Args)
+import CodeGenerator.Context (makeContext)
+-- import CodeGenerator.Position (generatePos)
+import CodeGenerator.Results (getHeaderLines, getBodyLines, getConstantMapping)
+import CodeGenerator.ToC (toC, toCString)
+import Parser.AST (AST, Value)
 
 generate :: Args -> AST -> (String,String)
 generate args prog = (unlines b, unlines h ++ unlines ml)
     where
-        r = toC (makeContext args) prog
+        r = toC c prog
+        c = (makeContext args)
         h = getHeaderLines r
-        b = getBodyLines b
-        m = getConstantMapping m
+        b = getBodyLines r
+        m = getConstantMapping r
         ml = mapgen <$> m
-        mapgen :: (String,Value) -> String
-        mapgen (k,v) = "#define " ++ k ++ " " ++ toC v
+        mapgen :: (String, Value) -> String
+        mapgen (k,v) = "#define " ++ toCString c k ++ " " ++ toCString c v
 
