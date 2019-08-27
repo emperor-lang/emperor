@@ -274,8 +274,7 @@ expr : value                            { Value $1 (getPos $1)}
      | "[" exprList "]"                 { List $2 (position $1) }
 
 value :: {Value}
-value : "_"         { IDC (position $1) }
-      | INT         { Integer (intVal $1) (position $1)}
+value : INT         { Integer (intVal $1) (position $1)}
       | REAL        { Real (realVal $1) (position $1) }
       | IDENT       { IdentV (Ident (identifierVal $1) (position $1)) (position $1) }
       | CHAR        { Char (charVal $1) (position $1) }

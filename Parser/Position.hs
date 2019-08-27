@@ -125,7 +125,6 @@ instance GetPos Expr where
     getPos (List _ p) = p
 
 instance GetPos Value where
-    getPos (IDC p) = p
     getPos (Integer _ p) = p
     getPos (Real _ p) = p
     getPos (Char _ p) = p

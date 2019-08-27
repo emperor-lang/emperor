@@ -176,8 +176,7 @@ data Expr
 
 -- | Data-structure to represent a single value
 data Value
-    = IDC AlexPosn
-    | Integer Integer AlexPosn
+    = Integer Integer AlexPosn
     | Real Double AlexPosn
     | Char Char AlexPosn
     | StringV String AlexPosn

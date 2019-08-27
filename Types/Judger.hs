@@ -153,7 +153,6 @@ instance Typable Value where
     _ |> (Real _ _) = Valid RealP
     _ |> (Char _ _) = Valid CharP
     _ |> (Bool _ _) = Valid BoolP
-    _ |> (IDC _) = Valid Unit
     _ |> (StringV _ _) = Valid $ EList CharP
     g |> (IdentV (Ident i _) _) = g =>> i
     g |> (CallV c _) = g |> c
