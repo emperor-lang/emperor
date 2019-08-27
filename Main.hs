@@ -17,7 +17,7 @@ module Main
     ) where
 
 import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv, version)
-import CodeGenerator.Generate (generate, generateHeadless)
+import CodeGenerator.Generate (generate)
 import Control.Monad (when)
 import Formatter.Formatter (formatFresh)
 import Logger.Logger (Loggers, makeLoggers)
@@ -50,8 +50,19 @@ main = do
                 (not (entryPoint args) && outputFile args /= "-")
                 (do inf "Outputting header..."
                     writeHeader (outputFile args ++ ".eh.json.gz") prog)
-            let r = generateCode args (err, inf, scc, wrn) prog
-            putStrLn r
+            (b,h) <- generateCode args (err, inf, scc, wrn) prog
+            if outputFile args == "-"
+            then do
+                putStrLn h
+                putStrLn "==="
+                putStrLn h
+            else do
+                inf $ "Writing to " ++ outputFile args ++ ".h"
+                writeFile (outputFile args ++ ".h") h
+                scc "Written header"
+                inf $ "Writing to " ++ outputFile args ++ ".c"
+                writeFile (outputFile args ++ ".c") b
+                scc "Written payload"
 
 typeCheck :: Args -> Loggers -> AST -> IO ()
 typeCheck _ (err, inf, scc, wrn) prog = do
@@ -70,13 +81,10 @@ output args c = do
         then putStrLn c
         else writeFile path c
 
-generateCode :: Args -> Loggers -> AST -> IO (Either (Either String String) (Either String (String, String)))
+generateCode :: Args -> Loggers -> AST -> IO (String, String)
 generateCode args (_, inf, scc, _) prog = do
     inf "Optimising program"
     let prog' = optimiseAST args prog
     scc "Optimisation complete"
     inf "Generating code"
-    return $
-        if entryPoint args
-            then Left $ generateHeadless args prog'
-            else Right $ generate args prog'
+    return $ generate args prog'
