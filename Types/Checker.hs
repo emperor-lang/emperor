@@ -15,6 +15,7 @@ module Types.Checker
     , (>-)
     ) where
 
+import Data.Map (elems)
 import Data.Monoid ((<>))
 import Parser.AST
     ( AST(..)
@@ -32,14 +33,7 @@ import Parser.AST
 import Types.Environment (TypeEnvironment(..), (=>>), fromList, insert, unsafeGet)
 import Types.Imports.Imports (getLocalEnvironment)
 import Types.Judger ((|>))
-import Types.Results
-    ( EmperorType(BoolP, EFunction, IntP, Unit)
-    , Purity(..)
-    , TypeCheckResult(..)
-    , TypeJudgementResult(..)
-    , getTypeList
-    , isValid
-    )
+import Types.Results (EmperorType(..), Purity(..), TypeCheckResult(..), TypeJudgementResult(..), getTypeList, isValid)
 import Types.SubTyping ((<:), (|-))
 
 -- | Describes objects which may be type-checked.
@@ -57,7 +51,6 @@ instance TypeCheck AST where
                  in if all isValid trs
                         then Pass
                         else head $ filter (not . isValid) trs
-                    -- The type environment to use
             Left m' -> Fail m'
       where
         r = getLocalEnvironment (AST m is bs) -- TODO: Check functinos already exist
@@ -70,13 +63,56 @@ instance TypeCheck ModuleItem where
 
 -- | A function definition may be type-checked using its parameters applied to its contents
 instance TypeCheck FunctionDef where
-    g >- (FunctionDef (FunctionTypeDef _ t _) is bs _) = g' `check` bs
+    g >- (FunctionDef (FunctionTypeDef _ t _) is bs _) =
+        case g' >- t of
+            Pass -> g' `check` bs
+            x -> x
       where
         g' :: TypeEnvironment
-        g' = insert "return" returnType (fromList $ ((\(Ident i' _) -> i') <$> is) `zip` paramTypes) <> g
-          where
-            paramTypes = init $ getTypeList t
-            returnType = last $ getTypeList t
+        g' =
+            case t of
+                EFunction p _ _ -> insert "@" p' g''
+                    where p' =
+                              case p of
+                                  Pure -> Unit
+                                  Impure -> Any
+                _ -> g''
+        g'' :: TypeEnvironment
+        g'' = insert "return" returnType (fromList $ ((\(Ident i _) -> i) <$> is) `zip` paramTypes) <> g
+        paramTypes = init $ getTypeList t
+        returnType = last $ getTypeList t
+
+instance TypeCheck EmperorType where
+    _ >- IntP = Pass
+    _ >- CharP = Pass
+    _ >- BoolP = Pass
+    _ >- RealP = Pass
+    g >- (ESet t) = g >- t
+    g >- (EList t) = g >- t
+    g >- (ETuple ts) =
+        if all isValid $ (g >-) <$> ts
+            then Pass
+            else Fail "Purity mis-match in tuple"
+    g >- (ERecord m) =
+        if all isValid $ (g >-) <$> elems m
+            then Pass
+            else Fail "Purity mis-match in record"
+    g >- (EFunction p ti to) =
+        case g =>> "@" of
+            Valid Any ->
+                case g >- ti of
+                    Pass -> g >- to
+                    x -> x
+            Valid Unit ->
+                if p == Pure
+                    then case g >- ti of
+                             Pass -> g >- to
+                             x -> x
+                    else Fail "Impure function type in pure context"
+            Valid t -> Fail $ "Managed to get " ++ show t ++ " when checking purity D:"
+            Invalid m -> Fail m
+    _ >- Any = Pass
+    _ >- Unit = Pass
 
 -- | A switch-case is type-checked by considering the type of its expression and applying this to its contents
 instance TypeCheck SwitchCase where
