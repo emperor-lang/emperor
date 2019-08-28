@@ -14,6 +14,8 @@ its C header.
 -}
 module CodeGenerator.Context
     ( GenerationContext
+    , annotation
+    , destFile
     , indent
     , isEntryPoint
     , makeContext
@@ -22,20 +24,23 @@ module CodeGenerator.Context
     , sourceFile
     ) where
 
-import Args (Args, entryPoint, input)
+import Args (Args, entryPoint, input, outputFile, annotateSource)
 
 data GenerationContext =
     GenerationContext
         { isEntryPoint :: Bool
         , sourceFile :: FilePath
+        , destFile :: FilePath
         , indent :: Int
+        , annotation :: Int
         }
     deriving (Show)
 
 makeContext :: Args -> GenerationContext
-makeContext args = GenerationContext { isEntryPoint = entryPoint args, sourceFile = inputFile, indent = 0 }
+makeContext args = GenerationContext { isEntryPoint = entryPoint args, sourceFile = inputFile, indent = 0, destFile = outFile, annotation = annotateSource args }
     where
         inputFile = if null $ input args then "stdin" else input args
+        outFile = if outputFile args == "-" then "stdout" else outputFile args
 
 makeIndent :: GenerationContext -> String
 makeIndent c = replicate (indent c) '\t'

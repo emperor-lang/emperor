@@ -140,7 +140,21 @@
 			"type": "int",
 			"help": "Wrap logging output to this many characters",
 			"default": "-1",
-			"metaDest": "n"
+			"metaDest": "width"
+		},
+		{
+			"short": "-a",
+			"long": "--annotate-source",
+			"dest": "annotateSource",
+			"type": "int",
+			"help": "Level to which to annotate the outputted source; 0 = none, 1 = line numbers only, 2 = line numbers and comments",
+			"default": "1",
+			"metaDest": "level",
+			"choices": [
+				"0",
+				"1",
+				"2"
+			]
 		}
 	]
 }
