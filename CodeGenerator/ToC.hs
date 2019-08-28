@@ -106,11 +106,11 @@ instance ToC BodyBlock where
     toC _ (Switch _ _ _) = makeBodyLines ["switch"]
 
 instance ToC BodyLine where
-    toC c (AssignmentC x) = wrapLastBodyLine (toC c x) (\x' -> makeIndent c ++ x' ++ ";")
-    toC c (QueueC x) = wrapLastBodyLine (toC c x) (\x' -> makeIndent c ++ x' ++ ";")
-    toC c (CallC x) = wrapLastBodyLine (toC c x) (\x' -> makeIndent c ++ x' ++ ";")
-    toC c (Return Nothing _) = makeBodyLines [makeIndent c ++ "return" ++ ";"]
-    toC c (Return (Just v) _) = makeBodyLines [makeIndent c ++ "return " ++ toCString c v ++ ";"]
+    toC c (AssignmentC x) = makeBodyLines [generatePos c x] <> wrapLastBodyLine (toC c x) (\x' -> makeIndent c ++ x' ++ ";")
+    toC c (QueueC x) = makeBodyLines [generatePos c x] <> wrapLastBodyLine (toC c x) (\x' -> makeIndent c ++ x' ++ ";")
+    toC c (CallC x) = makeBodyLines [generatePos c x] <> wrapLastBodyLine (toC c x) (\x' -> makeIndent c ++ x' ++ ";")
+    toC c (Return Nothing p) = makeBodyLines [generatePos c (Return Nothing p),  makeIndent c ++ "return" ++ ";"]
+    toC c (Return (Just v) p) = makeBodyLines [generatePos c (Return (Just v) p),  makeIndent c ++ "return " ++ toCString c v ++ ";"]
 
 instance ToC Assignment where
     toC c (Assignment Nothing i e _) = makeBodyLines [toCString c i ++ " = " ++ toCString c e]
