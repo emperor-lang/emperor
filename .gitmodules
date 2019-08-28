@@ -1,0 +1,3 @@
+[submodule "IncludedHeaders/banned"]
+	path = IncludedHeaders/banned
+	url = https://github.com/x509cert/banned.git
