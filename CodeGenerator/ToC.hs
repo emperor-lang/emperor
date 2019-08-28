@@ -139,7 +139,7 @@ instance ToCString Expr where
     toCString c (AndLazy e1 e2 _) = binaryOp c "&&" e1 e2
     toCString c (OrStrict e1 e2 _) = binaryOp c "|" e1 e2
     toCString c (OrLazy e1 e2 _) = binaryOp c "||" e1 e2
-    toCString c (Implies e1 e2 _) = '!' : binaryOp c "||" e1 e2
+    toCString c (Implies e1 e2 p) = binaryOp c "||" (Not e1 p) e2
     toCString c (Xor e1 e2 _) = binaryOp c "^" e1 e2
     toCString c (ShiftLeft e1 e2 _) = binaryOp c "<<" e1 e2
     toCString c (ShiftRight e1 e2 _) = binaryOp c ">>" e1 e2
@@ -152,7 +152,7 @@ unaryOp :: GenerationContext -> String -> Expr -> String
 unaryOp c o e = o ++ toCString c e
 
 binaryOp :: GenerationContext -> String -> Expr -> Expr -> String
-binaryOp c o e1 e2 = toCString c e1 ++ ' ' : o ++ " " ++ toCString c e2
+binaryOp c o e1 e2 = '(' : toCString c e1 ++ ' ' : o ++ " " ++ toCString c e2 ++ ")"
 
 instance ToCString Value where
     toCString _ (Integer i _) = show i
