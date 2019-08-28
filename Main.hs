@@ -53,9 +53,11 @@ main = do
             (b,h) <- generateCode args (err, inf, scc, wrn) prog
             if outputFile args == "-"
             then do
-                putStrLn h
+                putStrLn ">>>Header content:"
+                putStr h
                 putStrLn "==="
-                putStrLn h
+                putStrLn ">>>Body content:"
+                putStr b
             else do
                 inf $ "Writing to " ++ outputFile args ++ ".h"
                 writeFile (outputFile args ++ ".h") h
