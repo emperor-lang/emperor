@@ -13,6 +13,6 @@
 #elif __posix
 #	error Posix is not specifically supported.
 #else
-#	error Could not detect operating system, what are you running? If you are running something other people use,
-please file this as a bug report at < https: // github.com/emperor-lang/emperor/issues>
+#	error "Could not detect operating system, what are you running? If you are running something other people use, \
+please file this as a bug report at <https://github.com/emperor-lang/emperor/issues>"
 #endif
