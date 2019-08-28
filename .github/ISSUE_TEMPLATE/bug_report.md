@@ -6,7 +6,7 @@ labels: ''
 assignees: ''
 ---
 
-### Describe the bug**
+### Describe the bug
 
 A clear and concise description of what the bug is.
 
@@ -18,7 +18,7 @@ Steps to reproduce the behaviour:
 2. Run `./compiledOutput …`
 3. Observe error
 
-### Expected behaviour**
+### Expected behaviour
 
 A clear and concise description of what you expected to happen.
 
