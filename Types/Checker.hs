@@ -52,8 +52,9 @@ class TypeCheck a where
 instance TypeCheck AST where
     g >- (AST m is bs) =
         case r of
-            Right g' -> let trs = (g' <> g >-) <$> bs
-                in if all isValid trs
+            Right g' ->
+                let trs = (g' <> g >-) <$> bs
+                 in if all isValid trs
                         then Pass
                         else head $ filter (not . isValid) trs
                     -- The type environment to use

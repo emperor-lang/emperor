@@ -65,11 +65,13 @@ getLocalEnvironment (AST _ _ as) = getLocalEnvironment' as
                     "Components have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
             TypeClass {} ->
                 error "Classes have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
-            FunctionItem (FunctionDef (FunctionTypeDef (Ident i _) t _) _ _ _) _ -> case getLocalEnvironment' ms of
-                Right g -> if g `has` i
-                    then Left $ "Function " ++ show i ++ " already exists in the current scope"
-                    else Right $ insert i t g
-                x -> x
+            FunctionItem (FunctionDef (FunctionTypeDef (Ident i _) t _) _ _ _) _ ->
+                case getLocalEnvironment' ms of
+                    Right g ->
+                        if g `has` i
+                            then Left $ "Function " ++ show i ++ " already exists in the current scope"
+                            else Right $ insert i t g
+                    x -> x
 
 -- | Given a set of imports, obtain the type environment they form.
 getEnvironment :: Loggers -> [Import] -> IO (Either String TypeEnvironment)
