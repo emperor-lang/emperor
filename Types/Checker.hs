@@ -51,13 +51,16 @@ class TypeCheck a where
 -- | An AST can be type-checked by applying its environment to its contents.
 instance TypeCheck AST where
     g >- (AST m is bs) =
-        let trs = (g' >-) <$> bs
-         in if all isValid trs
-                then Pass
-                else head $ filter (not . isValid) trs
-            -- The type environment to use
+        case r of
+            Right g' ->
+                let trs = (g' <> g >-) <$> bs
+                 in if all isValid trs
+                        then Pass
+                        else head $ filter (not . isValid) trs
+                    -- The type environment to use
+            Left m' -> Fail m'
       where
-        g' = getLocalEnvironment (AST m is bs) <> g
+        r = getLocalEnvironment (AST m is bs) -- TODO: Check functinos already exist
 
 -- | Module item may be type-checked by considering its contents
 instance TypeCheck ModuleItem where
@@ -70,7 +73,7 @@ instance TypeCheck FunctionDef where
     g >- (FunctionDef (FunctionTypeDef _ t _) is bs _) = g' `check` bs
       where
         g' :: TypeEnvironment
-        g' = insert "return" returnType (fromList $ ((\(Ident i _) -> i) <$> is) `zip` paramTypes) <> g
+        g' = insert "return" returnType (fromList $ ((\(Ident i' _) -> i') <$> is) `zip` paramTypes) <> g
           where
             paramTypes = init $ getTypeList t
             returnType = last $ getTypeList t
