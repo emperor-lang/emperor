@@ -58,7 +58,8 @@ makeLogger :: Bool -> Args -> LogType -> Logger
 makeLogger c a t = hPutStrLn stderr . colouriseLog c a t
 
 colouriseLog :: Bool -> Args -> LogType -> String -> String
-colouriseLog c args t m = (init . unlines) $ applyHeaders messageStart messageContinue $ splitToLines firstLineLength remainderLineLength m
+colouriseLog c args t m =
+    (init . unlines) $ applyHeaders messageStart messageContinue $ splitToLines firstLineLength remainderLineLength m
   where
     messageStart :: String
     messageStart = messageHeader c t
@@ -66,16 +67,13 @@ colouriseLog c args t m = (init . unlines) $ applyHeaders messageStart messageCo
     messageContinue = messageStart ++ "↪  "
     firstLineLength :: Int
     firstLineLength = wrapLineLength args - ((length $ messageHeaderText t))
-
     applyHeaders :: String -> String -> [String] -> [String]
     applyHeaders _ _ [] = []
     applyHeaders a b (cs:css) = (a ++ cs) : applyHeaders' b css
-        where
-            applyHeaders' :: String -> [String] -> [String]
-            applyHeaders' _ [] = []
-            applyHeaders' b' (cs':css') = (b' ++ cs') : applyHeaders' b' css'
-
-
+      where
+        applyHeaders' :: String -> [String] -> [String]
+        applyHeaders' _ [] = []
+        applyHeaders' b' (cs':css') = (b' ++ cs') : applyHeaders' b' css'
     remainderLineLength :: Int
     remainderLineLength = wrapLineLength args - ((length $ messageHeaderText t) + 3)
     messageHeader :: Bool -> LogType -> String
@@ -103,12 +101,12 @@ splitToLines :: Int -> Int -> String -> [String]
 splitToLines f r s
     | f <= 0 || r <= 0 = [s]
     | otherwise = firstF : otherLines
-        where
-            (firstF, rest) = splitAt f s
-            otherLines = splitToLines' r rest
-            splitToLines' :: Int -> String -> [String]
-            splitToLines' _ [] = []
-            splitToLines' r' s' = line : others
-                where
-                    (line, rest') = splitAt r' s'
-                    others = splitToLines' r' rest'
+  where
+    (firstF, rest) = splitAt f s
+    otherLines = splitToLines' r rest
+    splitToLines' :: Int -> String -> [String]
+    splitToLines' _ [] = []
+    splitToLines' r' s' = line : others
+      where
+        (line, rest') = splitAt r' s'
+        others = splitToLines' r' rest'
