@@ -74,7 +74,7 @@ build: ./emperor ## Build everything, explicitly
 
 ./emperor.json:;
 
-install: /usr/bin/emperor /usr/share/man/man1/emperor.1.gz $(COMPLETION_INSTALL_LOCATION); ## Install binaries, libraries and documentation
+install: /usr/bin/emperor /usr/share/man/man1/emperor.1.gz $(COMPLETION_INSTALL_LOCATION) ## Install binaries, libraries and documentation
 .PHONY: install
 
 /usr/bin/emperor: ./dist/build/emperor/emperor
