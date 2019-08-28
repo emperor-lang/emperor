@@ -48,7 +48,7 @@ $stringchar = [^\n"]
 @docEnd = @tabs? "*/" \n?
 @docLineStart = @tabs? " *" (@spaces | @tabs)?
 
-@lineComment = \/\/ .* @newline @tabs?
+@lineComment = \/\/ .* (@newline @tabs?)+
 @ignoredWhitespace = \\ @newline @whitespace*
 
 :-
