@@ -10,7 +10,7 @@ Language    : Haskell2010
 
 Holds the results of code generation
 -}
-module CodeGenerator.Results (GenerationResult(..), makeHeaderLines, makeHeaderAndBodyLines, makeBodyLines, makeConstant, getHeaderLines, getBodyLines, getConstantMapping) where
+module CodeGenerator.Results (GenerationResult(..), makeHeaderLines, makeHeaderAndBodyLines, makeBodyLines, makeConstant, getHeaderLines, getBodyLines, getConstantMapping, wrapLastBodyLine) where
 
 import Parser.AST (Value)
 import Data.Monoid ((<>))
@@ -43,3 +43,8 @@ getBodyLines (GenerationResult _ bs _) = bs
 
 getConstantMapping :: GenerationResult -> [(String, Value)]
 getConstantMapping (GenerationResult _ _ m) = m
+
+wrapLastBodyLine :: GenerationResult -> (String -> String) -> GenerationResult
+wrapLastBodyLine (GenerationResult hs bs m) f = GenerationResult hs bs' m
+    where
+        bs' = init bs ++ [f $ last bs]
