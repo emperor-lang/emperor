@@ -39,9 +39,12 @@ import Types.Imports.JsonIO (Header(..), isHeaderFile, readHeader, writeHeader)
 -- | Write a header to a file
 writeHeader :: FilePath -> AST -> IO ()
 writeHeader f a = do
-    let g = getLocalEnvironment a
-    let h = generateHeader g a
-    Types.Imports.JsonIO.writeHeader h f
+    let r = getLocalEnvironment a
+    case r of
+        Right g -> do
+            let h = generateHeader g a
+            Types.Imports.JsonIO.writeHeader h f
+        Left m -> error m
   where
     generateHeader :: TypeEnvironment -> AST -> Header
     generateHeader g' (AST (Module i _) is _) = Header i (loc <$> is) g'
@@ -50,11 +53,11 @@ writeHeader f a = do
         loc (Import l _ _) = l
 
 -- | Obtain the type environment created by the content of the module
-getLocalEnvironment :: AST -> TypeEnvironment
+getLocalEnvironment :: AST -> Either String TypeEnvironment
 getLocalEnvironment (AST _ _ as) = getLocalEnvironment' as
   where
-    getLocalEnvironment' :: [ModuleItem] -> TypeEnvironment
-    getLocalEnvironment' [] = newTypeEnvironment
+    getLocalEnvironment' :: [ModuleItem] -> Either String TypeEnvironment
+    getLocalEnvironment' [] = Right newTypeEnvironment
     getLocalEnvironment' (m:ms) =
         case m of
             Component {} ->
@@ -62,7 +65,11 @@ getLocalEnvironment (AST _ _ as) = getLocalEnvironment' as
                     "Components have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
             TypeClass {} ->
                 error "Classes have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
-            FunctionItem (FunctionDef (FunctionTypeDef (Ident i _) t _) _ _ _) _ -> insert i t $ getLocalEnvironment' ms
+            FunctionItem (FunctionDef (FunctionTypeDef (Ident i _) t _) _ _ _) _ -> case getLocalEnvironment' ms of
+                Right g -> if g `has` i
+                    then Left $ "Function " ++ show i ++ " already exists in the current scope"
+                    else Right $ insert i t g
+                x -> x
 
 -- | Given a set of imports, obtain the type environment they form.
 getEnvironment :: Loggers -> [Import] -> IO (Either String TypeEnvironment)
