@@ -164,34 +164,38 @@ instance Typable Call where
         if unsafeGet "@" g == Unit && p == Impure
             then Invalid "Impure call in pure environment"
             else case g =>> i of
-                Valid t ->
-                    case t of
-                        EFunction p' t1 t2 ->
-                            case g |- p <: p' of
-                                Pass ->
-                                    let types = getTypeList (EFunction p' t1 t2)
-                                    in let expectedInputTypes = init types
-                                        in let expectedOutputType = last types
-                                            in if length expectedInputTypes == length es
-                                                    then let inputTypeJudgements = (g |>) <$> es
-                                                        in if all isValid inputTypeJudgements
-                                                                then case unpackTypes inputTypeJudgements of
-                                                                        Right inputTypes ->
-                                                                            if all isValid $
-                                                                                (g |-) <$>
-                                                                                zipWith (<:) inputTypes expectedInputTypes
-                                                                                then Valid expectedOutputType
-                                                                                else Invalid
-                                                                                        "Some input type is not a sub-type of the expected"
-                                                                        Left m -> Invalid m
-                                                                else head $ filter (not . isValid) inputTypeJudgements
-                                                    else Invalid $
-                                                        "Expected " ++
-                                                        (show . length) expectedInputTypes ++
-                                                        " inputs to function, got " ++ (show . length) es
-                                Fail m -> Invalid m
-                        x -> Invalid $ "Expected function type, got " ++ show x ++ " instead."
-                x -> x
+                     Valid t ->
+                         case t of
+                             EFunction p' t1 t2 ->
+                                 case g |- p <: p' of
+                                     Pass ->
+                                         let types = getTypeList (EFunction p' t1 t2)
+                                          in let expectedInputTypes = init types
+                                              in let expectedOutputType = last types
+                                                  in if length expectedInputTypes == length es
+                                                         then let inputTypeJudgements = (g |>) <$> es
+                                                               in if all isValid inputTypeJudgements
+                                                                      then case unpackTypes inputTypeJudgements of
+                                                                               Right inputTypes ->
+                                                                                   if all isValid $
+                                                                                      (g |-) <$>
+                                                                                      zipWith
+                                                                                          (<:)
+                                                                                          inputTypes
+                                                                                          expectedInputTypes
+                                                                                       then Valid expectedOutputType
+                                                                                       else Invalid
+                                                                                                "Some input type is not a sub-type of the expected"
+                                                                               Left m -> Invalid m
+                                                                      else head $
+                                                                           filter (not . isValid) inputTypeJudgements
+                                                         else Invalid $
+                                                              "Expected " ++
+                                                              (show . length) expectedInputTypes ++
+                                                              " inputs to function, got " ++ (show . length) es
+                                     Fail m -> Invalid m
+                             x -> Invalid $ "Expected function type, got " ++ show x ++ " instead."
+                     x -> x
 
 assert :: Bool -> String -> TypeJudgementResult -> TypeJudgementResult
 assert False s _ = Invalid s

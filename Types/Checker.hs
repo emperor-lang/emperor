@@ -33,14 +33,7 @@ import Parser.AST
 import Types.Environment (TypeEnvironment(..), (=>>), fromList, insert, unsafeGet)
 import Types.Imports.Imports (getLocalEnvironment)
 import Types.Judger ((|>))
-import Types.Results
-    ( EmperorType(..)
-    , Purity(..)
-    , TypeCheckResult(..)
-    , TypeJudgementResult(..)
-    , getTypeList
-    , isValid
-    )
+import Types.Results (EmperorType(..), Purity(..), TypeCheckResult(..), TypeJudgementResult(..), getTypeList, isValid)
 import Types.SubTyping ((<:), (|-))
 
 -- | Describes objects which may be type-checked.
@@ -67,18 +60,20 @@ instance TypeCheck ModuleItem where
 
 -- | A function definition may be type-checked using its parameters applied to its contents
 instance TypeCheck FunctionDef where
-    g >- (FunctionDef (FunctionTypeDef _ t _) is bs _) = case g' >- t of
-        Pass -> g' `check` bs
-        x -> x
+    g >- (FunctionDef (FunctionTypeDef _ t _) is bs _) =
+        case g' >- t of
+            Pass -> g' `check` bs
+            x -> x
       where
         g' :: TypeEnvironment
-        g' = case t of
-            EFunction p _ _ -> insert "@" p' g''
-                where
-                    p' = case p of
-                        Pure -> Unit
-                        Impure -> Any
-            _ -> g''
+        g' =
+            case t of
+                EFunction p _ _ -> insert "@" p' g''
+                    where p' =
+                              case p of
+                                  Pure -> Unit
+                                  Impure -> Any
+                _ -> g''
         g'' :: TypeEnvironment
         g'' = insert "return" returnType (fromList $ ((\(Ident i _) -> i) <$> is) `zip` paramTypes) <> g
         paramTypes = init $ getTypeList t
@@ -91,22 +86,26 @@ instance TypeCheck EmperorType where
     _ >- RealP = Pass
     g >- (ESet t) = g >- t
     g >- (EList t) = g >- t
-    g >- (ETuple ts) = if all isValid $ (g >-) <$> ts
-        then Pass
-        else Fail "Purity mis-match in tuple"
-    g >- (ERecord m) = if all isValid $ (g >-) <$> elems m
-        then Pass
-        else Fail "Purity mis-match in record"
+    g >- (ETuple ts) =
+        if all isValid $ (g >-) <$> ts
+            then Pass
+            else Fail "Purity mis-match in tuple"
+    g >- (ERecord m) =
+        if all isValid $ (g >-) <$> elems m
+            then Pass
+            else Fail "Purity mis-match in record"
     g >- (EFunction p ti to) =
         case g =>> "@" of
-            Valid Any -> case g >- ti of
+            Valid Any ->
+                case g >- ti of
                     Pass -> g >- to
                     x -> x
-            Valid Unit -> if p == Pure
-                then case g >- ti of
-                    Pass -> g >- to
-                    x -> x
-                else Fail "Impure function type in pure context"
+            Valid Unit ->
+                if p == Pure
+                    then case g >- ti of
+                             Pass -> g >- to
+                             x -> x
+                    else Fail "Impure function type in pure context"
             Valid t -> Fail $ "Managed to get " ++ show t ++ " when checking purity D:"
             Invalid m -> Fail m
     _ >- Any = Pass
