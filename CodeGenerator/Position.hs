@@ -11,7 +11,8 @@ Language    : Haskell2010
 Creates the #line directives for items with a position in code.
 -}
 module CodeGenerator.Position
-    ( generatePos
+    ( GetPos
+    , generatePos
     ) where
 
 import Parser.EmperorLexer (AlexPosn(..))
