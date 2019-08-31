@@ -20,11 +20,13 @@ PARSER_GENERATOR_FLAGS := -ga -m emperorParser
 PATCH := patch
 PATCHFLAGS := -F 1 -s # One line of fuzz is permitted as one lexer patch context catches an Alex address table
 FORMATTER_FLAGS_VALIDATE := $(FORMATTER_FLAGS) --validate
-LEXER_GENERATOR = alex
-LEXER_GENERATOR_FLAGS = -g
-PARSER_GENERATOR = happy
-PARSER_GENERATOR_FLAGS = -ga $(PARSER_DEBUG_FLAGS) -m emperorParser
+LEXER_GENERATOR := alex
+LEXER_GENERATOR_FLAGS := -g
+PARSER_GENERATOR := happy
+PARSER_GENERATOR_FLAGS := -ga $(PARSER_DEBUG_FLAGS) -m emperorParser
 SOFT_LINK_COMMAND = [[ ! -f $@ ]] && ln -s $^ $@
+
+HEADER_INSTALL_DIRECTORY = $(shell emperor-setup --include-location)
 
 # Code up-keep commands
 LINTER := hlint
@@ -32,6 +34,7 @@ LINTER_FLAGS := -s
 FORMATTER := hindent
 FORMATTER_FLAGS := --tab-size 4 --line-length 120
 
+DEFAULT_HEADERS = $(shell find ./IncludedHeaders/ -type f | grep .h | sed "s/\.\/IncludedHeaders\///" | sed "s/^/$(shell emperor-setup --include-location | sed 's/\//\\\\\//g')/")
 COMPLETION_INSTALL_LOCATION = /usr/share/bash-completion/completions/emperor
 
 .DEFAULT_GOAL := all
@@ -74,8 +77,11 @@ build: ./emperor ## Build everything, explicitly
 
 ./emperor.json:;
 
-install: /usr/bin/emperor /usr/share/man/man1/emperor.1.gz $(COMPLETION_INSTALL_LOCATION) ## Install binaries, libraries and documentation
+install: /usr/bin/emperor /usr/share/man/man1/emperor.1.gz $(COMPLETION_INSTALL_LOCATION) $(DEFAULT_HEADERS) ## Install binaries, libraries and documentation
 .PHONY: install
+
+$(HEADER_INSTALL_DIRECTORY)%.h: IncludedHeaders/%.h
+	sudo install -m 644 $^ $@
 
 /usr/bin/emperor: ./dist/build/emperor/emperor
 	sudo install -m 755 $^ $@
@@ -124,6 +130,7 @@ clean-installation: ## Remove installed executables, libraries and documentation
 	sudo $(RM) /usr/bin/emperor
 	sudo $(RM) /usr/share/man/man1/emperor.1.gz
 	sudo $(RM) /usr/share/bash-completion/completions/emperor 2>/dev/null || true
+	sudo $(RM) -r $(shell emperor-setup -C)
 .PHONY: clean-installation
 
 clean: ## Delete all generated files
