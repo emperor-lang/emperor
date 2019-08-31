@@ -67,11 +67,13 @@ instance TypeCheck ModuleItem where
 
 -- | A function definition may be type-checked using its parameters applied to its contents
 instance TypeCheck FunctionDef where
-    g >- (FunctionDef (FunctionTypeDef _ t _) is bs _) = g' `check` bs
-      where
-        g' :: TypeEnvironment
-        g' = insert "return" returnType (fromList $ ((\(Ident i _) -> i) <$> is) `zip` paramTypes) <> g
-          where
+    g >- (FunctionDef (FunctionTypeDef _ t _) is bs _) = if length paramTypes /= length is then
+                Fail "Number of parameters does not correspond to the input type"
+            else
+                g' `check` bs
+        where
+            g' :: TypeEnvironment
+            g' = insert "return" returnType (fromList $ ((\(Ident i _) -> i) <$> is) `zip` paramTypes) <> g
             paramTypes = init $ getTypeList t
             returnType = last $ getTypeList t
 
@@ -156,19 +158,27 @@ check g (b':bs') =
                     case g |- Impure <: p of
                         Pass ->
                             case g |> Call p (Ident i q) es q' of
-                                Valid _ -> Pass
+                                Valid _ -> g `check` bs'
                                 Invalid m -> Fail m
                         Fail _ -> Fail "Pure bare calls do not have any effect."
                 Return Nothing _ ->
                     case g =>> "return" of
-                        Valid Unit -> Pass
+                        Valid Unit -> if null bs' then
+                                Pass
+                            else
+                                Fail "Lines are not permitted after return statements"
                         Valid t -> Fail $ "Cannot return the unit, expected " ++ show t
                         Invalid m -> Fail m
                 Return (Just e) _ ->
                     case g =>> "return" of
                         Valid t ->
                             case g |> e of
-                                Valid t' -> g |- t' <: t
+                                Valid t' -> case g |- t' <: t of
+                                    Pass -> if null bs' then
+                                            Pass
+                                        else
+                                            Fail "Lines are not permitted after return statements"
+                                    x -> x
                                 Invalid m -> Fail m
                         Invalid _ -> Fail "Return statement found outside of function"
         IfElse e as bs _ ->
@@ -224,7 +234,7 @@ check g (b':bs') =
                             let g' = insert "caseExpr" t g
                              in let trs = (g' >-) <$> cs
                                  in if all isValid trs
-                                        then Pass
+                                        then g' `check` bs'
                                         else head $ filter (not . isValid) trs
                         x -> x
                 Invalid m -> Fail m
