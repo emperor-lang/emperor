@@ -26,15 +26,14 @@ PARSER_GENERATOR := happy
 PARSER_GENERATOR_FLAGS := -ga $(PARSER_DEBUG_FLAGS) -m emperorParser
 SOFT_LINK_COMMAND = [[ ! -f $@ ]] && ln -s $^ $@
 
-HEADER_INSTALL_DIRECTORY = $(shell emperor-setup --include-location)
-
 # Code up-keep commands
 LINTER := hlint
 LINTER_FLAGS := -s
 FORMATTER := hindent
 FORMATTER_FLAGS := --tab-size 4 --line-length 120
 
-DEFAULT_HEADERS = $(shell find ./IncludedHeaders/ -type f | grep .h | sed "s/\.\/IncludedHeaders\///" | sed "s/^/$(shell emperor-setup --include-location | sed 's/\//\\\\\//g')/")
+HEADER_INSTALL_DIRECTORY = $(shell emperor-setup --language-header-location)
+DEFAULT_HEADERS = $(shell find ./IncludedHeaders/ -type f | grep .h | sed "s/\.\/IncludedHeaders\///" | sed "s/^/$(shell emperor-setup --language-header-location | sed 's/\//\\\\\//g')/")
 COMPLETION_INSTALL_LOCATION = /usr/share/bash-completion/completions/emperor
 
 .DEFAULT_GOAL := all
@@ -80,8 +79,17 @@ build: ./emperor ## Build everything, explicitly
 install: /usr/bin/emperor /usr/share/man/man1/emperor.1.gz $(COMPLETION_INSTALL_LOCATION) $(DEFAULT_HEADERS) ## Install binaries, libraries and documentation
 .PHONY: install
 
-$(HEADER_INSTALL_DIRECTORY)%.h: IncludedHeaders/%.h
-	sudo install -m 644 $^ $@
+$(HEADER_INSTALL_DIRECTORY)%.h: IncludedHeaders/%.h $(HEADER_INSTALL_DIRECTORY)
+	sudo install -m 644 $< $@
+
+$(HEADER_INSTALL_DIRECTORY):
+	sudo mkdir -p $(HEADER_INSTALL_DIRECTORY)
+
+$(HEADER_INSTALL_DIRECTORY)banned/%.h: IncludedHeaders/banned/%.h $(HEADER_INSTALL_DIRECTORY)banned/
+	sudo install -m 644 $< $@
+
+$(HEADER_INSTALL_DIRECTORY)banned/:
+	sudo mkdir -p $(HEADER_INSTALL_DIRECTORY)banned/
 
 /usr/bin/emperor: ./dist/build/emperor/emperor
 	sudo install -m 755 $^ $@
@@ -130,7 +138,8 @@ clean-installation: ## Remove installed executables, libraries and documentation
 	sudo $(RM) /usr/bin/emperor
 	sudo $(RM) /usr/share/man/man1/emperor.1.gz
 	sudo $(RM) /usr/share/bash-completion/completions/emperor 2>/dev/null || true
-	sudo $(RM) -r $(shell emperor-setup -C)
+	$(RM) -r $(shell emperor-setup -C)
+	$(RM) -r $(shell emperor-setup --language-header-location)
 .PHONY: clean-installation
 
 clean: ## Delete all generated files
