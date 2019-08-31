@@ -98,7 +98,7 @@ getEnvironmentFromFile :: Loggers -> ImportType -> FilePath -> IO (Either String
 getEnvironmentFromFile l Local p = getEnvironmentFromFile' l $ "./" ++ p
 getEnvironmentFromFile (err, inf, scc, wrn) Global p = do
     inf "Getting install location"
-    (c, stdoutContent, stderrContent) <- readProcessWithExitCode "emperor-setup" ["-L"] ""
+    (c, stdoutContent, stderrContent) <- readProcessWithExitCode "emperor-setup" ["--get", p] ""
     let libraryInstallationDirectory = init stdoutContent
     if c /= ExitSuccess
         then return . Left $
