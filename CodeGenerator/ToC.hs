@@ -72,8 +72,8 @@ instance ToC Import where
     toC c (Import l _ _) = toC c l
 
 instance ToC ImportLocation where
-    toC c (ImportLocation Global i p) = generatePosLines makeHeaderLines c (ImportLocation Global i p) <> makeHeaderLines ["#include <" ++ toCString c i ++ ">"]
-    toC c (ImportLocation Local i p) = generatePosLines makeHeaderLines c (ImportLocation Local i p) <> makeHeaderLines ["#include \"" ++ toCString c i ++ "\""]
+    toC c (ImportLocation Global i p) = generatePosLines makeHeaderLines c (ImportLocation Global i p) <> makeHeaderLines ["#include <" ++ toCString c i ++ ".h>"]
+    toC c (ImportLocation Local i p) = generatePosLines makeHeaderLines c (ImportLocation Local i p) <> makeHeaderLines ["#include \"" ++ toCString c i ++ ".h\""]
 
 instance ToC ModuleItem where
     toC _ Component{} = error $ "Components have not been implemented yet, and this should have been caught at the type-checking stage??"
