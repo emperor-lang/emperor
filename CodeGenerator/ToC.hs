@@ -109,6 +109,7 @@ instance ToCString EmperorType where
     toCString _ Unit = "void"
 
 instance ToC BodyBlock where
+    -- TODO: make blocks actually work!
     toC c (Line l _) = toC c l
     toC c (IfElse e _ _ _) = makeBodyLines ([makeIndent c ++ "if (" ++ toCString (moreIndent c) e ++ ")", makeIndent c ++ "{"] ++ ["}", "else", "{"] ++ ["}"])
     toC c (While e _ _) = makeBodyLines ([makeIndent c ++ "while (" ++ toCString (moreIndent c) e ++ ")", makeIndent c ++ "{"] ++ [makeIndent c ++ "}"])
