@@ -1,5 +1,6 @@
 {
 	"recommendations": [
+		"kcza.emperor-language-support",
 		"ms-vscode.cpptools",
 		"webfreak.debug",
 		"editorconfig.editorconfig",
