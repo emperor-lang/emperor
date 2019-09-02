@@ -23,7 +23,7 @@ import Formatter.Formatter (formatFresh)
 import Logger.Logger (Loggers, makeLoggers)
 import Optimiser.Optimise (optimiseAST)
 import Parser.EmperorParserWrapper (AST, parse)
-import StandaloneCompiler.StandaloneCompile (nativeCompile)
+import StandaloneCompiler.Compile (nativeCompile)
 import System.Exit (exitFailure, exitSuccess)
 import Types.Types (TypeCheckResult(..), resolveTypes, writeHeader)
 
@@ -51,20 +51,20 @@ main = do
                 (not (entryPoint args) && outputFile args /= "-")
                 (do inf "Outputting header..."
                     writeHeader (outputFile args ++ ".eh.json.gz") prog)
-            (b,h) <- generateCode args (err, inf, scc, wrn) prog
-            if (not . toCOnly) args then
-                nativeCompile args (err, inf, scc, wrn) (b,h)
-            else if outputFile args == "-"
-                then do
-                    putStr h
-                    putStr b
-                else do
-                    inf $ "Writing to " ++ outputFile args ++ ".h"
-                    writeFile (outputFile args ++ ".h") h
-                    scc "Written header"
-                    inf $ "Writing to " ++ outputFile args ++ ".c"
-                    writeFile (outputFile args ++ ".c") b
-                    scc "Written payload"
+            (b, h) <- generateCode args (err, inf, scc, wrn) prog
+            if (not . toCOnly) args
+                then nativeCompile args (err, inf, scc, wrn) (b, h)
+                else if outputFile args == "-"
+                         then do
+                             putStr h
+                             putStr b
+                         else do
+                             inf $ "Writing to " ++ outputFile args ++ ".h"
+                             writeFile (outputFile args ++ ".h") h
+                             scc "Written header"
+                             inf $ "Writing to " ++ outputFile args ++ ".c"
+                             writeFile (outputFile args ++ ".c") b
+                             scc "Written payload"
 
 typeCheck :: Args -> Loggers -> AST -> IO ()
 typeCheck _ (err, inf, scc, wrn) prog = do

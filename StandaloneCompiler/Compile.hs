@@ -1,13 +1,15 @@
-module StandaloneCompiler.StandaloneCompile (nativeCompile) where
+module StandaloneCompiler.Compile
+    ( nativeCompile
+    ) where
 
 import Args (Args, input, outputFile)
-import System.IO (hPutStr, stderr)
 import Logger.Logger (Loggers)
-import System.Process (readProcessWithExitCode)
 import System.Exit (ExitCode(ExitSuccess), exitFailure)
+import System.IO (hPutStr, stderr)
+import System.Process (readProcessWithExitCode)
 
-nativeCompile :: Args -> Loggers -> (String,String) -> IO ()
-nativeCompile args (err, inf, wrn, scc) (b,h) = do
+nativeCompile :: Args -> Loggers -> (String, String) -> IO ()
+nativeCompile args (err, inf, wrn, scc) (b, h) = do
     let prog = h ++ '\n' : b
     inf "Compiling natively"
     cfsr <- getCflags (err, inf, wrn, scc)
@@ -24,20 +26,22 @@ nativeCompile args (err, inf, wrn, scc) (b,h) = do
                     hPutStr stderr m
                     exitFailure
                 Right ls -> do
-                    let outFile = if outputFile args /= "-" then
-                            outputFile args
-                        else if input args /= "" then
-                            input args
-                        else
-                            "a.out"
+                    let outFile =
+                            if outputFile args /= "-"
+                                then outputFile args
+                                else if input args /= ""
+                                         then input args
+                                         else "a.out"
                     inf $ (show . outputFile) args ++ " " ++ (show . input) args ++ " " ++ show outFile
-                    (c, outs, errs) <- readProcessWithExitCode "gcc-8" (words cfs ++ ["-xc", "-", "-o", outFile] ++ words ls) prog
-                    if c /= ExitSuccess then do
-                        err "GCC produced the following error(s)"
-                        hPutStr stderr errs
-                        exitFailure
-                    else do
-                        putStr outs
+                    (c, outs, errs) <-
+                        readProcessWithExitCode "gcc-8" (words cfs ++ ["-xc", "-", "-o", outFile] ++ words ls) prog
+                    if c /= ExitSuccess
+                        then do
+                            err "GCC produced the following error(s)"
+                            hPutStr stderr errs
+                            exitFailure
+                        else do
+                            putStr outs
 
 getCflags :: Loggers -> IO (Either String String)
 getCflags (_, inf, _, _) = do
@@ -52,7 +56,6 @@ getLibs (_, inf, _, _) = do
 getFromSetup :: [String] -> IO (Either String String)
 getFromSetup fs = do
     (c, out, err) <- readProcessWithExitCode "emperor-setup" fs ""
-    if c /= ExitSuccess then
-        return $ Left err
-    else
-        return . Right $ init out
+    if c /= ExitSuccess
+        then return $ Left err
+        else return . Right $ init out

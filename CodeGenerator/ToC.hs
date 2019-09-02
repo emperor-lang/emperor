@@ -52,7 +52,11 @@ class ToCString a where
     toCString :: GenerationContext -> a -> String
 
 instance ToC AST where
-    toC c (AST m is ms) = makeHeaderLines ["#ifndef " ++ includeGuard, "#define " ++ includeGuard, ""] <> toC c m <> (foldr (<>) mempty $ toC c <$> is) <> makeHeaderLines ["", "#include <banned.h>", ""] <> (foldr (<>) mempty $ toC c <$> ms) <> makeHeaderLines ["", "#endif /* " ++ includeGuard ++ " */"]
+    toC c (AST m is ms) = makeHeaderLines ["#ifndef " ++ includeGuard, "#define " ++ includeGuard, ""] <>
+        toC c m <>
+        foldr (<>) mempty (toC c <$> is) <>
+        makeHeaderLines ["", "#include <banned.h>", ""] <>
+        foldr (<>) mempty (toC c <$> ms) <> makeHeaderLines ["", "#endif /* " ++ includeGuard ++ " */"]
         where
             includeGuard = "__" ++ (toUpper <$> ((sanitise .  sourceFile) c)) ++ "_H_"
             sanitise :: String -> String
