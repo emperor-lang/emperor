@@ -197,7 +197,7 @@ body : bodyBlock        { [$1] }
 
 bodyBlock :: {BodyBlock}
 bodyBlock : bodyLine ";"                                    { Line $1 (getPos $1) }
-          | "if" expr ":" body "else" ":" body "#"          { IfElse $2 $4 $7 (position $1) }
+          | "if" expr ":" body "#" "else" ":" body "#"      { IfElse $2 $4 $8 (position $1) }
           | "while" expr ":" body "#"                       { While $2 $4 (position $1) }
           | "for" IDENT "<-" expr ":" body "#"              { For (Ident (identifierVal $2) (position $1)) $4 $6 (position $1) }
           | "repeat" expr ":" body "#"                      { Repeat $2 $4 (position $1) }
