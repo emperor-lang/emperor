@@ -85,11 +85,11 @@
 		{
 			"short": "-c",
 			"long": "--to-c",
-			"dest": "compileCOnly",
+			"dest": "toCOnly",
 			"type": "flag",
 			"default": "false",
 			"mandatory": false,
-			"help": "Translate to C (skips compilation step)"
+			"help": "Compile the input as a single executable"
 		},
 		{
 			"short": "-o",

@@ -52,7 +52,11 @@ class ToCString a where
     toCString :: GenerationContext -> a -> String
 
 instance ToC AST where
-    toC c (AST m is ms) = makeHeaderLines ["#ifndef " ++ includeGuard, "#define " ++ includeGuard, ""] <> toC c m <> (foldr (<>) mempty $ toC c <$> is) <> makeHeaderLines ["", "#include <banned.h>", ""] <> (foldr (<>) mempty $ toC c <$> ms) <> makeHeaderLines ["", "#endif /* " ++ includeGuard ++ " */"]
+    toC c (AST m is ms) = makeHeaderLines ["#ifndef " ++ includeGuard, "#define " ++ includeGuard, ""] <>
+        toC c m <>
+        foldr (<>) mempty (toC c <$> is) <>
+        makeHeaderLines ["", "#include <banned.h>", ""] <>
+        foldr (<>) mempty (toC c <$> ms) <> makeHeaderLines ["", "#endif /* " ++ includeGuard ++ " */"]
         where
             includeGuard = "__" ++ (toUpper <$> ((sanitise .  sourceFile) c)) ++ "_H_"
             sanitise :: String -> String
@@ -66,7 +70,9 @@ instance ToC AST where
                 replace x = x
 
 instance ToC ModuleHeader where
-    toC c (Module i p) = generatePosLines makeHeaderAndBodyLines c (Module i p) <> makeBodyLines ["#include \"" ++ destFile c ++ ".h\""] <> makeHeaderAndBodyLines ["// This is module " ++ show (toCString c i) ++ " generated from " ++ (show . sourceFile) c ++ " by emperor"] <> makeHeaderLines ["#pragma GCC dependency " ++ (show . sourceFile) c, "", "#include <OS.h>"]
+    toC c (Module i p) = generatePosLines makeHeaderAndBodyLines c (Module i p) <> headerInclude <> makeHeaderAndBodyLines ["// This is module " ++ show (toCString c i) ++ " generated from " ++ (show . sourceFile) c ++ " by emperor"] <> makeHeaderLines ["#pragma GCC dependency " ++ (show . sourceFile) c, "", "#include <OS.h>"]
+        where
+            headerInclude = makeBodyLines $ if destFile c /= "stdout" then ["#include \"" ++ destFile c ++ ".h\""] else []
 
 instance ToC Import where
     toC c (Import l _ _) = toC c l
