@@ -125,7 +125,7 @@ instance ToC BodyLine where
     toC c (Return Nothing p) = generatePosLines makeBodyLines c (Return Nothing p) <> makeBodyLines [makeIndent c ++ "return" ++ ";"]
     toC c (Return (Just v) p) = generatePosLines makeBodyLines c (Return (Just v) p) <> makeBodyLines [makeIndent c ++ "return " ++ toCString c v ++ ";"]
 
-generatePosLines :: GetPos a => ([String] -> GenerationResult) ->  GenerationContext -> a -> GenerationResult
+generatePosLines :: GetPos a => ([String] -> GenerationResult) -> GenerationContext -> a -> GenerationResult
 generatePosLines f c x = let s = generatePos c x in if null s
     then mempty
     else f [s]
