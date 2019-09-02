@@ -77,7 +77,7 @@ instance ToC ImportLocation where
 
 instance ToC ModuleItem where
     toC _ Component{} = error $ "Components have not been implemented yet, and this should have been caught at the type-checking stage??"
-    toC _ TypeClass{} = error $ "TypeClasses have not been implemented yet, and this should have been caught at the type-checking stage??"
+    toC _ TypeClass{} = mempty
     toC c (FunctionItem f p) = makeBodyLines [""] <> generatePosLines makeHeaderAndBodyLines c (FunctionItem f p) <> toC c f
 
 instance ToC FunctionDef where
