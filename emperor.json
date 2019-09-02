@@ -83,13 +83,13 @@
 			"help": "Compiler optimisation level as specified in **gcc**"
 		},
 		{
-			"short": "-c",
-			"long": "--to-c",
-			"dest": "compileCOnly",
+			"short": "-s",
+			"long": "--standalone",
+			"dest": "standaloneCompile",
 			"type": "flag",
 			"default": "false",
 			"mandatory": false,
-			"help": "Translate to C (skips compilation step)"
+			"help": "Compile the input as a single executable"
 		},
 		{
 			"short": "-o",
