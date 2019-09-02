@@ -83,9 +83,9 @@
 			"help": "Compiler optimisation level as specified in **gcc**"
 		},
 		{
-			"short": "-s",
-			"long": "--standalone",
-			"dest": "standaloneCompile",
+			"short": "-c",
+			"long": "--to-c",
+			"dest": "toCOnly",
 			"type": "flag",
 			"default": "false",
 			"mandatory": false,

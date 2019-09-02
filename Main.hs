@@ -16,7 +16,7 @@ module Main
     ( main
     ) where
 
-import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv, standaloneCompile, version)
+import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv, toCOnly, version)
 import CodeGenerator.Generate (generate)
 import Control.Monad (when)
 import Formatter.Formatter (formatFresh)
@@ -52,7 +52,7 @@ main = do
                 (do inf "Outputting header..."
                     writeHeader (outputFile args ++ ".eh.json.gz") prog)
             (b,h) <- generateCode args (err, inf, scc, wrn) prog
-            if standaloneCompile args then
+            if (not . toCOnly) args then
                 nativeCompile args (err, inf, scc, wrn) (b,h)
             else if outputFile args == "-"
                 then do
