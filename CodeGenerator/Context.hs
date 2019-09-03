@@ -21,10 +21,11 @@ module CodeGenerator.Context
     , makeContext
     , makeIndent
     , moreIndent
+    , nativeCompile
     , sourceFile
     ) where
 
-import Args (Args, entryPoint, input, outputFile, annotateSource)
+import qualified Args (Args, entryPoint, input, outputFile, annotateSource, toCOnly)
 
 data GenerationContext =
     GenerationContext
@@ -33,14 +34,15 @@ data GenerationContext =
         , destFile :: FilePath
         , indent :: Int
         , annotation :: Int
+        , nativeCompile :: Bool
         }
     deriving (Show)
 
-makeContext :: Args -> GenerationContext
-makeContext args = GenerationContext { isEntryPoint = entryPoint args, sourceFile = inputFile, indent = 0, destFile = outFile, annotation = annotateSource args }
+makeContext :: Args.Args -> GenerationContext
+makeContext args = GenerationContext { isEntryPoint = Args.entryPoint args, sourceFile = inputFile, indent = 0, destFile = outFile, annotation = Args.annotateSource args, nativeCompile = (not . Args.toCOnly) args }
     where
-        inputFile = if null $ input args then "stdin" else input args
-        outFile = if outputFile args == "-" then "stdout" else outputFile args
+        inputFile = if null $ Args.input args then "stdin" else Args.input args
+        outFile = if Args.outputFile args == "-" then "stdout" else Args.outputFile args
 
 makeIndent :: GenerationContext -> String
 makeIndent c = replicate (indent c) '\t'

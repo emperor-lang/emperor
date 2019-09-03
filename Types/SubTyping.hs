@@ -48,7 +48,6 @@ instance SubTypable EmperorType where
     _ |- (SubType a b)
         | a == b = Pass
     _ |- (SubType _ Any) = Pass
-    _ |- (SubType Unit _) = Pass
     _ |- (SubType IntP RealP) = Pass
     e |- (SubType (EList a) (EList b)) = e |- a <: b
     e |- (SubType (ETuple as) (ETuple bs)) =

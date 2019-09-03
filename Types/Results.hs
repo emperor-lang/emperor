@@ -17,6 +17,7 @@ module Types.Results
     ( EmperorType(..)
     , TypeCheckResult(..)
     , TypeJudgementResult(..)
+    , getPurity
     , getTypeList
     , isValid
     , isValidAnd
@@ -95,8 +96,7 @@ data Purity
 
 -- | Class of types which describe type operation results
 class TypeOp a where
-    isValid :: a -> Bool
-    -- ^ Indicates whether a type operation has returned a valid result
+    isValid :: a -> Bool-- ^ Indicates whether a type operation has returned a valid result
 
 instance TypeOp TypeCheckResult where
     isValid Pass = True
@@ -118,6 +118,11 @@ isValidAnd t (Valid t')
 getTypeList :: EmperorType -> [EmperorType]
 getTypeList (EFunction _ t1 t2) = t1 : getTypeList t2
 getTypeList x = [x]
+
+-- | Return the purity of an emperor function type
+getPurity :: EmperorType -> Either String Purity
+getPurity (EFunction p _ _) = Right p
+getPurity t = Left $ "Cannot get purity of type " ++ show t
 
 instance ToJSON EmperorType where
     toJSON IntP = primitiveToJSON "int"

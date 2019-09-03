@@ -201,7 +201,7 @@ bodyBlock : bodyLine ";"                                    { Line $1 (getPos $1
           | "while" expr ":" body "#"                       { While $2 $4 (position $1) }
           | "for" IDENT "<-" expr ":" body "#"              { For (Ident (identifierVal $2) (position $1)) $4 $6 (position $1) }
           | "repeat" expr ":" body "#"                      { Repeat $2 $4 (position $1) }
-          | "with" assignment ":" body "#"                  { With $2 $4 (position $1) }
+          | "with" typedef IDENT "<-" expr ":" body "#"     { With $2 (Ident (identifierVal $3) (position $3)) $5 $7 (position $1) }
           | "switch" expr ":" switchBody "#"                { Switch $2 $4 (position $1) }
 
 switchBody :: {[SwitchCase]}

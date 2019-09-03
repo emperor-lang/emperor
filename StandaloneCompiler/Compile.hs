@@ -9,30 +9,32 @@ import System.IO (hPutStr, stderr)
 import System.Process (readProcessWithExitCode)
 
 nativeCompile :: Args -> Loggers -> (String, String) -> IO ()
-nativeCompile args (err, inf, wrn, scc) (b, h) = do
+nativeCompile args (err, inf, scc, wrn) (b, h) = do
     let prog = h ++ '\n' : b
     inf "Compiling natively"
-    cfsr <- getCflags (err, inf, wrn, scc)
+    cfsr <- getCflags (err, inf, scc, wrn)
     case cfsr of
         Left m -> do
             err "Failed to get c flags from emperor-setup"
             hPutStr stderr m
             exitFailure
         Right cfs -> do
-            lsr <- getLibs (err, inf, wrn, scc)
+            scc "Got C flags"
+            lsr <- getLibs (err, inf, scc, wrn)
             case lsr of
                 Left m -> do
                     err "Failed to get libraries from emperor-setup"
                     hPutStr stderr m
                     exitFailure
                 Right ls -> do
+                    scc "Got libraries"
                     let outFile =
                             if outputFile args /= "-"
                                 then outputFile args
                                 else if input args /= ""
                                          then input args
                                          else "a.out"
-                    inf $ (show . outputFile) args ++ " " ++ (show . input) args ++ " " ++ show outFile
+                    inf $ "Running gcc, outputting to " ++ outFile
                     (c, outs, errs) <-
                         readProcessWithExitCode "gcc-8" (words cfs ++ ["-xc", "-", "-o", outFile] ++ words ls) prog
                     if c /= ExitSuccess
@@ -41,6 +43,7 @@ nativeCompile args (err, inf, wrn, scc) (b, h) = do
                             hPutStr stderr errs
                             exitFailure
                         else do
+                            scc "C compilation complete"
                             putStr outs
 
 getCflags :: Loggers -> IO (Either String String)
