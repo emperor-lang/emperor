@@ -22,6 +22,7 @@ import Parser.AST
     , BodyBlock(..)
     , BodyLine(..)
     , Call(..)
+    , Expr
     , FunctionDef(..)
     , FunctionTypeDef(..)
     , Ident(..)
@@ -29,14 +30,15 @@ import Parser.AST
     , Queue(..)
     , SwitchCase(..)
     )
-import Types.Environment (TypeEnvironment(..), (=>>), fromList, insert, unsafeGet)
+import Types.Environment (TypeEnvironment(..), (=>>), getReturnType, makeEnvironment, getEnvironmentPurity, insert, unsafeGet)
 import Types.Imports.Imports (getLocalEnvironment)
 import Types.Judger ((|>))
 import Types.Results
-    ( EmperorType(BoolP, EFunction, IntP, Unit)
+    ( EmperorType(..)
     , Purity(..)
     , TypeCheckResult(..)
     , TypeJudgementResult(..)
+    , getPurity
     , getTypeList
     , isValid
     )
@@ -67,15 +69,110 @@ instance TypeCheck ModuleItem where
 
 -- | A function definition may be type-checked using its parameters applied to its contents
 instance TypeCheck FunctionDef where
-    g >- (FunctionDef (FunctionTypeDef _ t _) is bs _) = if length paramTypes /= length is then
+    g >- (FunctionDef (FunctionTypeDef _ t _) is bs _) = if length paramTypesMap /= length is then
                 Fail "Number of parameters does not correspond to the input type"
-            else
-                g' `check` bs
+            else case getPurity t of
+                Left m  -> Fail m
+                Right p -> check (makeEnvironment paramTypesMap p [returnType] <> g) bs
         where
-            g' :: TypeEnvironment
-            g' = insert "return" returnType (fromList $ ((\(Ident i _) -> i) <$> is) `zip` paramTypes) <> g
-            paramTypes = init $ getTypeList t
+            paramTypesMap = filter (not . isUnit) $ ((\(Ident i _) -> i) <$> is) `zip` (init $ getTypeList t)
+            isUnit (_,Unit) = True
+            isUnit _ = False
             returnType = last $ getTypeList t
+
+checkLine :: TypeEnvironment -> BodyLine -> Either String TypeEnvironment
+checkLine g l = case l of
+        AssignmentC (Assignment (Just t) (Ident i _) e _) -> checkEnvironmentMutatorLine t i e
+        AssignmentC (Assignment Nothing (Ident i _) e _) -> checkEnvironmentNonMutatorLine i e
+        QueueC (Queue (Just t) (Ident i _) e _) -> checkEnvironmentMutatorLine t i e
+        QueueC (Queue Nothing (Ident i _) e _) -> checkEnvironmentNonMutatorLine i e
+        CallC (Call pty i es p) -> case g |- Impure <: pty of
+            Pass -> case g |> (Call pty i es p) of
+                Valid _ -> Right g
+                Invalid m -> Left m
+            Fail m -> Left m
+        Return Nothing _ -> case getReturnType g of
+            Left _ -> Right g
+            Right _ -> Left "Expected return value in this environment"
+        Return (Just e) _ -> case getReturnType g of
+            Right t -> case g |> e of
+                Valid t' -> case g |- t' <: t of
+                    Pass -> Right g
+                    _ -> Left "This environment does not return a value"
+                Invalid m -> Left m
+            Left m -> Left m
+    where
+        checkEnvironmentMutatorLine :: EmperorType -> String -> Expr -> Either String TypeEnvironment
+        checkEnvironmentMutatorLine t i e = case g =>> i of
+            Invalid _ -> case g |> e of
+                Valid t' -> case g |- t' <: t of
+                    Pass -> Right $ insert i t g
+                    Fail m -> Left m
+                Invalid m -> Left m
+            Valid _ -> Left $ "Identifier " ++ show i ++ " already exists in the current scope"
+
+        checkEnvironmentNonMutatorLine :: String -> Expr -> Either String TypeEnvironment
+        checkEnvironmentNonMutatorLine i e = case g =>> i of
+            Valid t -> case g |> e of
+                Valid t' -> case g |- t' <: t of
+                    Pass -> Right g
+                    Fail m -> Left m
+                Invalid m -> Left m
+            Invalid m -> Left m
+
+check :: TypeEnvironment -> [BodyBlock] -> TypeCheckResult
+check _ [] = Pass
+check g (b:bs) =
+    case b of
+        Line l _ -> case checkLine g l of
+            Left m -> Fail m
+            Right g' -> check g' bs
+        IfElse c bs1 bs2 _ -> case g |> c of
+            Valid t -> case g |- t <: BoolP of
+                Pass -> case check g bs1 of
+                    Pass -> case check g bs2 of
+                        Pass -> g `check` bs
+                        x -> x
+                    x -> x
+                x -> x
+            Invalid m -> Fail m
+        While c bs' _ -> case g |> c of
+            Valid t -> case g |- t <: BoolP of
+                Pass -> case check g bs' of
+                    Pass -> check g bs
+                    x -> x
+                x -> x
+            Invalid m -> Fail m
+        For (Ident i _) e bs' _ -> case g |> e of
+            Valid t -> case g |- t <: EList Any of
+                Pass -> case check (insert i t g) bs' of
+                    Pass -> check g bs
+                    x -> x
+                x -> x
+            Invalid m -> Fail m
+        Repeat e bs' _ -> case g |> e of
+            Valid t -> case g |- t <: IntP of
+                Pass -> case check g bs' of
+                    Pass -> check g bs
+                    x -> x
+                x -> x
+            Invalid m -> Fail m
+        With t (Ident i _) e bs' _ -> if getEnvironmentPurity g == Pure then
+                Fail "With statements are not allowed in a pure scope"
+            else case g |> e of
+                Valid t' -> case g |- t' <: t of
+                    Pass -> case check (insert i t g) bs' of
+                        Pass -> check g bs
+                        x -> x
+                    x -> x
+                Invalid m -> Fail m
+        Switch e bs' _ -> case g |> e of
+            Valid t -> let tcrs = (insert ".switch_case" t g >-) <$> bs' in
+                if all isValid tcrs then
+                    check g bs
+                else
+                    head $ filter (not . isValid) tcrs
+            Invalid m -> Fail m
 
 -- | A switch-case is type-checked by considering the type of its expression and applying this to its contents
 instance TypeCheck SwitchCase where
@@ -84,7 +181,7 @@ instance TypeCheck SwitchCase where
             Valid (EFunction p ti to) ->
                 case g |- p <: Pure of
                     Pass ->
-                        case g =>> "caseExpr" of
+                        case g =>> ".switch_case" of
                             Valid t ->
                                 case g |- t <: ti of
                                     Pass ->
@@ -99,142 +196,3 @@ instance TypeCheck SwitchCase where
                 "Case guard had type " ++
                 show t ++ " but type " ++ show (unsafeGet "caseExpr" g) ++ " -> " ++ show BoolP
             Invalid m -> Fail m
-
-check :: TypeEnvironment -> [BodyBlock] -> TypeCheckResult
-check _ [] = Pass
-check g (b':bs') =
-    case b' of
-        Line l _ ->
-            case l of
-                AssignmentC (Assignment mt (Ident i _) e _) ->
-                    case mt of
-                        Just t ->
-                            case g =>> i of
-                                Valid _ ->
-                                    Fail $
-                                    "Variable " ++
-                                    i ++ " already exists in the current scope. Name shadowing is forbidden."
-                                Invalid _ ->
-                                    case g |> e of
-                                        Valid t' ->
-                                            case g |- t' <: t of
-                                                Pass ->
-                                                    let g' = insert i t g
-                                                     in g' `check` bs'
-                                                x -> x
-                                        Invalid m -> Fail m
-                        Nothing ->
-                            case g =>> i of
-                                Valid t ->
-                                    case g |> e of
-                                        Valid t' ->
-                                            case g |- t <: t' of
-                                                Pass -> g `check` bs'
-                                                x -> x
-                                        Invalid m -> Fail m
-                                Invalid m -> Fail m
-                QueueC (Queue mt (Ident i _) e _) ->
-                    case mt of
-                        Just t ->
-                            case g |> e of
-                                Valid t' ->
-                                    case g |- t' <: t of
-                                        Pass ->
-                                            let g' = insert i t g
-                                             in g' `check` bs'
-                                        x -> x
-                                Invalid m -> Fail m
-                        Nothing ->
-                            case g =>> i of
-                                Valid t ->
-                                    case g |> e of
-                                        Valid t' ->
-                                            case g |- t <: t' of
-                                                Pass -> g `check` bs'
-                                                x -> x
-                                        Invalid m -> Fail m
-                                Invalid m -> Fail m
-                CallC (Call p (Ident i q) es q') ->
-                    case g |- Impure <: p of
-                        Pass ->
-                            case g |> Call p (Ident i q) es q' of
-                                Valid _ -> g `check` bs'
-                                Invalid m -> Fail m
-                        Fail _ -> Fail "Pure bare calls do not have any effect."
-                Return Nothing _ ->
-                    case g =>> "return" of
-                        Valid Unit -> if null bs' then
-                                Pass
-                            else
-                                Fail "Lines are not permitted after return statements"
-                        Valid t -> Fail $ "Cannot return the unit, expected " ++ show t
-                        Invalid m -> Fail m
-                Return (Just e) _ ->
-                    case g =>> "return" of
-                        Valid t ->
-                            case g |> e of
-                                Valid t' -> case g |- t' <: t of
-                                    Pass -> if null bs' then
-                                            Pass
-                                        else
-                                            Fail "Lines are not permitted after return statements"
-                                    x -> x
-                                Invalid m -> Fail m
-                        Invalid _ -> Fail "Return statement found outside of function"
-        IfElse e as bs _ ->
-            case g |> e of
-                Valid t ->
-                    case g |- t <: BoolP of
-                        Pass ->
-                            case g `check` as of
-                                Pass -> g `check` bs
-                                x -> x
-                        x -> x
-                Invalid m -> Fail m
-        While e as _ ->
-            case g |> e of
-                Valid t ->
-                    case g |- t <: BoolP of
-                        Pass -> g `check` as
-                        x -> x
-                Invalid m -> Fail m
-        For (Ident i _) e as _ ->
-            case g |> e of
-                Valid t ->
-                    let g' = insert i t g
-                     in g' `check` as
-                Invalid m -> Fail m
-        Repeat e as _ ->
-            case g |> e of
-                Valid t ->
-                    case g |- t <: IntP of
-                        Pass -> g `check` as
-                        x -> x
-                Invalid m -> Fail m
-        With (Assignment Nothing (Ident i _) e _) bs _ ->
-            case g |> e of
-                Valid t ->
-                    let g' = insert i t g
-                     in g' `check` bs
-                Invalid m -> Fail m
-        With (Assignment (Just t) (Ident i _) e _) bs _ ->
-            case g |> e of
-                Valid t' ->
-                    case g |- t' <: t of
-                        Pass ->
-                            let g' = insert i t' g
-                             in g' `check` bs
-                        x -> x
-                Invalid m -> Fail m
-        Switch e cs _ ->
-            case g |> e of
-                Valid t ->
-                    case g |- t <: BoolP of
-                        Pass ->
-                            let g' = insert "caseExpr" t g
-                             in let trs = (g' >-) <$> cs
-                                 in if all isValid trs
-                                        then g' `check` bs'
-                                        else head $ filter (not . isValid) trs
-                        x -> x
-                Invalid m -> Fail m
