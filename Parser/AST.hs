@@ -117,7 +117,7 @@ data BodyBlock
     | While Expr [BodyBlock] AlexPosn -- ^ A while-loop
     | For Ident Expr [BodyBlock] AlexPosn -- ^ A for-loop
     | Repeat Expr [BodyBlock] AlexPosn -- ^ A repeat-loop
-    | With Assignment [BodyBlock] AlexPosn -- ^ A resource acquisition
+    | With EmperorType Ident Expr [BodyBlock] AlexPosn -- ^ A resource acquisition
     | Switch Expr [SwitchCase] AlexPosn -- ^ A switch-case statement
     deriving (Show)
 

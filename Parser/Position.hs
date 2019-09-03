@@ -78,7 +78,7 @@ instance GetPos BodyBlock where
     getPos (While _ _ p) = p
     getPos (For _ _ _ p) = p
     getPos (Repeat _ _ p) = p
-    getPos (With _ _ p) = p
+    getPos (With _ _ _ _ p) = p
     getPos (Switch _ _ p) = p
 
 instance GetPos SwitchCase where

@@ -149,20 +149,20 @@ instance Format BodyBlock where
     format ctx (Line l _) = format ctx l
     format ctx (IfElse c b1 b2 _) =
         unlines $
-        [indent ctx ++ "if " ++ format (ctx + 1) c] ++
-        (format (ctx + 1) <$> b1) ++ [indent ctx ++ "else"] ++ (format (ctx + 1) <$> b2) ++ [indent ctx ++ "#"]
+        [indent ctx ++ "if " ++ format (ctx + 1) c ++ ":"] ++
+        (format (ctx + 1) <$> b1) ++ [indent ctx ++ "#else:"] ++ (format (ctx + 1) <$> b2) ++ [indent ctx ++ "#"]
     format ctx (While c b _) =
-        unlines $ [indent ctx ++ "while " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+        unlines $ [indent ctx ++ "while " ++ format (ctx + 1) c ++ ":"] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
     format ctx (For i e b _) =
         unlines $
-        [indent ctx ++ "for " ++ format (ctx + 1) i ++ " <- " ++ format (ctx + 1) e] ++
+        [indent ctx ++ "for " ++ format (ctx + 1) i ++ " <- " ++ format (ctx + 1) e ++ ":"] ++
         (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
     format ctx (Repeat c b _) =
-        unlines $ [indent ctx ++ "repeat " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
-    format ctx (With a b _) =
-        unlines $ [indent ctx ++ "with " ++ format (ctx + 1) a] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+        unlines $ [indent ctx ++ "repeat " ++ format (ctx + 1) c ++ ":"] ++ (format (ctx + 1) <$> b) ++ [indent ctx ++ "#"]
+    format ctx (With t i e bs p) =
+        unlines $ [indent ctx ++ "with " ++ format (ctx + 1) (Assignment (Just t) i e p) ++ ":"] ++ (format (ctx + 1) <$> bs) ++ [indent ctx ++ "#"]
     format ctx (Switch c s _) =
-        unlines $ [indent ctx ++ "switch " ++ format (ctx + 1) c] ++ (format (ctx + 1) <$> s) ++ [indent ctx ++ "#"]
+        unlines $ [indent ctx ++ "switch " ++ format (ctx + 1) c ++ ":"] ++ (format (ctx + 1) <$> s) ++ [indent ctx ++ "#"]
 
 -- | Switch-cases may be formatted with their case contents
 instance Format SwitchCase where
