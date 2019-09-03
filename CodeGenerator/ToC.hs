@@ -19,7 +19,7 @@ module CodeGenerator.ToC
     , toCString
     ) where
 
-import CodeGenerator.Context (GenerationContext, destFile, makeIndent, moreIndent, sourceFile)
+import CodeGenerator.Context (GenerationContext, destFile, makeIndent, moreIndent, nativeCompile, sourceFile)
 import CodeGenerator.Position (GetPos, generatePos)
 import CodeGenerator.Results
     ( GenerationResult
@@ -76,9 +76,10 @@ instance ToC AST where
                 replace x = x
 
 instance ToC ModuleHeader where
-    toC c (Module i p) = generatePosLines makeHeaderAndBodyLines c (Module i p) <> headerInclude <> makeHeaderAndBodyLines ["// This is module " ++ show (toCString c i) ++ " generated from " ++ (show . sourceFile) c ++ " by emperor"] <> makeHeaderLines ["#pragma GCC dependency " ++ (show . sourceFile) c, "", "#include <OS.h>"]
+    toC c (Module i p) = generatePosLines makeHeaderAndBodyLines c (Module i p) <> headerInclude <> makeHeaderAndBodyLines ["// This is module " ++ show (toCString c i) ++ " generated from " ++ (show . sourceFile) c ++ " by emperor"] <> makeHeaderLines (dependencyPragma ++ ["#include <OS.h>"])
         where
-            headerInclude = makeBodyLines $ if destFile c /= "stdout" then ["#include \"" ++ destFile c ++ ".h\""] else []
+            headerInclude = makeBodyLines $ if destFile c /= "stdout" && (not . nativeCompile) c then ["#include \"" ++ destFile c ++ ".h\""] else []
+            dependencyPragma =  if sourceFile c /= "stdin" then ["#pragma GCC dependency " ++ (show . sourceFile) c, ""] else []
 
 instance ToC Import where
     toC c (Import l _ _) = toC c l
