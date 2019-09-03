@@ -103,13 +103,16 @@ checkLine g l = case l of
             Left m -> Left m
     where
         checkEnvironmentMutatorLine :: EmperorType -> String -> Expr -> Either String TypeEnvironment
-        checkEnvironmentMutatorLine t i e = case g =>> i of
-            Invalid _ -> case g |> e of
-                Valid t' -> case g |- t' <: t of
-                    Pass -> Right $ insert i t g
-                    Fail m -> Left m
-                Invalid m -> Left m
-            Valid _ -> Left $ "Identifier " ++ show i ++ " already exists in the current scope"
+        checkEnvironmentMutatorLine t i e = if t == Unit then
+                Left "Assignments to the unit are valid but pointless, please remove this."
+            else
+                case g =>> i of
+                Invalid _ -> case g |> e of
+                    Valid t' -> case g |- t' <: t of
+                        Pass -> Right $ insert i t g
+                        Fail m -> Left m
+                    Invalid m -> Left m
+                Valid _ -> Left $ "Identifier " ++ show i ++ " already exists in the current scope"
 
         checkEnvironmentNonMutatorLine :: String -> Expr -> Either String TypeEnvironment
         checkEnvironmentNonMutatorLine i e = case g =>> i of
