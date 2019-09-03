@@ -9,10 +9,10 @@ import System.IO (hPutStr, stderr)
 import System.Process (readProcessWithExitCode)
 
 nativeCompile :: Args -> Loggers -> (String, String) -> IO ()
-nativeCompile args (err, inf, wrn, scc) (b, h) = do
+nativeCompile args (err, inf, scc, wrn) (b, h) = do
     let prog = h ++ '\n' : b
     inf "Compiling natively"
-    cfsr <- getCflags (err, inf, wrn, scc)
+    cfsr <- getCflags (err, inf, scc, wrn)
     case cfsr of
         Left m -> do
             err "Failed to get c flags from emperor-setup"
@@ -20,7 +20,7 @@ nativeCompile args (err, inf, wrn, scc) (b, h) = do
             exitFailure
         Right cfs -> do
             scc "Got C flags"
-            lsr <- getLibs (err, inf, wrn, scc)
+            lsr <- getLibs (err, inf, scc, wrn)
             case lsr of
                 Left m -> do
                     err "Failed to get libraries from emperor-setup"
