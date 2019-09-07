@@ -16,6 +16,7 @@ module CodeGenerator.Context
     ( GenerationContext
     , annotation
     , destFile
+    , exposedIdents
     , indent
     , isEntryPoint
     , makeContext
@@ -26,6 +27,7 @@ module CodeGenerator.Context
     ) where
 
 import qualified Args (Args, entryPoint, input, outputFile, annotateSource, toCOnly)
+import Parser.AST (Ident)
 
 data GenerationContext =
     GenerationContext
@@ -35,11 +37,20 @@ data GenerationContext =
         , indent :: Int
         , annotation :: Int
         , nativeCompile :: Bool
+        , exposedIdents :: Maybe [Ident]
         }
     deriving (Show)
 
 makeContext :: Args.Args -> GenerationContext
-makeContext args = GenerationContext { isEntryPoint = Args.entryPoint args, sourceFile = inputFile, indent = 0, destFile = outFile, annotation = Args.annotateSource args, nativeCompile = (not . Args.toCOnly) args }
+makeContext args = GenerationContext
+        { isEntryPoint = Args.entryPoint args
+        , sourceFile = inputFile
+        , indent = 0
+        , destFile = outFile
+        , annotation = Args.annotateSource args
+        , nativeCompile = (not . Args.toCOnly) args
+        , exposedIdents = Nothing
+        }
     where
         inputFile = if null $ Args.input args then "stdin" else Args.input args
         outFile = if Args.outputFile args == "-" then "stdout" else Args.outputFile args

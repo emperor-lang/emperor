@@ -77,7 +77,8 @@ instance Format ImportLocation where
 
 -- | Module headers may be formatted with their docs and name
 instance Format ModuleHeader where
-    format ctx (Module i _) = "module " ++ format ctx i
+    format ctx (Module i Nothing _) = "module " ++ format ctx i
+    format ctx (Module i (Just is) _) = "module " ++ format ctx i ++ '(' : format ctx is ++ ")"
 
 -- | Module items may be formatted by their contents
 instance Format ModuleItem where

@@ -96,9 +96,8 @@ import Parser.Position (GetPos, getPos)
     "class"             { TClass                p }
     "component"         { TComponent            p }
     "#"                 { TBlockSeparator       p }
-    "_"                 { TIDC                  p }
+    -- "_"                 { TIDC                  p }
     "return"            { TReturn               p }
---     EOL                 { TEoL                  p }
 
 %nonassoc PURE
 %nonassoc IMPURE
@@ -128,7 +127,9 @@ ast :: {AST}
 ast : moduleHeader usings moduleBody                 { AST $1 $2 $3 }
 
 moduleHeader :: {ModuleHeader}
-moduleHeader : "module" IDENT ";" { Module (Ident (identifierVal $2) (position $2)) (position $1) }
+moduleHeader : "module" IDENT ";"                   { Module (Ident (identifierVal $2) (position $2)) Nothing (position $1) }
+             | "module" IDENT "(" identList ")" ";" { Module (Ident (identifierVal $2) (position $2)) (Just $4) (position $1) }
+             | "module" IDENT "()" ";"              { Module (Ident (identifierVal $2) (position $2)) (Just []) (position $1) }
 
 -- docs :: {[DocLine]}
 -- docs : DOCLINE          { [ $1] }
