@@ -26,6 +26,7 @@ import Parser.AST
     , FunctionDef(..)
     , FunctionTypeDef(..)
     , Ident(..)
+    , ModuleHeader(..)
     , ModuleItem(..)
     , Queue(..)
     , SwitchCase(..)
@@ -52,14 +53,23 @@ class TypeCheck a where
 
 -- | An AST can be type-checked by applying its environment to its contents.
 instance TypeCheck AST where
-    g >- (AST m is bs) =
-        let trs = (g' >-) <$> bs
-         in if all isValid trs
-                then Pass
-                else head $ filter (not . isValid) trs
-            -- The type environment to use
-      where
-        g' = getLocalEnvironment (AST m is bs) <> g
+    g >- (AST (Module i mis p) is bs) =
+            case mis of
+                Nothing -> typeCheckAST
+                Just is' -> let frs = (\(Ident i' _) -> g' =>> i') <$> is' in
+                    if all isValid frs then
+                        typeCheckAST
+                    else
+                        Fail $ (extractMessage . head . filter (not . isValid)) frs
+        where
+            typeCheckAST = let trs = (g' >-) <$> bs
+                in if all isValid trs
+                        then Pass
+                        else head $ filter (not . isValid) trs
+            g' = getLocalEnvironment (AST (Module i mis p) is bs) <> g
+
+            extractMessage (Invalid m) = m
+            extractMessage _ = error "Attempted to extract error message from an object which is valid"
 
 -- | Module item may be type-checked by considering its contents
 instance TypeCheck ModuleItem where
