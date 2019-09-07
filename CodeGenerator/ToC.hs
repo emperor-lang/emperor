@@ -49,7 +49,7 @@ import Parser.AST
     , Queue(..)
     , Value(..)
     )
-import Types.Results (EmperorType(..), getTypeList)
+import Types.Results (EmperorType(..), Purity(Impure), getTypeList)
 
 class ToC a where
     toC :: GenerationContext -> a -> GenerationResult
@@ -104,7 +104,7 @@ instance ToC ModuleItem where
         makeBodyLines [""] <> generatePosLines makeHeaderAndBodyLines c (FunctionItem f p) <> toC c f
 
 instance ToC FunctionDef where
-    toC c (FunctionDef (FunctionTypeDef i t _) is bs _) =
+    toC c (FunctionDef (FunctionTypeDef i t _) is bs p) =
         prototype <>
         makeBodyLines [returnString ++ " " ++ toCString c i ++ "(" ++ paramSig ++ ")", "{"] <>
         body <> makeBodyLines ["}"]
@@ -113,12 +113,19 @@ instance ToC FunctionDef where
             if null inputTypeMap
                 then "void"
                 else intercalate ", " $ (\(i', t') -> toCString c t' ++ " " ++ toCString c i') <$> inputTypeMap
-        prototype = makeHeaderLines [returnString ++ " " ++ toCString c i ++ "(" ++ paramsPrototypes ++ ");"]
+        prototype = makeHeaderLines [staticString ++ returnString ++ " " ++ toCString c i ++ "(" ++ paramsPrototypes ++ ");"]
+        staticString = case exposedIdents c of
+            Nothing -> ""
+            Just eis -> if i `elem` eis then "" else "static "
         paramsPrototypes =
             if null inputTypeMap
                 then "void"
                 else intercalate ", " (toCString c <$> ((\(_, x) -> x) <$> inputTypeMap))
-        body = foldr (<>) mempty $ toC (moreIndent c) <$> bs
+        bs' = if i == Ident "main" p then
+                (Line (CallC (Call Impure (Ident "base_initEmperor" p) [] p)) p) : bs
+            else
+                bs
+        body = foldr (<>) mempty $ toC (moreIndent c) <$> bs'
         returnString = toCString c returnType
         inputTypeMap = filter (not . isUnit) $ zip is (init $ getTypeList t)
         isUnit (_, Unit) = True
