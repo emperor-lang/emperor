@@ -44,10 +44,15 @@ writeHeader f a = do
     Types.Imports.JsonIO.writeHeader h f
   where
     generateHeader :: TypeEnvironment -> AST -> Header
-    generateHeader g' (AST (Module i _) is _) = Header i (loc <$> is) g'
+    generateHeader g' (AST (Module i mis _) is _) = Header i (loc <$> is) g''
       where
         loc :: Import -> ImportLocation
         loc (Import l _ _) = l
+        g'' :: TypeEnvironment
+        g'' = case mis of
+            Nothing -> g'
+            Just is' -> let is'' = (\(Ident i' _) -> i') <$> is' in
+                filterEnvironment (`elem` is'') g'
 
 -- | Obtain the type environment created by the content of the module
 getLocalEnvironment :: AST -> TypeEnvironment

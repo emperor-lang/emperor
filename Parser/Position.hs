@@ -46,7 +46,7 @@ instance GetPos AST where
     getPos (AST _ _ _) = AlexPn 1 1 1
 
 instance GetPos ModuleHeader where
-    getPos (Module _ p) = p
+    getPos (Module _ _ p) = p
 
 instance GetPos Import where
     getPos (Import _ _ p) = p

@@ -46,7 +46,7 @@ data AST =
 
 -- | A single module header
 data ModuleHeader =
-    Module Ident AlexPosn
+    Module Ident (Maybe [Ident]) AlexPosn
     deriving (Show)
 
 -- | A single imported file
@@ -193,4 +193,7 @@ data Call =
 -- | Data-structure to represent an identifier
 data Ident =
     Ident String AlexPosn
-    deriving (Eq, Ord, Show)
+    deriving (Ord, Show)
+
+instance Eq Ident where
+    Ident i _ == Ident i' _ = i == i'
