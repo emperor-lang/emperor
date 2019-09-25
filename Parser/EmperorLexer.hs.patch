@@ -6,17 +6,17 @@
  -- `move_pos' calculates the new position after traversing a given character,
 --- assuming the usual eight character tab stops.
 +-- assuming four character tab stops.
- 
- 
+
+
 +-- | Constructor to represent the position of a token in code.
 +-- Format: current line, current character on line, current total character over
 +-- all lines
  data AlexPosn = AlexPn !Int !Int !Int
          deriving (Eq,Show)
- 
+
 @@ -395,7 +398,7 @@
      }
- 
+
  -- Compile with -funbox-strict-fields for best results!
 -
 +-- | Function to run the generated lexer
@@ -26,159 +26,25 @@
 @@ -408,6 +411,7 @@
                          alex_scd = 0}) of Left msg -> Left msg
                                            Right ( _, a ) -> Right a
- 
+
 +-- | State information for an Alex lexer
  newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
- 
+
  instance Functor Alex where
 @@ -439,6 +443,7 @@
   = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} of
                    state__@(AlexState{}) -> Right (state__, ())
- 
+
 +-- | Function to return an Alex error state
  alexError :: String -> Alex a
  alexError message = Alex $ const $ Left message
- 
+
 @@ -533,7 +538,7 @@
  -- For compatibility with previous versions of Alex, and because we can.
- 
+
  alex_tab_size :: Int
 -alex_tab_size = 8
 +alex_tab_size = 4
  alex_base :: AlexAddr
  alex_base = AlexA#
    "\xf8\xff\xff\xff\xdc\xff\xff\xff\xf6\xff\xff\xff\x76\x00\x00\x00\xf6\x00\x00\x00\x67\x01\x00\x00\x00\x00\x00\x00\xe7\x01\x00\x00\x00\x00\x00\x00\x58\x02\x00\x00\x00\x00\x00\x00\x99\x02\x00\x00\x00\x00\x00\x00\xda\x02\x00\x00\xda\x03\x00\x00\x9a\x03\x00\x00\x00\x00\x00\x00\x6a\x04\x00\x00\xe5\x04\x00\x00\xa5\x04\x00\x00\x00\x00\x00\x00\x9b\x05\x00\x00\xd6\xff\xff\xff\x06\x00\x00\x00\x91\x06\x00\x00\xe4\xff\xff\xff\x08\x00\x00\x00\x09\x00\x00\x00\x88\x07\x00\x00\x9e\x05\x00\x00\x9f\x05\x00\x00\x7c\x05\x00\x00\x90\x05\x00\x00\xdb\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x6f\x06\x00\x00\x66\x07\x00\x00\x58\x08\x00\x00\xa3\x08\x00\x00\x00\x00\x00\x00\xee\x08\x00\x00\x39\x09\x00\x00\x00\x00\x00\x00\x84\x09\x00\x00\xcf\x09\x00\x00\x1a\x0a\x00\x00\x65\x0a\x00\x00\xb0\x0a\x00\x00\xfb\x0a\x00\x00\x46\x0b\x00\x00\x91\x0b\x00\x00\xdc\x0b\x00\x00\x27\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x72\x0c\x00\x00\xbd\x0c\x00\x00\x08\x0d\x00\x00\x53\x0d\x00\x00\x9e\x0d\x00\x00\xe9\x0d\x00\x00\x34\x0e\x00\x00\x7f\x0e\x00\x00\xca\x0e\x00\x00\x15\x0f\x00\x00\x60\x0f\x00\x00\xab\x0f\x00\x00\xf6\x0f\x00\x00\x41\x10\x00\x00\x8c\x10\x00\x00\xd7\x10\x00\x00\x22\x11\x00\x00\x6d\x11\x00\x00\xb8\x11\x00\x00\x03\x12\x00\x00\x4e\x12\x00\x00\x99\x12\x00\x00\xe4\x12\x00\x00\x2f\x13\x00\x00\x7a\x13\x00\x00\xc5\x13\x00\x00\x10\x14\x00\x00\x5b\x14\x00\x00\xa6\x14\x00\x00\xf1\x14\x00\x00\x3c\x15\x00\x00\x87\x15\x00\x00\xd2\x15\x00\x00\x1d\x16\x00\x00\x68\x16\x00\x00\xb3\x16\x00\x00\xfe\x16\x00\x00\x49\x17\x00\x00\x94\x17\x00\x00\xdf\x17\x00\x00\x2a\x18\x00\x00\x75\x18\x00\x00\xc0\x18\x00\x00\x0b\x19\x00\x00\x56\x19\x00\x00\xa1\x19\x00\x00\xec\x19\x00\x00\x37\x1a\x00\x00\x82\x1a\x00\x00\xcd\x1a\x00\x00\x18\x1b\x00\x00\x63\x1b\x00\x00\xae\x1b\x00\x00\xf9\x1b\x00\x00\x44\x1c\x00\x00\x8f\x1c\x00\x00\xda\x1c\x00\x00\x25\x1d\x00\x00\x70\x1d\x00\x00\xbb\x1d\x00\x00\x06\x1e\x00\x00\x51\x1e\x00\x00\x9c\x1e\x00\x00\xe7\x1e\x00\x00\x32\x1f\x00\x00\x7d\x1f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xd7\xff\xff\xff\x00\x00\x00\x00\xed\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x9a\x04\x00\x00\x0d\x00\x00\x00\x00\x00\x00\x00\x9b\x04\x00\x00\x12\x00\x00\x00\x00\x00\x00\x00\x1c\x00\x00\x00\xc0\x06\x00\x00\x00\x00\x00\x00\xf9\xff\xff\xff\x29\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x68\x04\x00\x00\x00\x00\x00\x00\x83\x04\x00\x00\x00\x00\x00\x00\x2e\x04\x00\x00\x00\x00\x00\x00\x88\x04\x00\x00\x00\x00\x00\x00\x70\x06\x00\x00\x00\x00\x00\x00\x89\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"#
-@@ -1148,70 +1153,70 @@
-     a <= b = (a < b) || (a == b)
- 
- 
--alex_action_4 =  mkL LInteger 
--alex_action_5 =  mkL LBool 
--alex_action_6 =  mkL LReal 
--alex_action_7 =  mkL LChar 
--alex_action_8 =  mkL LString 
--alex_action_9 =  mkL LIntT 
--alex_action_10 =  mkL LBoolT 
--alex_action_11 =  mkL LRealT 
--alex_action_12 =  mkL LCharT 
--alex_action_13 =  mkL LUnit 
--alex_action_14 =  mkL LAnyT 
--alex_action_15 =  mkL LStringT 
--alex_action_16 =  mkL LIDC 
--alex_action_17 =  mkL LReturn 
--alex_action_18 =  mkL LIf 
--alex_action_19 =  mkL LElse 
--alex_action_20 =  mkL LWhile 
--alex_action_21 =  mkL LRepeat 
--alex_action_22 =  mkL LWith 
--alex_action_23 =  mkL LSwitch 
--alex_action_24 =  mkL LFor 
--alex_action_25 =  mkL LImport 
--alex_action_26 =  mkL LModule 
--alex_action_27 =  mkL LIsSubType 
--alex_action_28 =  mkL LIsImplementeBy 
--alex_action_29 =  mkL LIsType 
--alex_action_30 =  mkL LClass 
--alex_action_31 =  mkL LComponent 
--alex_action_32 =  mkL LIdent 
--alex_action_37 =  mkL LQueue 
--alex_action_38 =  mkL LGoesTo 
--alex_action_39 =  mkL LGets 
-+alex_action_4 =  mkL LInteger
-+alex_action_5 =  mkL LBool
-+alex_action_6 =  mkL LReal
-+alex_action_7 =  mkL LChar
-+alex_action_8 =  mkL LString
-+alex_action_9 =  mkL LIntT
-+alex_action_10 =  mkL LBoolT
-+alex_action_11 =  mkL LRealT
-+alex_action_12 =  mkL LCharT
-+alex_action_13 =  mkL LUnit
-+alex_action_14 =  mkL LAnyT
-+alex_action_15 =  mkL LStringT
-+alex_action_16 =  mkL LIDC
-+alex_action_17 =  mkL LReturn
-+alex_action_18 =  mkL LIf
-+alex_action_19 =  mkL LElse
-+alex_action_20 =  mkL LWhile
-+alex_action_21 =  mkL LRepeat
-+alex_action_22 =  mkL LWith
-+alex_action_23 =  mkL LSwitch
-+alex_action_24 =  mkL LFor
-+alex_action_25 =  mkL LImport
-+alex_action_26 =  mkL LModule
-+alex_action_27 =  mkL LIsSubType
-+alex_action_28 =  mkL LIsImplementeBy
-+alex_action_29 =  mkL LIsType
-+alex_action_30 =  mkL LClass
-+alex_action_31 =  mkL LComponent
-+alex_action_32 =  mkL LIdent
-+alex_action_37 =  mkL LQueue
-+alex_action_38 =  mkL LGoesTo
-+alex_action_39 =  mkL LGets
- alex_action_40 =  mkL LComma
--alex_action_41 =  mkL LLParenth 
--alex_action_42 =  mkL LRParenth 
--alex_action_43 =  mkL LLBracket 
--alex_action_44 =  mkL LRBracket 
--alex_action_45 =  mkL LLBrace 
--alex_action_46 =  mkL LRBrace 
--alex_action_47 =  mkL LImpure 
--alex_action_48 =  mkL LPartSeparator 
--alex_action_49 =  mkL LBlockSeparator 
--alex_action_50 =  mkL LColon 
--alex_action_51 =  mkL LPlus 
--alex_action_52 =  mkL LMinus 
--alex_action_53 =  mkL LDivide 
--alex_action_54 =  mkL LModulo 
--alex_action_55 =  mkL LTimes 
--alex_action_56 =  mkL LShiftLeft 
--alex_action_57 =  mkL LShiftRight 
--alex_action_58 =  mkL LShiftRightSameSign 
--alex_action_59 =  mkL LAndScrict 
--alex_action_60 =  mkL LAndLazy 
--alex_action_61 =  mkL LOrStrict 
--alex_action_62 =  mkL LOrLazy 
--alex_action_63 =  mkL LNot 
--alex_action_64 =  mkL LXor 
--alex_action_65 =  mkL LLessThan 
--alex_action_66 =  mkL LLessThanOrEqual 
--alex_action_67 =  mkL LGreaterThan 
--alex_action_68 =  mkL LGreaterThanOrEqual 
--alex_action_69 =  mkL LImplies 
--alex_action_70 =  mkL LEqual 
--alex_action_71 =  mkL LNotEqual 
-+alex_action_41 =  mkL LLParenth
-+alex_action_42 =  mkL LRParenth
-+alex_action_43 =  mkL LLBracket
-+alex_action_44 =  mkL LRBracket
-+alex_action_45 =  mkL LLBrace
-+alex_action_46 =  mkL LRBrace
-+alex_action_47 =  mkL LImpure
-+alex_action_48 =  mkL LPartSeparator
-+alex_action_49 =  mkL LBlockSeparator
-+alex_action_50 =  mkL LColon
-+alex_action_51 =  mkL LPlus
-+alex_action_52 =  mkL LMinus
-+alex_action_53 =  mkL LDivide
-+alex_action_54 =  mkL LModulo
-+alex_action_55 =  mkL LTimes
-+alex_action_56 =  mkL LShiftLeft
-+alex_action_57 =  mkL LShiftRight
-+alex_action_58 =  mkL LShiftRightSameSign
-+alex_action_59 =  mkL LAndScrict
-+alex_action_60 =  mkL LAndLazy
-+alex_action_61 =  mkL LOrStrict
-+alex_action_62 =  mkL LOrLazy
-+alex_action_63 =  mkL LNot
-+alex_action_64 =  mkL LXor
-+alex_action_65 =  mkL LLessThan
-+alex_action_66 =  mkL LLessThanOrEqual
-+alex_action_67 =  mkL LGreaterThan
-+alex_action_68 =  mkL LGreaterThanOrEqual
-+alex_action_69 =  mkL LImplies
-+alex_action_70 =  mkL LEqual
-+alex_action_71 =  mkL LNotEqual
- {-# LINE 1 "templates/GenericTemplate.hs" #-}
- {-# LINE 1 "templates/GenericTemplate.hs" #-}
- {-# LINE 1 "<built-in>" #-}
