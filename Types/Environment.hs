@@ -36,11 +36,14 @@ data TypeEnvironment =
     TypeEnvironment [(String, EmperorType)] Purity [EmperorType]
     deriving (Eq, Show)
 
-instance Monoid TypeEnvironment where
-    mempty = newTypeEnvironment
-    mappend (TypeEnvironment g p ts) (TypeEnvironment g' p' ts') = TypeEnvironment (g ++ g') p'' (ts ++ ts')
+instance Semigroup TypeEnvironment where
+    (TypeEnvironment g p ts) <> (TypeEnvironment g' p' ts') = TypeEnvironment (g ++ g') p'' (ts ++ ts')
         where
             p'' = if p == Pure && p' == Pure then Pure else Impure
+
+instance Monoid TypeEnvironment where
+    mempty = newTypeEnvironment
+    mappend = (<>)
 
 -- | Creates a fresh type-environment
 newTypeEnvironment :: TypeEnvironment
