@@ -19,9 +19,12 @@ data GenerationResult =
     GenerationResult [String] [String] [(String,Value)]
     deriving (Show)
 
+instance Semigroup GenerationResult where
+    (GenerationResult hs bs cs) <> (GenerationResult hs' bs' cs') = GenerationResult (hs <> hs') (bs <> bs') (cs <> cs')
+
 instance Monoid GenerationResult where
     mempty = GenerationResult [] [] []
-    mappend (GenerationResult hs bs cs) (GenerationResult hs' bs' cs') = GenerationResult (hs <> hs') (bs <> bs') (cs <> cs')
+    mappend  = (<>)
 
 makeHeaderLines :: [String] -> GenerationResult
 makeHeaderLines hs = GenerationResult hs [] []

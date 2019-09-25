@@ -29,8 +29,8 @@ SOFT_LINK_COMMAND = [[ ! -f $@ ]] && ln -s $^ $@
 # Code up-keep commands
 LINTER := hlint
 LINTER_FLAGS := -s
-FORMATTER := hindent
-FORMATTER_FLAGS := --tab-size 4 --line-length 120
+FORMATTER := stylish-haskell
+FORMATTER_FLAGS := -i
 
 HEADER_INSTALL_DIRECTORY = $(shell emperor-setup --language-header-location)
 DEFAULT_HEADERS = $(shell find ./IncludedHeaders/ -type f | grep .h | sed "s/\.\/IncludedHeaders\///" | sed "s/^/$(shell emperor-setup --language-header-location | sed 's/\//\\\\\//g')/")
@@ -47,13 +47,13 @@ all: build ## Build everything
 build: ./emperor ## Build everything, explicitly
 .PHONY: build
 
-./emperor: ./dist/build/emperor/emperor
-	@echo "[[ ! -f $@ ]] && ln -s $^ $@"
-	$(shell [[ ! -f $@ ]] && ln -s $^ $@)
+./emperor: ./dist-newstyle/build/x86_64-linux/ghc-8.6.5/emperor-0.1.0.0/x/emperor/build/emperor/emperor
+	@echo "[[ ! -f $@ ]] && ln -sf $^ $@"
+	$(shell [[ ! -f $@ ]] && ln -sf $^ $@)
 .DELETE_ON_ERROR: ./emperor
 
-./dist/build/emperor/emperor: $(SOURCE_FILES)
-	cabal build $(CABALFLAGS)
+./dist-newstyle/build/x86_64-linux/ghc-8.6.5/emperor-0.1.0.0/x/emperor/build/emperor/emperor: $(SOURCE_FILES)
+	cabal new-build $(CABALFLAGS)
 
 ./Parser/EmperorLexer.hs: ./Parser/EmperorLexer.x ./Parser/EmperorLexer.hs.patch
 	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $< -o $@
