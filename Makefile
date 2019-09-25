@@ -29,8 +29,8 @@ SOFT_LINK_COMMAND = [[ ! -f $@ ]] && ln -s $^ $@
 # Code up-keep commands
 LINTER := hlint
 LINTER_FLAGS := -s
-FORMATTER := hindent
-FORMATTER_FLAGS := --tab-size 4 --line-length 120
+FORMATTER := stylish-haskell
+FORMATTER_FLAGS := -i
 
 HEADER_INSTALL_DIRECTORY = $(shell emperor-setup --language-header-location)
 DEFAULT_HEADERS = $(shell find ./IncludedHeaders/ -type f | grep .h | sed "s/\.\/IncludedHeaders\///" | sed "s/^/$(shell emperor-setup --language-header-location | sed 's/\//\\\\\//g')/")
