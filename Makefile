@@ -47,9 +47,9 @@ all: build ## Build everything
 build: ./emperor ## Build everything, explicitly
 .PHONY: build
 
-./emperor: ./dist/build/emperor/emperor
-	@echo "[[ ! -f $@ ]] && ln -s $^ $@"
-	$(shell [[ ! -f $@ ]] && ln -s $^ $@)
+./emperor: ./dist-newstyle/build/x86_64-linux/ghc-8.6.5/emperor-0.1.0.0/x/emperor/build/emperor/emperor
+	@echo "[[ ! -f $@ ]] && ln -sf $^ $@"
+	$(shell [[ ! -f $@ ]] && ln -sf $^ $@)
 .DELETE_ON_ERROR: ./emperor
 
 ./dist/build/emperor/emperor: $(SOURCE_FILES)
