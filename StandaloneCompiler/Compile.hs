@@ -41,7 +41,7 @@ nativeCompile args (err, inf, scc, wrn) (b, h) = do
                     let colourOpts = "-fdiagnostics-color=" ++ if useColour then "always" else "never"
                     inf $ "Running gcc, outputting to " ++ outFile
                     (c, outs, errs) <-
-                        readProcessWithExitCode "gcc-8" (words cfs ++ ["-xc", "-", "-o", outFile] ++ words ls) prog
+                        readProcessWithExitCode "gcc" (words cfs ++ ["-xc", "-", "-o", outFile, colourOpts] ++ words ls) prog
                     if c /= ExitSuccess
                         then do
                             err "GCC produced the following error(s)"
