@@ -49,7 +49,7 @@ build: ./emperor ## Build everything, explicitly
 .DELETE_ON_ERROR: ./emperor
 
 ./dist-newstyle/build/x86_64-linux/ghc-8.6.5/emperor-0.1.0.0/x/emperor/build/emperor/emperor: $(SOURCE_FILES)
-	cabal new-build $(CABALFLAGS)
+	stack build
 
 ./Parser/EmperorLexer.hs: ./Parser/EmperorLexer.x ./Parser/EmperorLexer.hs.patch
 	$(LEXER_GENERATOR) $(LEXER_GENERATOR_FLAGS) $< -o $@
