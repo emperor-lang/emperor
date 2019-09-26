@@ -49,3 +49,6 @@ Parser/*.info
 
 # VSCode things
 .vscode/
+
+# Stack things
+stack.yaml.lock
