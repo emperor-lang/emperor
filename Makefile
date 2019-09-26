@@ -1,10 +1,6 @@
 #!/usr/bin/make
 SHELL := /bin/bash
 
-# CC = gcc-8
-# CFLAGS := $(shell emperor-setup --cflags) # $(CFLAGS) -Wall -Os -I . -I /usr/include/python3.6m -g
-# CLIBS := $(shell emperor-setup --libs)
-
 # Apply debug options if specified
 ifdef DEBUG
 PARSER_DEBUG_FLAGS = -d
