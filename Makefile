@@ -29,7 +29,6 @@ FORMATTER := stylish-haskell
 FORMATTER_FLAGS := -i
 
 HEADER_INSTALL_DIRECTORY = $(shell emperor-setup --language-header-location)
-DEFAULT_HEADERS = $(shell find ./IncludedHeaders/ -type f | grep .h | sed "s/\.\/IncludedHeaders\///" | sed "s/^/$(shell emperor-setup --language-header-location | sed 's/\//\\\\\//g')/")
 COMPLETION_INSTALL_LOCATION = /usr/share/bash-completion/completions/emperor
 
 .DEFAULT_GOAL := all
@@ -43,12 +42,12 @@ all: build ## Build everything
 build: ./emperor ## Build everything, explicitly
 .PHONY: build
 
-./emperor: ./dist-newstyle/build/x86_64-linux/ghc-8.6.5/emperor-0.1.0.0/x/emperor/build/emperor/emperor
+./emperor: ./.stack-work/install/x86_64-linux-tinfo6/a4fefd2a9618441c5b464352bd9d27949d738f84f553d0be92299367e59678e1/8.6.5/bin/emperor
 	@echo "[[ ! -f $@ ]] && ln -sf $^ $@"
 	$(shell [[ ! -f $@ ]] && ln -sf $^ $@)
 .DELETE_ON_ERROR: ./emperor
 
-./dist-newstyle/build/x86_64-linux/ghc-8.6.5/emperor-0.1.0.0/x/emperor/build/emperor/emperor: $(SOURCE_FILES)
+./.stack-work/install/x86_64-linux-tinfo6/a4fefd2a9618441c5b464352bd9d27949d738f84f553d0be92299367e59678e1/8.6.5/bin/emperor: $(SOURCE_FILES)
 	stack build
 
 ./Parser/EmperorLexer.hs: ./Parser/EmperorLexer.x ./Parser/EmperorLexer.hs.patch
@@ -72,22 +71,10 @@ build: ./emperor ## Build everything, explicitly
 
 ./emperor.json:;
 
-install: /usr/bin/emperor /usr/share/man/man1/emperor.1.gz $(COMPLETION_INSTALL_LOCATION) $(DEFAULT_HEADERS) ## Install binaries, libraries and documentation
+install: /usr/bin/emperor /usr/share/man/man1/emperor.1.gz $(COMPLETION_INSTALL_LOCATION) # $(DEFAULT_HEADERS) ## Install binaries, libraries and documentation
 .PHONY: install
 
-$(HEADER_INSTALL_DIRECTORY)%.h: IncludedHeaders/%.h $(HEADER_INSTALL_DIRECTORY)
-	sudo install -m 644 $< $@
-
-$(HEADER_INSTALL_DIRECTORY):
-	sudo mkdir -p $(HEADER_INSTALL_DIRECTORY)
-
-$(HEADER_INSTALL_DIRECTORY)banned/%.h: IncludedHeaders/banned/%.h $(HEADER_INSTALL_DIRECTORY)banned/
-	sudo install -m 644 $< $@
-
-$(HEADER_INSTALL_DIRECTORY)banned/:
-	sudo mkdir -p $(HEADER_INSTALL_DIRECTORY)banned/
-
-/usr/bin/emperor: ./dist/build/emperor/emperor
+/usr/bin/emperor: ./.stack-work/install/x86_64-linux-tinfo6/a4fefd2a9618441c5b464352bd9d27949d738f84f553d0be92299367e59678e1/8.6.5/bin/emperor
 	sudo install -m 755 $^ $@
 
 man: ./dist/doc/man/emperor.1.gz; ## Make the man page
