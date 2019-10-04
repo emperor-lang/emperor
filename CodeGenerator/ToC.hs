@@ -19,37 +19,19 @@ module CodeGenerator.ToC
     , toCString
     ) where
 
-import CodeGenerator.Context (GenerationContext, destFile, exposedIdents, makeIndent, moreIndent, nativeCompile, sourceFile)
-import CodeGenerator.Position (GetPos, generatePos)
-import CodeGenerator.Results
-    ( GenerationResult
-    , makeBodyLines
-    , makeHeaderAndBodyLines
-    , makeHeaderLines
-    , wrapLastBodyLine
-    ) --, makeConstant)
-import Data.Char (toUpper)
-import Data.List (intercalate)
-import Data.Monoid ((<>))
-import Parser.AST
-    ( AST(..)
-    , Assignment(..)
-    , BodyBlock(..)
-    , BodyLine(..)
-    , Call(..)
-    , Expr(..)
-    , FunctionDef(..)
-    , FunctionTypeDef(..)
-    , Ident(..)
-    , Import(..)
-    , ImportLocation(..)
-    , ImportType(..)
-    , ModuleHeader(..)
-    , ModuleItem(..)
-    , Queue(..)
-    , Value(..)
-    )
-import Types.Results (EmperorType(..), Purity(Impure), getTypeList)
+import           CodeGenerator.Context  (GenerationContext, destFile, exposedIdents, makeIndent, moreIndent,
+                                         nativeCompile, sourceFile)
+import           CodeGenerator.Position (GetPos, generatePos)
+import           CodeGenerator.Results  (GenerationResult, makeBodyLines, makeHeaderAndBodyLines, makeHeaderLines,
+                                         wrapLastBodyLine)
+import           Data.Char              (toUpper)
+import           Data.List              (intercalate)
+import           Data.Monoid            ((<>))
+import           Parser.AST             (AST (..), Assignment (..), BodyBlock (..), BodyLine (..), Call (..), Expr (..),
+                                         FunctionDef (..), FunctionTypeDef (..), Ident (..), Import (..),
+                                         ImportLocation (..), ImportType (..), ModuleHeader (..), ModuleItem (..),
+                                         Queue (..), Value (..))
+import           Types.Results          (EmperorType (..), Purity (Impure), getTypeList)
 
 class ToC a where
     toC :: GenerationContext -> a -> GenerationResult
@@ -61,7 +43,7 @@ instance ToC AST where
     toC c (AST (Module is mis p) is' ms) = makeHeaderLines ["#ifndef " ++ includeGuard, "#define " ++ includeGuard, ""] <>
         toC c (Module is mis p) <>
         foldr (<>) mempty (toC c' <$> is') <>
-        makeHeaderLines ["", "#include <banned.h>", ""] <>
+        makeHeaderLines [""] <>
         foldr (<>) mempty (toC c' <$> ms) <> makeHeaderLines ["", "#endif /* " ++ includeGuard ++ " */"]
             where
                 includeGuard = "__" ++ (toUpper <$> ((sanitise .  sourceFile) c)) ++ "_H_"
@@ -76,10 +58,10 @@ instance ToC AST where
                         replace :: Char -> Char
                         replace '.' = '_'
                         replace '/' = '$'
-                        replace x = x
+                        replace x   = x
 
 instance ToC ModuleHeader where
-    toC c (Module i mis p) = generatePosLines makeHeaderAndBodyLines c (Module i mis p) <> headerInclude <> makeHeaderAndBodyLines ["// This is module " ++ show (toCString c i) ++ " generated from " ++ (show . sourceFile) c ++ " by emperor"] <> makeHeaderLines (dependencyPragma ++ ["#include <OS.h>"])
+    toC c (Module i mis p) = generatePosLines makeHeaderAndBodyLines c (Module i mis p) <> headerInclude <> makeHeaderAndBodyLines ["// This is module " ++ show (toCString c i) ++ " generated from " ++ (show . sourceFile) c ++ " by emperor"] <> makeHeaderLines (dependencyPragma ++ ["#include <base.h>"])
         where
             headerInclude = makeBodyLines $ if destFile c /= "stdout" && (not . nativeCompile) c then ["#include \"" ++ destFile c ++ ".h\""] else []
             dependencyPragma =  if sourceFile c /= "stdin" then ["#pragma GCC dependency " ++ (show . sourceFile) c, ""] else []
@@ -115,7 +97,7 @@ instance ToC FunctionDef where
                 else intercalate ", " $ (\(i', t') -> toCString c t' ++ " " ++ toCString c i') <$> inputTypeMap
         prototype = makeHeaderLines [staticString ++ returnString ++ " " ++ toCString c i ++ "(" ++ paramsPrototypes ++ ");"]
         staticString = case exposedIdents c of
-            Nothing -> ""
+            Nothing  -> ""
             Just eis -> if i `elem` eis then "" else "static "
         paramsPrototypes =
             if null inputTypeMap
@@ -129,21 +111,21 @@ instance ToC FunctionDef where
         returnString = toCString c returnType
         inputTypeMap = filter (not . isUnit) $ zip is (init $ getTypeList t)
         isUnit (_, Unit) = True
-        isUnit _ = False
+        isUnit _         = False
         returnType = last $ getTypeList t
 
 instance ToCString EmperorType where
-    toCString _ IntP = "int"
-    toCString _ CharP = "char"
-    toCString _ BoolP = "int"
-    toCString _ RealP = "double"
-    toCString _ (ESet _) = "emperorList_t*"
-    toCString _ (EList _) = "emperorList_t*"
-    toCString c (ETuple ts) = intercalate "__" $ "eTuple_t" : (toCString c <$> ts)
-    toCString _ (ERecord _) = error "Records are not yet supported... working on it!"
+    toCString _ IntP              = "int"
+    toCString _ CharP             = "char"
+    toCString _ BoolP             = "int"
+    toCString _ RealP             = "double"
+    toCString _ (ESet _)          = "emperorList_t*"
+    toCString _ (EList _)         = "emperorList_t*"
+    toCString c (ETuple ts)       = intercalate "__" $ "eTuple_t" : (toCString c <$> ts)
+    toCString _ (ERecord _)       = error "Records are not yet supported... working on it!"
     toCString _ (EFunction _ _ _) = error "Functions are not yet supported properly :/ (Working on it)"
-    toCString _ Any = "void*"
-    toCString _ Unit = "void"
+    toCString _ Any               = "void*"
+    toCString _ Unit              = "void"
 
 instance ToC BodyBlock
     -- TODO: make blocks actually work!
@@ -192,36 +174,36 @@ instance ToC Assignment where
     toC c (Assignment (Just t) i e _) = makeBodyLines [toCString c t ++ " " ++ toCString c i ++ " = " ++ toCString c e]
 
 instance ToC Queue where
-    toC c (Queue Nothing i e _) = makeBodyLines [toCString c i ++ " = " ++ toCString c e]
+    toC c (Queue Nothing i e _)  = makeBodyLines [toCString c i ++ " = " ++ toCString c e]
     toC c (Queue (Just t) i e _) = makeBodyLines [toCString c t ++ " " ++ toCString c i ++ " = " ++ toCString c e]
 
 instance ToCString Expr where
-    toCString c (Value v _) = toCString c v
-    toCString c (Neg e _) = unaryOp c "-" e
-    toCString c (Add e1 e2 _) = binaryOp c "+" e1 e2
-    toCString c (Subtract e1 e2 _) = binaryOp c "-" e1 e2
-    toCString c (Multiply e1 e2 _) = binaryOp c "*" e1 e2
-    toCString c (Divide e1 e2 _) = binaryOp c "/" e1 e2
-    toCString c (Modulo e1 e2 _) = binaryOp c "%" e1 e2
-    toCString c (Less e1 e2 _) = binaryOp c "<" e1 e2
-    toCString c (LessOrEqual e1 e2 _) = binaryOp c "<=" e1 e2
-    toCString c (Greater e1 e2 _) = binaryOp c ">" e1 e2
-    toCString c (GreaterOrEqual e1 e2 _) = binaryOp c ">=" e1 e2
-    toCString c (Equal e1 e2 _) = binaryOp c "==" e1 e2
-    toCString c (NotEqual e1 e2 _) = binaryOp c "!=" e1 e2
-    toCString c (Not e _) = unaryOp c "!" e
-    toCString c (AndStrict e1 e2 _) = binaryOp c "&" e1 e2
-    toCString c (AndLazy e1 e2 _) = binaryOp c "&&" e1 e2
-    toCString c (OrStrict e1 e2 _) = binaryOp c "|" e1 e2
-    toCString c (OrLazy e1 e2 _) = binaryOp c "||" e1 e2
-    toCString c (Implies e1 e2 p) = binaryOp c "||" (Not e1 p) e2
-    toCString c (Xor e1 e2 _) = binaryOp c "^" e1 e2
-    toCString c (ShiftLeft e1 e2 _) = binaryOp c "<<" e1 e2
-    toCString c (ShiftRight e1 e2 _) = binaryOp c ">>" e1 e2
+    toCString c (Value v _)                  = toCString c v
+    toCString c (Neg e _)                    = unaryOp c "-" e
+    toCString c (Add e1 e2 _)                = binaryOp c "+" e1 e2
+    toCString c (Subtract e1 e2 _)           = binaryOp c "-" e1 e2
+    toCString c (Multiply e1 e2 _)           = binaryOp c "*" e1 e2
+    toCString c (Divide e1 e2 _)             = binaryOp c "/" e1 e2
+    toCString c (Modulo e1 e2 _)             = binaryOp c "%" e1 e2
+    toCString c (Less e1 e2 _)               = binaryOp c "<" e1 e2
+    toCString c (LessOrEqual e1 e2 _)        = binaryOp c "<=" e1 e2
+    toCString c (Greater e1 e2 _)            = binaryOp c ">" e1 e2
+    toCString c (GreaterOrEqual e1 e2 _)     = binaryOp c ">=" e1 e2
+    toCString c (Equal e1 e2 _)              = binaryOp c "==" e1 e2
+    toCString c (NotEqual e1 e2 _)           = binaryOp c "!=" e1 e2
+    toCString c (Not e _)                    = unaryOp c "!" e
+    toCString c (AndStrict e1 e2 _)          = binaryOp c "&" e1 e2
+    toCString c (AndLazy e1 e2 _)            = binaryOp c "&&" e1 e2
+    toCString c (OrStrict e1 e2 _)           = binaryOp c "|" e1 e2
+    toCString c (OrLazy e1 e2 _)             = binaryOp c "||" e1 e2
+    toCString c (Implies e1 e2 p)            = binaryOp c "||" (Not e1 p) e2
+    toCString c (Xor e1 e2 _)                = binaryOp c "^" e1 e2
+    toCString c (ShiftLeft e1 e2 _)          = binaryOp c "<<" e1 e2
+    toCString c (ShiftRight e1 e2 _)         = binaryOp c ">>" e1 e2
     toCString c (ShiftRightSameSign e1 e2 _) = binaryOp c ">>>" e1 e2
-    toCString _ (Set _ _) = error "Sets are not supported yet..."
-    toCString _ (Tuple _ _) = error "Tuples are not supported yet..."
-    toCString _ (List _ _) = error "Lists are not supported yet..."
+    toCString _ (Set _ _)                    = error "Sets are not supported yet..."
+    toCString _ (Tuple _ _)                  = error "Tuples are not supported yet..."
+    toCString _ (List _ _)                   = error "Lists are not supported yet..."
 
 unaryOp :: GenerationContext -> String -> Expr -> String
 unaryOp c o e = o ++ toCString c e

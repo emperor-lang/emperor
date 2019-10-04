@@ -2,11 +2,13 @@ module StandaloneCompiler.Compile
     ( nativeCompile
     ) where
 
-import Args (Args, input, outputFile)
-import Logger.Logger (Loggers)
-import System.Exit (ExitCode(ExitSuccess), exitFailure)
-import System.IO (hPutStr, stderr)
-import System.Process (readProcessWithExitCode)
+import           Args                (Args, input, outputFile)
+import           Logger.Logger       (Loggers)
+import           System.Console.ANSI (hSupportsANSIColor)
+import           System.Exit         (ExitCode (ExitSuccess), exitFailure)
+import           System.IO           (hPutStr, stderr)
+import           System.Process      (readProcessWithExitCode)
+
 
 nativeCompile :: Args -> Loggers -> (String, String) -> IO ()
 nativeCompile args (err, inf, scc, wrn) (b, h) = do
@@ -32,11 +34,14 @@ nativeCompile args (err, inf, scc, wrn) (b, h) = do
                             if outputFile args /= "-"
                                 then outputFile args
                                 else if input args /= ""
-                                         then input args
-                                         else "a.out"
+                                        then input args
+                                        else "a.out"
+                    -- Use GCC colours on output
+                    useColour <- hSupportsANSIColor stderr
+                    let colourOpts = "-fdiagnostics-color=" ++ if useColour then "always" else "never"
                     inf $ "Running gcc, outputting to " ++ outFile
                     (c, outs, errs) <-
-                        readProcessWithExitCode "gcc-8" (words cfs ++ ["-xc", "-", "-o", outFile] ++ words ls) prog
+                        readProcessWithExitCode "gcc" (words cfs ++ ["-xc", "-", "-o", outFile, colourOpts] ++ words ls) prog
                     if c /= ExitSuccess
                         then do
                             err "GCC produced the following error(s)"
