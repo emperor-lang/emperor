@@ -25,12 +25,13 @@ import           CodeGenerator.Position (GetPos, generatePos)
 import           CodeGenerator.Results  (GenerationResult, makeBodyLines, makeHeaderAndBodyLines, makeHeaderLines,
                                          wrapLastBodyLine)
 import           Data.Char              (toUpper)
-import           Data.List              (intercalate)
+import           Data.List              (intercalate, intersperse)
 import           Data.Monoid            ((<>))
 import           Parser.AST             (AST (..), Assignment (..), BodyBlock (..), BodyLine (..), Call (..), Expr (..),
                                          FunctionDef (..), FunctionTypeDef (..), Ident (..), Import (..),
                                          ImportLocation (..), ImportType (..), ModuleHeader (..), ModuleItem (..),
                                          Queue (..), Value (..))
+import           Parser.EmperorLexer    (AlexPosn (..))
 import           Types.Results          (EmperorType (..), Purity (Impure), getTypeList)
 
 class ToC a where
@@ -141,7 +142,16 @@ instance ToC BodyBlock
         generatePosLines makeBodyLines c (While e bs p) <>
         makeBodyLines [makeIndent c ++ "while (" ++ toCString (moreIndent c) e ++ ")", makeIndent c ++ "{"] <>
         (foldl (<>) mempty $ toC (moreIndent c) <$> bs) <> makeBodyLines [makeIndent c ++ "}"]
-    toC _ (For _ _ _ _) = error "For loops have not been implemented yet"
+    toC c (For i e bs p) = generatePosLines makeBodyLines c (For i e bs p) <>
+        makeBodyLines [
+            makeIndent c ++ "base_Any_t " ++ forListVar ++ " = " ++ "0;",
+            makeIndent c ++ "for (base_Any_t " ++ forListNodeVar ++ " = ((base_EmperorList_t*)" ++ forListNodeVar ++ ".voidV)->first; " ++ forListNodeVar ++ " != NULL; " ++ forListNodeVar ++ " = " ++ forListVar ++ "->next)",
+            makeIndent c ++ "{",
+            makeIndent (moreIndent c) ++ "base_Any_t " ++ toCString c i ++ " = " ++ forListNodeVar ++ "->value;"
+        ] <> (foldl (<>) mempty $ toC (moreIndent c) <$> bs) <> makeBodyLines [makeIndent c ++ "}"]
+        where
+            forListVar = "forListVar$" ++ toCString c p
+            forListNodeVar = "forListNodeVar$" ++ toCString c p
     toC c (Repeat e _ _) =
         makeBodyLines
             ([makeIndent c ++ "for (int i = 0; i < " ++ toCString (moreIndent c) e ++ "; i++)", makeIndent c ++ "{"] ++
@@ -175,7 +185,14 @@ instance ToC Assignment where
 
 instance ToC Queue where
     toC c (Queue Nothing i e _)  = makeBodyLines [toCString c i ++ " = " ++ toCString c e]
-    toC c (Queue (Just t) i e _) = makeBodyLines [toCString c t ++ " " ++ toCString c i ++ " = " ++ toCString c e]
+    toC c (Queue (Just t) i e _) = makeBodyLines ["base_Any_t " ++ toCString c i ++ " = (base_Any_t){ ." ++ typeModifier ++ " = " ++ toCString c e ++ " }." ++ typeModifier]
+        where
+            typeModifier = case t of
+                IntP  -> "intV"
+                CharP -> "charV"
+                BoolP -> "intV"
+                RealP -> "doubleV"
+                _     -> "voidV"
 
 instance ToCString Expr where
     toCString c (Value v _)                  = toCString c v
@@ -234,3 +251,6 @@ instance ToCString Ident where
 
 instance ToCString String where
     toCString _ s = s
+
+instance ToCString AlexPosn where
+    toCString _ (AlexPn a b c) = foldr1 (++) $ intersperse "_" $ show <$> [a,b,c]
