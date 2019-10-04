@@ -132,6 +132,7 @@ instance Format EmperorType where
     format _ BoolP = "bool"
     format _ RealP = "real"
     format ctx (ESet t) = "{" ++ format ctx t ++ "}"
+    format _ (EList CharP) = "string"
     format ctx (EList t) = "[" ++ format ctx t ++ "]"
     format ctx (ETuple ts) = intercalate "*" (format ctx <$> ts)
     format ctx (ERecord m) = " { " ++ formattedMap ++ " }"
