@@ -120,9 +120,9 @@ instance ToC FunctionDef where
 
         optionalEntryPoint = case i of
             Ident "main" _ -> if (stringRep . moduleName) c == "main" then
-                    let mainPrototype = makeHeaderLines [ "int main(int, char*);" ] in
-                    let mainCallBody = [ makeIndent (moreIndent c) ++ "return main_main();" ] in
-                    let mainBody = makeBodyLines $ [ "int main()", "{" ] ++ mainCallBody ++ [ "}", "" ] in
+                    let mainPrototype = makeHeaderLines [ "int main(int, char**);" ] in
+                    let mainCallBody = [ makeIndent (moreIndent c) ++ "return main_main().intV;" ] in
+                    let mainBody = makeBodyLines $ [ "int main(int UNUSED(argc), char** UNUSED(argv))", "{" ] ++ mainCallBody ++ [ "}", "" ] in
                     mainPrototype <> mainBody
                 else
                     mempty
@@ -146,17 +146,15 @@ instance ToC BodyBlock where
     toC c (For i e bs p) = generatePosLines makeBodyLines c (For i e bs p) <>
         makeBodyLines [
             makeIndent c ++ "base_Any_t " ++ forListVar ++ " = " ++ "0;",
-            makeIndent c ++ "for (base_Any_t " ++ forListNodeVar ++ " = ((base_EmperorList_t*)" ++ forListNodeVar ++ ".voidV)->first; " ++ forListNodeVar ++ " != NULL; " ++ forListNodeVar ++ " = " ++ forListVar ++ "->next)",
+            makeIndent c ++ "for (base_EmperorListNode_t* " ++ forListNodeVar ++ " = ((base_EmperorList_t*)" ++ forListNodeVar ++ ".voidV)->first.voidV; " ++ forListNodeVar ++ ".voidV != NULL; " ++ forListNodeVar ++ " = " ++ forListVar ++ "->next.voidV)",
             makeIndent c ++ "{",
             makeIndent (moreIndent c) ++ "base_Any_t " ++ toCString c i ++ " = " ++ forListNodeVar ++ "->value;"
         ] <> (foldl (<>) mempty $ toC (moreIndent c) <$> bs) <> makeBodyLines [makeIndent c ++ "}"]
         where
             forListVar = "forListVar__" ++ toCString c p
             forListNodeVar = "forListNodeVar__" ++ toCString c p
-    toC c (Repeat e _ _) =
-        makeBodyLines
-            ([makeIndent c ++ "for (int i = 0; i < " ++ toCString (moreIndent c) e ++ "; i++)", makeIndent c ++ "{"] ++
-             [makeIndent c ++ "}"])
+    toC c (Repeat e bs _) =
+        makeBodyLines [makeIndent c ++ "for (int i = 0; i < " ++ toCString (moreIndent c) e ++ "; i++)", makeIndent c ++ "{"] <> (foldr (<>) mempty $ toC (moreIndent c) <$> bs) <> makeBodyLines [makeIndent c ++ "}"]
     toC _ (With _ _ _ _ _) = error "With has not been implemented yet" -- Use if (1) for scoping
     toC _ (Switch _ _ _) = error "Switches have not been implemented yet"
 
@@ -221,7 +219,7 @@ instance ToCString Expr where
     toCString c (ShiftRightSameSign e1 e2 _) = binaryOp c ">>>" e1 e2
     toCString _ (Set _ _)                    = error "Sets are not supported yet..."
     toCString _ (Tuple _ _)                  = error "Tuples are not supported yet..."
-    toCString _ (List _ _)                   = error "Lists are not supported yet..."
+    toCString c (List es _)                  = "base_listFromArray((base_Any_t[]){ " ++ intercalate ", " (toCString c <$> es) ++ " }" ++ ", " ++ (show . length) es ++ ")"
 
 unaryOp :: GenerationContext -> String -> Expr -> String
 unaryOp c o e = o ++ toCString c e
