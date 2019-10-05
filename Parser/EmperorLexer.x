@@ -98,7 +98,7 @@ $stringchar = [^\n"]
 "module"            { mkL LModule }
 "<:"                { mkL LIsSubType }
 "<~"                { mkL LIsImplementeBy }
-"::"                { mkL LIsType }
+"|>"                { mkL LIsType }
 "class"             { mkL LClass }
 "component"         { mkL LComponent }
 
@@ -434,7 +434,7 @@ instance Show Token where
     show (TColon               _) = ":"
     show (TIsSubType           _) = "<:"
     show (TIsImplementeBy      _) = "<~"
-    show (TIsType              _) = "::"
+    show (TIsType              _) = "|>"
     show (TClass               _) = "class"
     show (TComponent           _) = "component"
     show (TIDC                 _) = "_"

@@ -92,7 +92,7 @@ import Parser.Position (GetPos, getPos)
     "Any"               { TAnyT                 p }
     "<:"                { TIsSubType            p }
     "<~"                { TIsImplementeBy       p }
-    "::"                { TIsType               p }
+    "|>"                { TIsType               p }
     "class"             { TClass                p }
     "component"         { TComponent            p }
     "#"                 { TBlockSeparator       p }
@@ -178,7 +178,7 @@ functionDef :: {FunctionDef}
 functionDef : functionTypeDef ";" IDENT functionParamDef ":" body "#" { FunctionDef $1 $4 $6 (getPos $1) }
 
 functionTypeDef :: {FunctionTypeDef}
-functionTypeDef : IDENT "::" typedef { FunctionTypeDef (Ident (identifierVal $1) (position $1)) $3 (position $1) }
+functionTypeDef : IDENT "|>" typedef { FunctionTypeDef (Ident (identifierVal $1) (position $1)) $3 (position $1) }
 
 functionParamDef :: {[Ident]}
 functionParamDef : {- empty -}              { [] }
