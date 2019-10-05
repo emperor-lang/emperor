@@ -15,35 +15,17 @@ module Types.Checker
     , (>-)
     ) where
 
-import Data.Monoid ((<>))
-import Parser.AST
-    ( AST(..)
-    , Assignment(..)
-    , BodyBlock(..)
-    , BodyLine(..)
-    , Call(..)
-    , Expr
-    , FunctionDef(..)
-    , FunctionTypeDef(..)
-    , Ident(..)
-    , ModuleHeader(..)
-    , ModuleItem(..)
-    , Queue(..)
-    , SwitchCase(..)
-    )
-import Types.Environment (TypeEnvironment(..), (=>>), getReturnType, makeEnvironment, getEnvironmentPurity, insert, unsafeGet)
-import Types.Imports.Imports (getLocalEnvironment)
-import Types.Judger ((|>))
-import Types.Results
-    ( EmperorType(..)
-    , Purity(..)
-    , TypeCheckResult(..)
-    , TypeJudgementResult(..)
-    , getPurity
-    , getTypeList
-    , isValid
-    )
-import Types.SubTyping ((<:), (|-))
+import           Data.Monoid           ((<>))
+import           Parser.AST            (AST (..), Assignment (..), BodyBlock (..), BodyLine (..), Call (..), Expr,
+                                        FunctionDef (..), FunctionTypeDef (..), Ident (..), ModuleHeader (..),
+                                        ModuleItem (..), Queue (..), SwitchCase (..))
+import           Types.Environment     (TypeEnvironment (..), getEnvironmentPurity, getReturnType, insert,
+                                        makeEnvironment, unsafeGet, (=>>))
+import           Types.Imports.Imports (getLocalEnvironment)
+import           Types.Judger          ((|>))
+import           Types.Results         (EmperorType (..), Purity (..), TypeCheckResult (..), TypeJudgementResult (..),
+                                        getPurity, getTypeList, isValid)
+import           Types.SubTyping       ((<:), (|-))
 
 -- | Describes objects which may be type-checked.
 class TypeCheck a where
@@ -56,7 +38,7 @@ instance TypeCheck AST where
     g >- (AST (Module i mis p) is bs) =
             case mis of
                 Nothing -> typeCheckAST
-                Just is' -> let frs = (\(Ident i' _) -> g' =>> i') <$> is' in
+                Just is' -> let frs = (\(Ident i' _ _) -> g' =>> i') <$> is' in
                     if all isValid frs then
                         typeCheckAST
                     else
@@ -69,7 +51,7 @@ instance TypeCheck AST where
             g' = getLocalEnvironment (AST (Module i mis p) is bs) <> g
 
             extractMessage (Invalid m) = m
-            extractMessage _ = error "Attempted to extract error message from an object which is valid"
+            extractMessage _           = error "Attempted to extract error message from an object which is valid"
 
 -- | Module item may be type-checked by considering its contents
 instance TypeCheck ModuleItem where
@@ -85,30 +67,30 @@ instance TypeCheck FunctionDef where
                 Left m  -> Fail m
                 Right p -> check (makeEnvironment paramTypesMap p [returnType] <> g) bs
         where
-            paramTypesMap = filter (not . isUnit) $ ((\(Ident i _) -> i) <$> is) `zip` (init $ getTypeList t)
+            paramTypesMap = filter (not . isUnit) $ ((\(Ident i _ _) -> i) <$> is) `zip` (init $ getTypeList t)
             isUnit (_,Unit) = True
-            isUnit _ = False
+            isUnit _        = False
             returnType = last $ getTypeList t
 
 checkLine :: TypeEnvironment -> BodyLine -> Either String TypeEnvironment
 checkLine g l = case l of
-        AssignmentC (Assignment (Just t) (Ident i _) e _) -> checkEnvironmentMutatorLine t i e
-        AssignmentC (Assignment Nothing (Ident i _) e _) -> checkEnvironmentNonMutatorLine i e
-        QueueC (Queue (Just t) (Ident i _) e _) -> checkEnvironmentMutatorLine t i e
-        QueueC (Queue Nothing (Ident i _) e _) -> checkEnvironmentNonMutatorLine i e
+        AssignmentC (Assignment (Just t) (Ident i _ _) e _) -> checkEnvironmentMutatorLine t i e
+        AssignmentC (Assignment Nothing (Ident i _ _) e _) -> checkEnvironmentNonMutatorLine i e
+        QueueC (Queue (Just t) (Ident i _ _) e _) -> checkEnvironmentMutatorLine t i e
+        QueueC (Queue Nothing (Ident i _ _) e _) -> checkEnvironmentNonMutatorLine i e
         CallC (Call pty i es p) -> case g |- Impure <: pty of
             Pass -> case g |> (Call pty i es p) of
-                Valid _ -> Right g
+                Valid _   -> Right g
                 Invalid m -> Left m
             Fail m -> Left m
         Return Nothing _ -> case getReturnType g of
-            Left _ -> Right g
+            Left _  -> Right g
             Right _ -> Left "Expected return value in this environment"
         Return (Just e) _ -> case getReturnType g of
             Right t -> case g |> e of
                 Valid t' -> case g |- t' <: t of
                     Pass -> Right g
-                    _ -> Left "This environment does not return a value"
+                    _    -> Left "This environment does not return a value"
                 Invalid m -> Left m
             Left m -> Left m
     where
@@ -119,7 +101,7 @@ checkLine g l = case l of
                 case g =>> i of
                 Invalid _ -> case g |> e of
                     Valid t' -> case g |- t' <: t of
-                        Pass -> Right $ insert i t g
+                        Pass   -> Right $ insert i t g
                         Fail m -> Left m
                     Invalid m -> Left m
                 Valid _ -> Left $ "Identifier " ++ show i ++ " already exists in the current scope"
@@ -128,7 +110,7 @@ checkLine g l = case l of
         checkEnvironmentNonMutatorLine i e = case g =>> i of
             Valid t -> case g |> e of
                 Valid t' -> case g |- t' <: t of
-                    Pass -> Right g
+                    Pass   -> Right g
                     Fail m -> Left m
                 Invalid m -> Left m
             Invalid m -> Left m
@@ -138,14 +120,14 @@ check _ [] = Pass
 check g (b:bs) =
     case b of
         Line l _ -> case checkLine g l of
-            Left m -> Fail m
+            Left m   -> Fail m
             Right g' -> check g' bs
         IfElse c bs1 bs2 _ -> case g |> c of
             Valid t -> case g |- t <: BoolP of
                 Pass -> case check g bs1 of
                     Pass -> case check g bs2 of
                         Pass -> g `check` bs
-                        x -> x
+                        x    -> x
                     x -> x
                 x -> x
             Invalid m -> Fail m
@@ -153,30 +135,30 @@ check g (b:bs) =
             Valid t -> case g |- t <: BoolP of
                 Pass -> case check g bs' of
                     Pass -> check g bs
-                    x -> x
+                    x    -> x
                 x -> x
             Invalid m -> Fail m
-        For (Ident i _) e bs' _ -> case g |> e of
+        For (Ident i _ _) e bs' _ -> case g |> e of
             Valid t -> case g |- t <: EList Any of
                 Pass -> case check (insert i t g) bs' of
                     Pass -> check g bs
-                    x -> x
+                    x    -> x
                 x -> x
             Invalid m -> Fail m
         Repeat e bs' _ -> case g |> e of
             Valid t -> case g |- t <: IntP of
                 Pass -> case check g bs' of
                     Pass -> check g bs
-                    x -> x
+                    x    -> x
                 x -> x
             Invalid m -> Fail m
-        With t (Ident i _) e bs' _ -> if getEnvironmentPurity g == Pure then
+        With t (Ident i _ _) e bs' _ -> if getEnvironmentPurity g == Pure then
                 Fail "With statements are not allowed in a pure scope"
             else case g |> e of
                 Valid t' -> case g |- t' <: t of
                     Pass -> case check (insert i t g) bs' of
                         Pass -> check g bs
-                        x -> x
+                        x    -> x
                     x -> x
                 Invalid m -> Fail m
         Switch e bs' _ -> case g |> e of
@@ -199,7 +181,7 @@ instance TypeCheck SwitchCase where
                                 case g |- t <: ti of
                                     Pass ->
                                         case g |- to <: BoolP of
-                                            Pass -> g `check` [b]
+                                            Pass   -> g `check` [b]
                                             Fail _ -> Fail "Return type of case guard is not a boolean! "
                                     x -> x
                             Invalid _ -> Fail "Missing expression type for case?"

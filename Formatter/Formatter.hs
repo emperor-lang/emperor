@@ -72,13 +72,13 @@ instance Format Import where
 
 -- | Import locations may be formatted by their type
 instance Format ImportLocation where
-    format ctx (ImportLocation Global i _) = "<" ++ format ctx i ++ ">"
-    format ctx (ImportLocation Local i _) = "\"" ++ format ctx i ++ "\""
+    format _ (ImportLocation Global s _) = "<" ++ s ++ ">"
+    format _ (ImportLocation Local s _) = "\"" ++ s ++ "\""
 
 -- | Module headers may be formatted with their docs and name
 instance Format ModuleHeader where
-    format ctx (Module i Nothing _) = "module " ++ format ctx i
-    format ctx (Module i (Just is) _) = "module " ++ format ctx i ++ '(' : format ctx is ++ ")"
+    format _ (Module s Nothing _) = "module " ++ s
+    format ctx (Module s (Just is) _) = "module " ++ s ++ '(' : format ctx is ++ ")"
 
 -- | Module items may be formatted by their contents
 instance Format ModuleItem where
@@ -244,7 +244,7 @@ instance Format Purity where
 
 -- | Identifiers are formatted as their name
 instance Format Ident where
-    format _ (Ident i _) = i
+    format _ (Ident i _ _) = i
 
 -- | Maybe formattables may be formatted as an empty string or their contents
 instance Format a => Format (Maybe a) where

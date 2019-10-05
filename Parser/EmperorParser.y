@@ -127,9 +127,9 @@ ast :: {AST}
 ast : moduleHeader usings moduleBody                 { AST $1 $2 $3 }
 
 moduleHeader :: {ModuleHeader}
-moduleHeader : "module" IDENT ";"                   { Module (Ident (identifierVal $2) (position $2)) Nothing (position $1) }
-             | "module" IDENT "(" identList ")" ";" { Module (Ident (identifierVal $2) (position $2)) (Just $4) (position $1) }
-             | "module" IDENT "()" ";"              { Module (Ident (identifierVal $2) (position $2)) (Just []) (position $1) }
+moduleHeader : "module" IDENT ";"                   { Module (identifierVal $2) Nothing (position $1) }
+             | "module" IDENT "(" identList ")" ";" { Module (identifierVal $2) (Just $4) (position $1) }
+             | "module" IDENT "()" ";"              { Module (identifierVal $2) (Just []) (position $1) }
 
 -- docs :: {[DocLine]}
 -- docs : DOCLINE          { [ $1] }
@@ -144,12 +144,12 @@ using : "import" usingLabel                      { Import $2 Nothing (position $
       | "import" usingLabel "(" identList ")"    { Import $2 (Just $4) (position $1) }
 
 usingLabel :: {ImportLocation}
-usingLabel : "<" IDENT ">" { ImportLocation Global (Ident (identifierVal $2) (position $2)) (position $1) }
-           | STRING        { ImportLocation Local (Ident (stringVal $1) (position $1)) (position $1) }
+usingLabel : "<" IDENT ">" { ImportLocation Global (identifierVal $2) (position $1) }
+           | STRING        { ImportLocation Local (identifierVal $1) (position $1) }
 
 identList :: {[Ident]}
-identList : IDENT               { [ Ident (identifierVal $1) (position $1) ]}
-          | IDENT "," identList { Ident (identifierVal $1) (position $1) : $3 }
+identList : IDENT               { [ Ident (identifierVal $1) Nothing (position $1) ]}
+          | IDENT "," identList { Ident (identifierVal $1) Nothing (position $1) : $3 }
 
 moduleBody :: {[ModuleItem]}
 moduleBody : moduleItem             { [$1] }
@@ -161,14 +161,14 @@ moduleItem : component    { $1 }
            | functionDef  { FunctionItem $1 (getPos $1) }
 
 component :: {ModuleItem}
-component : "component" IDENT maybe(typeComparisons) ":" functionDefs "#" { Component (Ident (identifierVal $2) (position $2)) $3 $5 (position $1) }
+component : "component" IDENT maybe(typeComparisons) ":" functionDefs "#" { Component (Ident (identifierVal $2) Nothing (position $2)) $3 $5 (position $1) }
 
 functionDefs :: {[FunctionDef]}
 functionDefs : {- empty -}              { [] }
              | functionDef functionDefs { $1 : $2 }
 
 typeClass :: {ModuleItem}
-typeClass : "class" IDENT maybe(typeComparisons) ":" memberTypes "#" { TypeClass (Ident (identifierVal $2) (position $2)) $3 $5 (position $1) }
+typeClass : "class" IDENT maybe(typeComparisons) ":" memberTypes "#" { TypeClass (Ident (identifierVal $2) Nothing (position $2)) $3 $5 (position $1) }
 
 memberTypes :: {[FunctionTypeDef]}
 memberTypes : {- empty -}                   { [] }
@@ -178,19 +178,19 @@ functionDef :: {FunctionDef}
 functionDef : functionTypeDef ";" IDENT functionParamDef ":" body "#" { FunctionDef $1 $4 $6 (getPos $1) }
 
 functionTypeDef :: {FunctionTypeDef}
-functionTypeDef : IDENT "::" typedef { FunctionTypeDef (Ident (identifierVal $1) (position $1)) $3 (position $1) }
+functionTypeDef : IDENT "::" typedef { FunctionTypeDef (Ident (identifierVal $1) Nothing (position $1)) $3 (position $1) }
 
 functionParamDef :: {[Ident]}
 functionParamDef : {- empty -}              { [] }
-                 | IDENT functionParamDef   { (Ident (identifierVal $1) (position $1)) : $2 }
+                 | IDENT functionParamDef   { (Ident (identifierVal $1) Nothing (position $1)) : $2 }
 
 typeComparisons :: {[TypeComparison]}
 typeComparisons : typeComparison                        { [$1] }
                 | typeComparison "," typeComparisons    { $1 : $3 }
 
 typeComparison :: {TypeComparison}
-typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2) (position $2)) (position $1) }
-               | "<:" IDENT "<~" IDENT { IsSubTypeWithImplementor (Ident (identifierVal $2) (position $2)) (Ident (identifierVal $4) (position $4)) (position $1) }
+typeComparison : "<:" IDENT            { IsSubType (Ident (identifierVal $2) Nothing (position $2)) (position $1) }
+               | "<:" IDENT "<~" IDENT { IsSubTypeWithImplementor (Ident (identifierVal $2) Nothing (position $2)) (Ident (identifierVal $4) Nothing (position $4)) (position $1) }
 
 body :: {[BodyBlock]}
 body : bodyBlock        { [$1] }
@@ -200,9 +200,9 @@ bodyBlock :: {BodyBlock}
 bodyBlock : bodyLine ";"                                    { Line $1 (getPos $1) }
           | "if" expr ":" body "#" "else" ":" body "#"      { IfElse $2 $4 $8 (position $1) }
           | "while" expr ":" body "#"                       { While $2 $4 (position $1) }
-          | "for" IDENT "<-" expr ":" body "#"              { For (Ident (identifierVal $2) (position $1)) $4 $6 (position $1) }
+          | "for" IDENT "<-" expr ":" body "#"              { For (Ident (identifierVal $2) Nothing (position $1)) $4 $6 (position $1) }
           | "repeat" expr ":" body "#"                      { Repeat $2 $4 (position $1) }
-          | "with" typedef IDENT "<-" expr ":" body "#"     { With $2 (Ident (identifierVal $3) (position $3)) $5 $7 (position $1) }
+          | "with" typedef IDENT "<-" expr ":" body "#"     { With $2 (Ident (identifierVal $3) Nothing (position $3)) $5 $7 (position $1) }
           | "switch" expr ":" switchBody "#"                { Switch $2 $4 (position $1) }
 
 switchBody :: {[SwitchCase]}
@@ -219,10 +219,10 @@ bodyLine : assignment            { AssignmentC $1 }
          | "return" maybe(expr)  { Return $2 (position $1) }
 
 assignment :: {Assignment}
-assignment : maybe(typedef) IDENT "=" expr { Assignment $1 (Ident (identifierVal $2) (position $2)) $4 (position $2) }
+assignment : maybe(typedef) IDENT "=" expr { Assignment $1 (Ident (identifierVal $2) Nothing (position $2)) $4 (position $2) }
 
 queue :: {Queue}
-queue : maybe(typedef) IDENT "<-" expr { Queue $1 (Ident (identifierVal $2) (position $2)) $4 (position $2) }
+queue : maybe(typedef) IDENT "<-" expr { Queue $1 (Ident (identifierVal $2) Nothing (position $2)) $4 (position $2) }
 
 typedef :: {EmperorType}
 typedef : tupleTypeDef  %prec TYPEDEF   { resolveTuple $1 }
@@ -277,7 +277,7 @@ expr : value                            { Value $1 (getPos $1)}
 value :: {Value}
 value : INT         { Integer (intVal $1) (position $1)}
       | REAL        { Real (realVal $1) (position $1) }
-      | IDENT       { IdentV (Ident (identifierVal $1) (position $1)) (position $1) }
+      | IDENT       { IdentV (Ident (identifierVal $1) Nothing (position $1)) (position $1) }
       | CHAR        { Char (charVal $1) (position $1) }
       | BOOL        { Bool (isTrue $1) (position $1) }
       | STRING      { StringV (stringVal $1) (position $1) }
@@ -288,10 +288,10 @@ call : impureCall   { $1 }
      | pureCall     { $1 }
 
 impureCall :: {Call}
-impureCall : "@" IDENT "(" exprList ")" { Call Impure (Ident (identifierVal $2) (position $2)) $4 (position $1) }
+impureCall : "@" IDENT "(" exprList ")" { Call Impure (Ident (identifierVal $2) Nothing (position $2)) $4 (position $1) }
 
 pureCall :: {Call}
-pureCall : IDENT "(" exprList ")" { Call Pure (Ident (identifierVal $1) (position $1)) $3 (position $1) }
+pureCall : IDENT "(" exprList ")" { Call Pure (Ident (identifierVal $1) Nothing (position $1)) $3 (position $1) }
 
 exprList :: {[Expr]}
 exprList : {- empty -}          { [] }

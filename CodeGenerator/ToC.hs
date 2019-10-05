@@ -30,7 +30,7 @@ import           Data.Monoid            ((<>))
 import           Parser.AST             (AST (..), Assignment (..), BodyBlock (..), BodyLine (..), Call (..), Expr (..),
                                          FunctionDef (..), FunctionTypeDef (..), Ident (..), Import (..),
                                          ImportLocation (..), ImportType (..), ModuleHeader (..), ModuleItem (..),
-                                         Queue (..), Value (..))
+                                         Queue (..), Value (..), stringRep)
 import           Parser.EmperorLexer    (AlexPosn (..))
 import           Types.Results          (EmperorType (..), Purity (Impure), getTypeList)
 
@@ -104,8 +104,8 @@ instance ToC FunctionDef where
             if null inputTypeMap
                 then "void"
                 else intercalate ", " (toCString c <$> ((\(_, x) -> x) <$> inputTypeMap))
-        bs' = if i == Ident "main" p then
-                (Line (CallC (Call Impure (Ident "base_initEmperor" p) [] p)) p) : bs
+        bs' = if i == Ident "main" Nothing p then
+                (Line (CallC (Call Impure (Ident "initEmperor" (Just "base") p) [] p)) p) : bs
             else
                 bs
         body = foldr (<>) mempty $ toC (moreIndent c) <$> bs'
@@ -145,7 +145,7 @@ instance ToC BodyBlock
     toC c (For i e bs p) = generatePosLines makeBodyLines c (For i e bs p) <>
         makeBodyLines [
             makeIndent c ++ "base_Any_t " ++ forListVar ++ " = " ++ "0;",
-            makeIndent c ++ "for (base_Any_t " ++ forListNodeVar ++ " = ((base_EmperorList_t*)" ++ forListNodeVar ++ ".voidV)->first; " ++ forListNodeVar ++ " != NULL; " ++ forListNodeVar ++ " = " ++ forListVar ++ "->next)",
+            makeIndent c ++ "for (base_EmperorListNode_t* " ++ forListNodeVar ++ " = ((base_EmperorList_t*)" ++ forListNodeVar ++ ".voidV)->first.voidV; " ++ forListNodeVar ++ " != NULL; " ++ forListNodeVar ++ " = " ++ forListVar ++ "->next.voidV)",
             makeIndent c ++ "{",
             makeIndent (moreIndent c) ++ "base_Any_t " ++ toCString c i ++ " = " ++ forListNodeVar ++ "->value;"
         ] <> (foldl (<>) mempty $ toC (moreIndent c) <$> bs) <> makeBodyLines [makeIndent c ++ "}"]
@@ -247,7 +247,7 @@ instance ToCString Call where
     toCString c (Call _ i es _) = toCString c i ++ "(" ++ intercalate ", " (toCString c <$> es) ++ ")"
 
 instance ToCString Ident where
-    toCString _ (Ident s _) = s
+    toCString _ = stringRep
 
 instance ToCString String where
     toCString _ s = s
