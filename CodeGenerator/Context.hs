@@ -21,23 +21,31 @@ module CodeGenerator.Context
     , isEntryPoint
     , makeContext
     , makeIndent
+    , moduleName
     , moreIndent
     , nativeCompile
     , sourceFile
+    , importEnv
     ) where
 
-import qualified Args (Args, entryPoint, input, outputFile, annotateSource, toCOnly)
-import Parser.AST (Ident)
+import qualified Args                (Args, annotateSource, entryPoint, input, outputFile, toCOnly)
+import           Data.Map            (Map)
+import           Parser.AST          (Ident (..), ImportLocation)
+import           Parser.EmperorLexer (AlexPosn (..))
+import           Types.Environment   (TypeEnvironment)
 
 data GenerationContext =
     GenerationContext
-        { isEntryPoint :: Bool
-        , sourceFile :: FilePath
-        , destFile :: FilePath
-        , indent :: Int
-        , annotation :: Int
-        , nativeCompile :: Bool
-        , exposedIdents :: Maybe [Ident]
+        { isEntryPoint      :: Bool
+        , sourceFile        :: FilePath
+        , destFile          :: FilePath
+        , indent            :: Int
+        , annotation        :: Int
+        , nativeCompile     :: Bool
+        , exposedIdents     :: Maybe [Ident]
+        , moduleName        :: Ident
+        , importEnv         :: TypeEnvironment
+        , importLocationMap :: Map Ident ImportLocation
         }
     deriving (Show)
 
@@ -50,6 +58,9 @@ makeContext args = GenerationContext
         , annotation = Args.annotateSource args
         , nativeCompile = (not . Args.toCOnly) args
         , exposedIdents = Nothing
+        , moduleName = Ident "main" (AlexPn 0 0 0)
+        , importEnv = mempty
+        , importLocationMap = mempty
         }
     where
         inputFile = if null $ Args.input args then "stdin" else Args.input args

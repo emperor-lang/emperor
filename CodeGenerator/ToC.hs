@@ -19,7 +19,7 @@ module CodeGenerator.ToC
     , toCString
     ) where
 
-import           CodeGenerator.Context  (GenerationContext, destFile, exposedIdents, makeIndent, moreIndent,
+import           CodeGenerator.Context  (GenerationContext, destFile, exposedIdents, makeIndent, moduleName, moreIndent,
                                          nativeCompile, sourceFile)
 import           CodeGenerator.Position (GetPos, generatePos)
 import           CodeGenerator.Results  (GenerationResult, makeBodyLines, makeHeaderAndBodyLines, makeHeaderLines,
@@ -30,9 +30,10 @@ import           Data.Monoid            ((<>))
 import           Parser.AST             (AST (..), Assignment (..), BodyBlock (..), BodyLine (..), Call (..), Expr (..),
                                          FunctionDef (..), FunctionTypeDef (..), Ident (..), Import (..),
                                          ImportLocation (..), ImportType (..), ModuleHeader (..), ModuleItem (..),
-                                         Queue (..), Value (..))
+                                         Queue (..), Value (..), stringRep)
 import           Parser.EmperorLexer    (AlexPosn (..))
 import           Types.Results          (EmperorType (..), Purity (Impure), getTypeList)
+
 
 class ToC a where
     toC :: GenerationContext -> a -> GenerationResult
@@ -49,7 +50,7 @@ instance ToC AST where
             where
                 includeGuard = "__" ++ (toUpper <$> ((sanitise .  sourceFile) c)) ++ "_H_"
 
-                c' = c { exposedIdents = mis }
+                c' = c { exposedIdents = mis, moduleName = is }
 
                 sanitise :: String -> String
                 sanitise s = if head s `elem` ['.', '/']
@@ -88,15 +89,17 @@ instance ToC ModuleItem where
 
 instance ToC FunctionDef where
     toC c (FunctionDef (FunctionTypeDef i t _) is bs p) =
+        optionalEntryPoint <>
         prototype <>
-        makeBodyLines [returnString ++ " " ++ toCString c i ++ "(" ++ paramSig ++ ")", "{"] <>
+        makeBodyLines [returnString ++ " " ++ functionName ++ "(" ++ paramSig ++ ")", "{"] <>
         body <> makeBodyLines ["}"]
       where
         paramSig =
             if null inputTypeMap
                 then "void"
                 else intercalate ", " $ (\(i', t') -> toCString c t' ++ " " ++ toCString c i') <$> inputTypeMap
-        prototype = makeHeaderLines [staticString ++ returnString ++ " " ++ toCString c i ++ "(" ++ paramsPrototypes ++ ");"]
+        prototype = makeHeaderLines [staticString ++ returnString ++ " " ++ functionName ++ "(" ++ paramsPrototypes ++ ");"]
+        functionName = (stringRep . moduleName) c ++ '_' : toCString c i
         staticString = case exposedIdents c of
             Nothing  -> ""
             Just eis -> if i `elem` eis then "" else "static "
@@ -115,22 +118,20 @@ instance ToC FunctionDef where
         isUnit _         = False
         returnType = last $ getTypeList t
 
-instance ToCString EmperorType where
-    toCString _ IntP              = "int"
-    toCString _ CharP             = "char"
-    toCString _ BoolP             = "int"
-    toCString _ RealP             = "double"
-    toCString _ (ESet _)          = "emperorList_t*"
-    toCString _ (EList _)         = "emperorList_t*"
-    toCString c (ETuple ts)       = intercalate "__" $ "eTuple_t" : (toCString c <$> ts)
-    toCString _ (ERecord _)       = error "Records are not yet supported... working on it!"
-    toCString _ (EFunction _ _ _) = error "Functions are not yet supported properly :/ (Working on it)"
-    toCString _ Any               = "void*"
-    toCString _ Unit              = "void"
+        optionalEntryPoint = case i of
+            Ident "main" _ -> if (stringRep . moduleName) c == "main" then
+                    let mainPrototype = makeHeaderLines [ "int main(int, char*);" ] in
+                    let mainCallBody = [ makeIndent (moreIndent c) ++ "return main_main();" ] in
+                    let mainBody = makeBodyLines $ [ "int main()", "{" ] ++ mainCallBody ++ [ "}", "" ] in
+                    mainPrototype <> mainBody
+                else
+                    mempty
+            _ -> mempty
 
-instance ToC BodyBlock
-    -- TODO: make blocks actually work!
-                                        where
+instance ToCString EmperorType where
+    toCString _ _ = "base_Any_t"
+
+instance ToC BodyBlock where
     toC c (Line l _) = toC c l
     toC c (IfElse e bs1 bs2 p) =
         generatePosLines makeBodyLines c (IfElse e bs1 bs2 p) <>
@@ -150,8 +151,8 @@ instance ToC BodyBlock
             makeIndent (moreIndent c) ++ "base_Any_t " ++ toCString c i ++ " = " ++ forListNodeVar ++ "->value;"
         ] <> (foldl (<>) mempty $ toC (moreIndent c) <$> bs) <> makeBodyLines [makeIndent c ++ "}"]
         where
-            forListVar = "forListVar$" ++ toCString c p
-            forListNodeVar = "forListNodeVar$" ++ toCString c p
+            forListVar = "forListVar__" ++ toCString c p
+            forListNodeVar = "forListNodeVar__" ++ toCString c p
     toC c (Repeat e _ _) =
         makeBodyLines
             ([makeIndent c ++ "for (int i = 0; i < " ++ toCString (moreIndent c) e ++ "; i++)", makeIndent c ++ "{"] ++

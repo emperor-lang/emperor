@@ -32,12 +32,14 @@ module Parser.AST
     , SwitchCase(..)
     , TypeComparison(..)
     , Value(..)
+    , stringRep
     ) where
 
-import qualified Data.Aeson as A (FromJSON, ToJSON, Value(Object, String), (.:), (.=), object, parseJSON, toJSON)
-import Data.Text (pack, unpack)
-import Parser.EmperorLexer (AlexPosn(..))
-import Types.Results (EmperorType(..), Purity(..))
+import qualified Data.Aeson          as A (FromJSON, ToJSON, Value (Object, String), object, parseJSON, toJSON, (.:),
+                                           (.=))
+import           Data.Text           (pack, unpack)
+import           Parser.EmperorLexer (AlexPosn (..))
+import           Types.Results       (EmperorType (..), Purity (..))
 
 -- | Data type to represent the abstract syntax tree for a single module. This is specified by its name, its imports and its code.
 data AST =
@@ -75,15 +77,15 @@ data ImportType
     deriving (Show)
 
 instance A.ToJSON ImportType where
-    toJSON Local = A.String "local"
+    toJSON Local  = A.String "local"
     toJSON Global = A.String "global"
 
 instance A.FromJSON ImportType where
     parseJSON (A.String s) =
         case s of
-            "local" -> return Local
+            "local"  -> return Local
             "global" -> return Global
-            _ -> fail $ "Got " ++ unpack s ++ " when parsing import type (expected \"local\"/\"global\""
+            _        -> fail $ "Got " ++ unpack s ++ " when parsing import type (expected \"local\"/\"global\""
     parseJSON _ = fail "Expected string when parsing import type"
 
 -- | Describes a single named item in the module
@@ -194,6 +196,9 @@ data Call =
 data Ident =
     Ident String AlexPosn
     deriving (Ord, Show)
+
+stringRep :: Ident -> String
+stringRep (Ident i _) = i
 
 instance Eq Ident where
     Ident i _ == Ident i' _ = i == i'
