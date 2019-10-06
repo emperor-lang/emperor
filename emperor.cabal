@@ -78,6 +78,7 @@ executable emperor
                     , Parser.EmperorParser
                     , Parser.EmperorParserWrapper
                     , Parser.Position
+                    , ScopeResolver.ScopeResolver
                     , StandaloneCompiler.Compile
                     , Types.Checker
                     , Types.Environment
