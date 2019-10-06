@@ -1,4 +1,4 @@
-module asdf
+module main (main)
 
 import <std> (print)
 
@@ -7,7 +7,6 @@ main:
 	for i <- [1, 2, 3]:
 		@print("i")
 	#
-
 
 	@print("x")
 	if false:
@@ -28,7 +27,11 @@ main:
 		// c = @print("i")
 		// c = @print("i")
 		i = i - 1
+		i = i / 4 * 2
 	#
+
+	string s <- ['a', 'b', 'c', 'd' ]
+
 	// char c <- @print("i")
 	return 0
 #
