@@ -203,3 +203,10 @@ stringRep (Ident i m _) = case m of
 
 instance Eq Ident where
     Ident i m _ == Ident i' m' _ = i == i' && m == m'
+
+instance A.ToJSON Ident where
+    toJSON (Ident i m _) = A.object [ "name" A..= pack i, "moduleName" A..= m ]
+
+instance A.FromJSON Ident where
+    parseJSON (A.Object v) = Ident <$> v A..: "name" <*> v A..: "moduleName" <*> return (AlexPn 0 0 0)
+    parseJSON _            = fail "Expected object when parsing identifier"
