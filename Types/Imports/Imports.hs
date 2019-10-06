@@ -21,9 +21,8 @@ module Types.Imports.Imports
 import           Data.Monoid          ((<>))
 import           GHC.IO.Exception     (ExitCode (..))
 import           Logger.Logger        (Loggers)
-import           Parser.AST           (AST (..), FunctionDef (..), FunctionTypeDef (..), Ident (..), Import (..),
+import           Parser.AST           (AST (..), FunctionDef (..), FunctionTypeDef (..), Import (..),
                                        ImportLocation (..), ImportType (..), ModuleHeader (..), ModuleItem (..))
-import           Parser.AST           (stringRep)
 import           System.Process       (readProcessWithExitCode)
 import           Types.Environment    (TypeEnvironment (..), filterEnvironment, has, insert, newTypeEnvironment)
 import           Types.Imports.JsonIO (Header (..), isHeaderFile, readHeader, writeHeader)
@@ -42,9 +41,8 @@ writeHeader f a = do
         loc (Import l _ _) = l
         g'' :: TypeEnvironment
         g'' = case mis of
-            Nothing -> g'
-            Just is' -> let is'' = stringRep <$> is' in
-                filterEnvironment (`elem` is'') g'
+            Nothing  -> g'
+            Just is' -> filterEnvironment (`elem` is') g'
 
 -- | Obtain the type environment created by the content of the module
 getLocalEnvironment :: AST -> TypeEnvironment
@@ -59,7 +57,7 @@ getLocalEnvironment (AST _ _ as) = getLocalEnvironment' as
                     "Components have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
             TypeClass {} ->
                 error "Classes have not been implemented for type-checking (and this should have been stopped sooner..." --  getLocalEnvironment ms
-            FunctionItem (FunctionDef (FunctionTypeDef (Ident i _ _) t _) _ _ _) _ -> insert i t $ getLocalEnvironment' ms
+            FunctionItem (FunctionDef (FunctionTypeDef i t _) _ _ _) _ -> insert i t $ getLocalEnvironment' ms
 
 -- | Given a set of imports, obtain the type environment they form.
 getEnvironment :: Loggers -> [Import] -> IO (Either String TypeEnvironment)
@@ -82,12 +80,12 @@ getEnvironment' (err, inf, scc, wrn) (Import (ImportLocation t s _) mis _) = do
         Right g ->
             case mis of
                 Just is ->
-                    if all (g `has`) $ stringRep <$> is
-                        then return . Right $ filterEnvironment (`elem` (stringRep <$> is)) g
+                    if all (g `has`) is
+                        then return . Right $ filterEnvironment (`elem` is) g
                         else return . Left $
                              "Environment of " ++
                              show s ++
-                             " does not contain " ++ show (head $ filter (\(Ident i' _ _) -> not $ g `has` i') is)
+                             " does not contain " ++ show (head $ filter (not . has g) is)
                 Nothing -> return . Right $ g
         Left m -> return $ Left m
 

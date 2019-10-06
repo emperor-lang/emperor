@@ -17,7 +17,7 @@ module Types.Judger
     , Typable
     ) where
 
-import Parser.AST (Call(..), Expr(..), Ident(..), Value(..))
+import Parser.AST (Call(..), Expr(..), Value(..))
 import Types.Environment (TypeEnvironment(..), (=>>), newTypeEnvironment, unsafeGet)
 import Types.PreludeTypes (eqable)
 import Types.Results
@@ -154,11 +154,11 @@ instance Typable Value where
     _ |> (Char _ _) = Valid CharP
     _ |> (Bool _ _) = Valid BoolP
     _ |> (StringV _ _) = Valid $ EList CharP
-    g |> (IdentV (Ident i _ _) _) = g =>> i
+    g |> (IdentV i _) = g =>> i
     g |> (CallV c _) = g |> c
 
 instance Typable Call where
-    g |> (Call p (Ident i _ _) es _) =
+    g |> (Call p i es _) =
         case g =>> i of
             Valid t ->  case t of
                 EFunction p' t1 t2 -> case g |- p' <: p of

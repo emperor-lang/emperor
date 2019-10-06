@@ -19,6 +19,7 @@ import           Data.Monoid           ((<>))
 import           Parser.AST            (AST (..), Assignment (..), BodyBlock (..), BodyLine (..), Call (..), Expr,
                                         FunctionDef (..), FunctionTypeDef (..), Ident (..), ModuleHeader (..),
                                         ModuleItem (..), Queue (..), SwitchCase (..))
+import           Parser.EmperorLexer   (AlexPosn (..))
 import           Types.Environment     (TypeEnvironment (..), getEnvironmentPurity, getReturnType, insert,
                                         makeEnvironment, unsafeGet, (=>>))
 import           Types.Imports.Imports (getLocalEnvironment)
@@ -38,7 +39,7 @@ instance TypeCheck AST where
     g >- (AST (Module i mis p) is bs) =
             case mis of
                 Nothing -> typeCheckAST
-                Just is' -> let frs = (\(Ident i' _ _) -> g' =>> i') <$> is' in
+                Just is' -> let frs = (g' =>>) <$> is' in
                     if all isValid frs then
                         typeCheckAST
                     else
@@ -67,17 +68,17 @@ instance TypeCheck FunctionDef where
                 Left m  -> Fail m
                 Right p -> check (makeEnvironment paramTypesMap p [returnType] <> g) bs
         where
-            paramTypesMap = filter (not . isUnit) $ ((\(Ident i _ _) -> i) <$> is) `zip` (init $ getTypeList t)
+            paramTypesMap = filter (not . isUnit) $ is `zip` (init $ getTypeList t)
             isUnit (_,Unit) = True
             isUnit _        = False
             returnType = last $ getTypeList t
 
 checkLine :: TypeEnvironment -> BodyLine -> Either String TypeEnvironment
 checkLine g l = case l of
-        AssignmentC (Assignment (Just t) (Ident i _ _) e _) -> checkEnvironmentMutatorLine t i e
-        AssignmentC (Assignment Nothing (Ident i _ _) e _) -> checkEnvironmentNonMutatorLine i e
-        QueueC (Queue (Just t) (Ident i _ _) e _) -> checkEnvironmentMutatorLine t i e
-        QueueC (Queue Nothing (Ident i _ _) e _) -> checkEnvironmentNonMutatorLine i e
+        AssignmentC (Assignment (Just t) i e _) -> checkEnvironmentMutatorLine t i e
+        AssignmentC (Assignment Nothing i e _) -> checkEnvironmentNonMutatorLine i e
+        QueueC (Queue (Just t) i e _) -> checkEnvironmentMutatorLine t i e
+        QueueC (Queue Nothing i e _) -> checkEnvironmentNonMutatorLine i e
         CallC (Call pty i es p) -> case g |- Impure <: pty of
             Pass -> case g |> (Call pty i es p) of
                 Valid _   -> Right g
@@ -94,7 +95,7 @@ checkLine g l = case l of
                 Invalid m -> Left m
             Left m -> Left m
     where
-        checkEnvironmentMutatorLine :: EmperorType -> String -> Expr -> Either String TypeEnvironment
+        checkEnvironmentMutatorLine :: EmperorType -> Ident -> Expr -> Either String TypeEnvironment
         checkEnvironmentMutatorLine t i e = if t == Unit then
                 Left "Assignments to the unit are valid but pointless, please remove this."
             else
@@ -106,7 +107,7 @@ checkLine g l = case l of
                     Invalid m -> Left m
                 Valid _ -> Left $ "Identifier " ++ show i ++ " already exists in the current scope"
 
-        checkEnvironmentNonMutatorLine :: String -> Expr -> Either String TypeEnvironment
+        checkEnvironmentNonMutatorLine :: Ident -> Expr -> Either String TypeEnvironment
         checkEnvironmentNonMutatorLine i e = case g =>> i of
             Valid t -> case g |> e of
                 Valid t' -> case g |- t' <: t of
@@ -138,7 +139,7 @@ check g (b:bs) =
                     x    -> x
                 x -> x
             Invalid m -> Fail m
-        For (Ident i _ _) e bs' _ -> case g |> e of
+        For i e bs' _ -> case g |> e of
             Valid t -> case g |- t <: EList Any of
                 Pass -> case check (insert i t g) bs' of
                     Pass -> check g bs
@@ -152,7 +153,7 @@ check g (b:bs) =
                     x    -> x
                 x -> x
             Invalid m -> Fail m
-        With t (Ident i _ _) e bs' _ -> if getEnvironmentPurity g == Pure then
+        With t i e bs' _ -> if getEnvironmentPurity g == Pure then
                 Fail "With statements are not allowed in a pure scope"
             else case g |> e of
                 Valid t' -> case g |- t' <: t of
@@ -162,7 +163,7 @@ check g (b:bs) =
                     x -> x
                 Invalid m -> Fail m
         Switch e bs' _ -> case g |> e of
-            Valid t -> let tcrs = (insert ".switch_case" t g >-) <$> bs' in
+            Valid t -> let tcrs = (insert (Ident ".switch_case" Nothing (AlexPn 0 0 0)) t g >-) <$> bs' in
                 if all isValid tcrs then
                     check g bs
                 else
@@ -176,7 +177,7 @@ instance TypeCheck SwitchCase where
             Valid (EFunction p ti to) ->
                 case g |- p <: Pure of
                     Pass ->
-                        case g =>> ".switch_case" of
+                        case g =>> Ident ".switch_case" Nothing (AlexPn 0 0 0) of
                             Valid t ->
                                 case g |- t <: ti of
                                     Pass ->
@@ -189,5 +190,5 @@ instance TypeCheck SwitchCase where
             Valid t ->
                 Fail $
                 "Case guard had type " ++
-                show t ++ " but type " ++ show (unsafeGet "caseExpr" g) ++ " -> " ++ show BoolP
+                show t ++ " but type " ++ show (unsafeGet (Ident "caseExpr" Nothing (AlexPn 0 0 0)) g) ++ " -> " ++ show BoolP
             Invalid m -> Fail m

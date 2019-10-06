@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-|
 Module      : TypeEnvironment
@@ -27,13 +27,14 @@ module Types.Environment
     , unsafeGet
     ) where
 
-import Data.Aeson (FromJSON, ToJSON, Value(..), (.:), (.=), object, parseJSON, toJSON)
-import Types.Results (EmperorType, Purity(..), TypeJudgementResult(..))
-import GHC.Generics (Generic)
+import           Data.Aeson    (FromJSON, ToJSON, Value (..), object, parseJSON, toJSON, (.:), (.=))
+import           GHC.Generics  (Generic)
+import           Parser.AST    (Ident)
+import           Types.Results (EmperorType, Purity (..), TypeJudgementResult (..))
 
 -- | An environment which maps names to types
 data TypeEnvironment =
-    TypeEnvironment [(String, EmperorType)] Purity [EmperorType]
+    TypeEnvironment [(Ident, EmperorType)] Purity [EmperorType]
     deriving (Eq, Show)
 
 instance Semigroup TypeEnvironment where
@@ -50,14 +51,14 @@ newTypeEnvironment :: TypeEnvironment
 newTypeEnvironment = TypeEnvironment [] Impure []
 
 -- | Check whether a given type environment contains a symbol of the given name
-has :: TypeEnvironment -> String -> Bool
+has :: TypeEnvironment -> Ident -> Bool
 has g s =
     case g =>> s of
-        Valid _ -> True
+        Valid _   -> True
         Invalid _ -> False
 
 -- | Get a value from a type environment
-(=>>) :: TypeEnvironment -> String -> TypeJudgementResult
+(=>>) :: TypeEnvironment -> Ident -> TypeJudgementResult
 TypeEnvironment [] _ _ =>> s = Invalid $ "Identifier " ++ show s ++ " not in current scope"
 TypeEnvironment ((i, t):ms) p ts =>> s =
     if s == i
@@ -66,7 +67,7 @@ TypeEnvironment ((i, t):ms) p ts =>> s =
 
 -- | Get a value from a type environment under the assertion that it already
 -- exists. This should only be used for types guaranteed to be in the prelude.
-unsafeGet :: String -> TypeEnvironment -> EmperorType
+unsafeGet :: Ident -> TypeEnvironment -> EmperorType
 unsafeGet s (TypeEnvironment [] _ _) =
     error $
     "Identifier " ++
@@ -78,11 +79,11 @@ unsafeGet s (TypeEnvironment ((i,t):ms) p ts) =
         else unsafeGet s (TypeEnvironment ms p ts)
 
 -- | Add a type assertion to the environment
-insert :: String -> EmperorType -> TypeEnvironment -> TypeEnvironment
+insert :: Ident -> EmperorType -> TypeEnvironment -> TypeEnvironment
 insert s t (TypeEnvironment m p ts) = TypeEnvironment ((s,t) : m) p ts
 
 -- | Create a type environment from a list and other data
-makeEnvironment :: [(String, EmperorType)] -> Purity -> [EmperorType] -> TypeEnvironment
+makeEnvironment :: [(Ident, EmperorType)] -> Purity -> [EmperorType] -> TypeEnvironment
 makeEnvironment = TypeEnvironment
 
 pushReturnType :: EmperorType -> TypeEnvironment -> TypeEnvironment
@@ -99,10 +100,10 @@ getEnvironmentPurity :: TypeEnvironment -> Purity
 getEnvironmentPurity (TypeEnvironment _ p _) = p
 
 -- | Filter the entries of the type environment
-filterEnvironment :: (String -> Bool) -> TypeEnvironment -> TypeEnvironment
+filterEnvironment :: (Ident -> Bool) -> TypeEnvironment -> TypeEnvironment
 filterEnvironment f (TypeEnvironment ms p ts) = TypeEnvironment (filterEnvironment' f ms) p ts
   where
-    filterEnvironment' :: (String -> Bool) -> [(String, EmperorType)] -> [(String, EmperorType)]
+    filterEnvironment' :: (Ident -> Bool) -> [(Ident, EmperorType)] -> [(Ident, EmperorType)]
     filterEnvironment' _ [] = []
     filterEnvironment' f' ((i, t):ms')
         | f' i = (i, t) : filterEnvironment' f' ms'
@@ -123,4 +124,4 @@ instance (FromJSON k, FromJSON v) => FromJSON (KV k v)
 
 instance FromJSON TypeEnvironment where
     parseJSON (Object v) = TypeEnvironment <$> ((fromKV <$>) <$> (v .: "env")) <*> v .: "purity" <*> v .: "returns"
-    parseJSON _ = fail "Expected object when parsing type environment"
+    parseJSON _          = fail "Expected object when parsing type environment"
