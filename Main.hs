@@ -16,16 +16,18 @@ module Main
     ( main
     ) where
 
-import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv, toCOnly, version)
-import CodeGenerator.Generate (generate)
-import Control.Monad (when)
-import Formatter.Formatter (formatFresh)
-import Logger.Logger (Loggers, makeLoggers)
-import Optimiser.Optimise (optimiseAST)
-import Parser.EmperorParserWrapper (AST, parse)
-import StandaloneCompiler.Compile (nativeCompile)
-import System.Exit (exitFailure, exitSuccess)
-import Types.Types (TypeCheckResult(..), resolveTypes, writeHeader)
+import           Args                        (Args, doFormat, entryPoint, input, outputFile, parseArgv, toCOnly,
+                                              version)
+import           CodeGenerator.Generate      (generate)
+import           Control.Monad               (when)
+import           Formatter.Formatter         (formatFresh)
+import           Logger.Logger               (Loggers, makeLoggers)
+import           Optimiser.Optimise          (optimiseAST)
+import           Parser.EmperorParserWrapper (AST, parse)
+import           ScopeResolver.ScopeResolver (resolveScope)
+import           StandaloneCompiler.Compile  (nativeCompile)
+import           System.Exit                 (exitFailure, exitSuccess)
+import           Types.Types                 (TypeCheckResult (..), resolveTypes, writeHeader)
 
 -- | Provides the entry-point
 main :: IO ()
@@ -46,12 +48,13 @@ main = do
         Right prog -> do
             scc "Parsing done for input file"
             when (doFormat args) (output args (formatFresh prog) >>= const exitSuccess)
-            typeCheck args (err, inf, scc, wrn) prog
+            prog' <- resolveScope (err, inf, scc, wrn) prog
+            typeCheck args (err, inf, scc, wrn) prog'
             when
                 (not (entryPoint args) && outputFile args /= "-")
                 (do inf "Outputting header..."
-                    writeHeader (outputFile args ++ ".eh.json.gz") prog)
-            (b, h) <- generateCode args (err, inf, scc, wrn) prog
+                    writeHeader (outputFile args ++ ".eh.json.gz") prog')
+            (b, h) <- generateCode args (err, inf, scc, wrn) prog'
             if (not . toCOnly) args
                 then nativeCompile args (err, inf, scc, wrn) (b, h)
                 else if outputFile args == "-"
