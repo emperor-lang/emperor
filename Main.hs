@@ -16,16 +16,18 @@ module Main
     ( main
     ) where
 
-import Args (Args, doFormat, entryPoint, input, outputFile, parseArgv, toCOnly, version)
-import CodeGenerator.Generate (generate)
-import Control.Monad (when)
-import Formatter.Formatter (formatFresh)
-import Logger.Logger (Loggers, makeLoggers)
-import Optimiser.Optimise (optimiseAST)
-import Parser.EmperorParserWrapper (AST, parse)
-import StandaloneCompiler.Compile (nativeCompile)
-import System.Exit (exitFailure, exitSuccess)
-import Types.Types (TypeCheckResult(..), resolveTypes, writeHeader)
+import           Args                        (Args, doFormat, entryPoint, input, outputFile, parseArgv, toCOnly,
+                                              version)
+import           CodeGenerator.Generate      (generate)
+import           Control.Monad               (when)
+import           Errors.Errors               (ErrorResult (..), printErrors)
+import           Formatter.Formatter         (formatFresh)
+import           Logger.Logger               (Loggers, makeLoggers)
+import           Optimiser.Optimise          (optimiseAST)
+import           Parser.EmperorParserWrapper (AST, parse)
+import           StandaloneCompiler.Compile  (nativeCompile)
+import           System.Exit                 (exitFailure, exitSuccess)
+import           Types.Types                 (TypeCheckResult (..), resolveTypes, writeHeader)
 
 -- | Provides the entry-point
 main :: IO ()
@@ -42,8 +44,10 @@ main = do
                 else args
     parseResult <- parse (input sanitisedArguments)
     case parseResult of
-        Left msg -> err msg
-        Right prog -> do
+        Sin errs -> do
+            printErrors (err, inf, scc, wrn) errs
+            exitFailure
+        Dex prog -> do
             scc "Parsing done for input file"
             when (doFormat args) (output args (formatFresh prog) >>= const exitSuccess)
             typeCheck args (err, inf, scc, wrn) prog

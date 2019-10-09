@@ -18,25 +18,28 @@ module Parser.EmperorParserWrapper
     , parseString
     ) where
 
-import Parser.AST (AST)
-import Parser.EmperorLexer (runAlex)
-import Parser.EmperorParser (parseEmperor)
+import           Errors.Errors        (ErrorResult (..), makeErrorResult)
+import           Parser.AST           (AST)
+import           Parser.EmperorLexer  (runAlex)
+import           Parser.EmperorParser (parseEmperor)
 
 -- | Parse a file of "-" for @stdin@
-parse :: String -> IO (Either String AST)
+parse :: String -> IO (ErrorResult AST)
 parse "-" = parse' getContents
-parse f = parseFile f
+parse f   = parseFile f
 
 -- | Parse an IO String (e.g. raw result of reading a file)
-parse' :: IO String -> IO (Either String AST)
+parse' :: IO String -> IO (ErrorResult AST)
 parse' c = do
     s <- c
     return $ parseString s
 
 -- | Parse an arbitrary file on disk
-parseFile :: FilePath -> IO (Either String AST)
+parseFile :: FilePath -> IO (ErrorResult AST)
 parseFile name = parse' $ readFile name
 
 -- | Parse a given string
-parseString :: String -> Either String AST
-parseString s = runAlex s parseEmperor
+parseString :: String -> ErrorResult AST
+parseString s = case runAlex s parseEmperor of
+    Right x -> Dex x
+    Left m  -> makeErrorResult m Nothing
