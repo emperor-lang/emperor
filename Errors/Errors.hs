@@ -1,4 +1,4 @@
-module Errors.Errors where
+module Errors.Errors (Error(..), ErrorResult(..), isError, isResult, fromResult) where
 
 import           Parser.EmperorLexer (AlexPosn)
 
@@ -20,3 +20,14 @@ instance Semigroup a => Semigroup (ErrorResult a) where
 instance Monoid a => Monoid (ErrorResult a) where
     mempty = Dex mempty
 
+isError :: ErrorResult a -> Bool
+isError (Sin _) = True
+isError (Dex _) = False
+
+isResult :: ErrorResult a -> Bool
+isResult (Dex _) = True
+isResult (Sin _) = False
+
+fromResult :: ErrorResult a -> a
+fromResult (Dex x) = x
+fromResult _       = error "Attempted to extract result from error"
