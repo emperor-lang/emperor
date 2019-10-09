@@ -70,6 +70,7 @@ executable emperor
                     , CodeGenerator.Position
                     , CodeGenerator.Results
                     , CodeGenerator.ToC
+					, Errors.Errors
                     , Formatter.Formatter
                     , Logger.Logger
                     , Optimiser.Optimise
